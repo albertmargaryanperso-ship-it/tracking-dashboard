@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 49,
-    "updated_at": "2026-04-08T17:00:30",
+    "version": 50,
+    "updated_at": "2026-04-08T17:00:39",
     "updated_by": "obsidian",
     "habitudes": [
       "Sport",
@@ -558,20 +558,6 @@
       "completed_at": null,
       "duration_min": null,
       "completed_min": null
-    },
-    {
-      "id": 33,
-      "text": "Session Claude Code — tracking-dashboard (16:55-17:00)",
-      "priority": "normal",
-      "category": "automatisation",
-      "due": null,
-      "status": "done",
-      "done": true,
-      "delegated_to": null,
-      "created": "2026-04-08",
-      "completed_at": "2026-04-08",
-      "duration_min": 5,
-      "completed_min": 5
     }
   ],
   "todos_next_id": 34
