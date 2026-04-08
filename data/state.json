@@ -1,0 +1,486 @@
+{
+  "meta": {
+    "version": 1,
+    "updated_at": "2026-04-08T13:18:19.173002",
+    "updated_by": "obsidian",
+    "habitudes": [
+      "Sport",
+      "Cardio",
+      "Lecture",
+      "Bien-être"
+    ]
+  },
+  "sessions": [
+    {
+      "id": "FTTH CCT 2026 - Partie 1-2026-03-29-0",
+      "project": "FTTH CCT 2026 - Partie 1",
+      "date": "2026-03-29",
+      "hours": 0.5,
+      "note": ""
+    },
+    {
+      "id": "FTTH CCT 2026 - Partie 1-2026-04-03-1",
+      "project": "FTTH CCT 2026 - Partie 1",
+      "date": "2026-04-03",
+      "hours": 2.0,
+      "note": "Plateforme contrôle documentaire: scan Drive, extraction SIREN/SS, mise à jour URSSAF/IBAN, relevé conformité, documentation processus"
+    },
+    {
+      "id": "FTTH CCT 2026 - Partie 1-2026-04-05-2",
+      "project": "FTTH CCT 2026 - Partie 1",
+      "date": "2026-04-05",
+      "hours": 1.0,
+      "note": "Renommage FTTH CCT vers FTTH Circet 2026 vault et Drive, 5 taches todo, config graph view"
+    },
+    {
+      "id": "FTTH CCT 2026 - Partie 1-2026-04-05-3",
+      "project": "FTTH CCT 2026 - Partie 1",
+      "date": "2026-04-05",
+      "hours": 4.0,
+      "note": "Calcul"
+    },
+    {
+      "id": "FTTH CCT 2026 - Partie 1-2026-04-08-4",
+      "project": "FTTH CCT 2026 - Partie 1",
+      "date": "2026-04-08",
+      "hours": 3.0,
+      "note": "Pipeline PPD Février 2026 outillé bout-en-bout (lecture Drive → 25 onglets techniciens → 4 checks → note récap → email SMTP), section matériel par chef d'équipe ajoutée"
+    },
+    {
+      "id": "FTTH CCT 2026 - Partie 1-2026-04-08-5",
+      "project": "FTTH CCT 2026 - Partie 1",
+      "date": "2026-04-08",
+      "hours": 1.5,
+      "note": "Correction colonne Matériel (total € au lieu du détail codes), ajout CHECK 5 garde-fou exhaustif vs Résumé source, section \"Notes complémentaires (info hors PPD)\" partout, documentation cas Matériel magasin et Nb de tech 23/25"
+    },
+    {
+      "id": "FTTH CCT 2026 - Partie 1-2026-04-08-6",
+      "project": "FTTH CCT 2026 - Partie 1",
+      "date": "2026-04-08",
+      "hours": 1.0,
+      "note": "Fix incohérence Defalque -1980/-1680 (orphans déplacés de _Charges globales vers ligne 'Non assignés' dans synthèse), fix float accumulation sub-cent, règle d'or \"TOTAL synthèse = Résumé source partout\", garde-fou final_audit.py renforcé (parsing tableau + check intra-note)"
+    },
+    {
+      "id": "FTTH CCT 2026 - Partie 1-2026-04-08-7",
+      "project": "FTTH CCT 2026 - Partie 1",
+      "date": "2026-04-08",
+      "hours": 4.0,
+      "note": "Janvier 2026 PPD complet (ingestion XLSX, 5 cas particuliers: Réfaction non répartissable, Régul BLO, Bonus/Casse absents, fuzzy match MASSINISSA, format XLSX), 23 onglets Google Sheet + note Obsidian + email, fix frontmatter Récap Février, Étape 2 Tableau des paiements (16 techs + Bouzad fusionné L14 + pertes -1713,25/-29,02 en charges négatives L3), documentation Pipeline 5 étapes dans FTTH CCT 2026"
+    },
+    {
+      "id": "FTTH CCT 2026 - Partie 2-2026-04-08-8",
+      "project": "FTTH CCT 2026 - Partie 2",
+      "date": "2026-04-08",
+      "hours": 1.0,
+      "note": "Extraction grilles tarifaires des 4 techniciens archivés (Adem, Luca, Nikola, Yacine), tableau croisé code × tech, fusion combos doublonnés, structuration par catégorie métier"
+    },
+    {
+      "id": "Récap FTTH Circet - Février 2026-2026-04-08-9",
+      "project": "Récap FTTH Circet - Février 2026",
+      "date": "2026-04-08",
+      "hours": 0.25,
+      "note": ""
+    },
+    {
+      "id": "Développement — Cerveau Albert-2026-03-30-10",
+      "project": "Développement — Cerveau Albert",
+      "date": "2026-03-30",
+      "hours": 1.5,
+      "note": "architecture multi-agents + templates"
+    },
+    {
+      "id": "Développement — Cerveau Albert-2026-04-05-11",
+      "project": "Développement — Cerveau Albert",
+      "date": "2026-04-05",
+      "hours": 1.0,
+      "note": "Session"
+    },
+    {
+      "id": "Développement — Cerveau Albert-2026-04-05-12",
+      "project": "Développement — Cerveau Albert",
+      "date": "2026-04-05",
+      "hours": 1.0,
+      "note": "Audit parents, déplacements, category sur 53 notes, graphes catégories dashboard"
+    },
+    {
+      "id": "📲 Conformité Juridique FTTH-2026-04-06-13",
+      "project": "📲 Conformité Juridique FTTH",
+      "date": "2026-04-06",
+      "hours": 2.0,
+      "note": "Creation app Flask + dashboard web, lecture Google Sheet, documentation vision complete"
+    }
+  ],
+  "routine": [
+    {
+      "date": "2026-03-31",
+      "blocs": 1,
+      "notes": "douche",
+      "habitudes": {
+        "Bien-être": "Oui"
+      }
+    }
+  ],
+  "todos": [
+    {
+      "id": 1,
+      "text": "Transfert techniciens CIRCET [BPU, Contrat STT, Att honneur]",
+      "category": "pro",
+      "priority": "urgent",
+      "status": "done",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": "2026-04-04",
+      "done": true
+    },
+    {
+      "id": 2,
+      "text": "Appeler Mohand ou Omar salarié",
+      "category": "pro",
+      "priority": "urgent",
+      "status": "done",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": "2026-03-31",
+      "done": true
+    },
+    {
+      "id": 3,
+      "text": "Appeler Karen voir ce qui se passe + Ouss Makhlouf",
+      "category": "pro",
+      "priority": "urgent",
+      "status": "done",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": "2026-04-04",
+      "done": true
+    },
+    {
+      "id": 4,
+      "text": "Appeler Seb voir ce qui se passe RDV demain",
+      "category": "pro",
+      "priority": "urgent",
+      "status": "done",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": "2026-04-04",
+      "done": true
+    },
+    {
+      "id": 5,
+      "text": "Appeler Kader",
+      "category": "pro",
+      "priority": "urgent",
+      "status": "done",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": "2026-04-04",
+      "done": true
+    },
+    {
+      "id": 6,
+      "text": "Appeler Sabrina Karima et Shayma",
+      "category": "pro",
+      "priority": "urgent",
+      "status": "done",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": "2026-04-04",
+      "done": true
+    },
+    {
+      "id": 7,
+      "text": "Appeler Soufiane",
+      "category": "pro",
+      "priority": "urgent",
+      "status": "done",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": "2026-04-04",
+      "done": true
+    },
+    {
+      "id": 8,
+      "text": "Ranger les documents",
+      "category": "admin",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": null,
+      "done": false
+    },
+    {
+      "id": 9,
+      "text": "Paiement maître VESIN et TABANI (200-500€)",
+      "category": "finance",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": null,
+      "done": false
+    },
+    {
+      "id": 10,
+      "text": "Paiement bureau LUXEMBOURG",
+      "category": "finance",
+      "priority": "normal",
+      "status": "done",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": "2026-04-04",
+      "done": true
+    },
+    {
+      "id": 11,
+      "text": "Remboursement AFDAS EDEN HALLARD 6K",
+      "category": "finance",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": null,
+      "done": false
+    },
+    {
+      "id": 12,
+      "text": "Paiement formation EDEN HALLARD 6K",
+      "category": "finance",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": null,
+      "done": false
+    },
+    {
+      "id": 13,
+      "text": "Remboursement Macbook BOULANGER et FNAC 3K",
+      "category": "finance",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": null,
+      "done": false
+    },
+    {
+      "id": 14,
+      "text": "Transférer mail perso → CCT (Loelia)",
+      "category": "admin",
+      "priority": "normal",
+      "status": "done",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": "2026-04-04",
+      "done": true
+    },
+    {
+      "id": 15,
+      "text": "Sinistre CONSTRUCTEL [1] et [2]",
+      "category": "pro",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": null,
+      "done": false
+    },
+    {
+      "id": 16,
+      "text": "Erreur régul Yves SOUFIANE",
+      "category": "pro",
+      "priority": "normal",
+      "status": "done",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": "2026-04-04",
+      "done": true
+    },
+    {
+      "id": 17,
+      "text": "Résiliation assurances véhicules",
+      "category": "admin",
+      "priority": "normal",
+      "status": "done",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": "2026-04-04",
+      "done": true
+    },
+    {
+      "id": 18,
+      "text": "Remboursement assurance",
+      "category": "finance",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": null,
+      "done": false
+    },
+    {
+      "id": 19,
+      "text": "Connecter Obsidian à mon Drive et continuer le travail Drive + Claude",
+      "category": "admin",
+      "priority": "normal",
+      "status": "done",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": "2026-03-29",
+      "done": true
+    },
+    {
+      "id": 20,
+      "text": "Vérifier fin de contrat Oussama chômage",
+      "category": "pro",
+      "priority": "normal",
+      "status": "done",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": "2026-04-04",
+      "done": true
+    },
+    {
+      "id": 21,
+      "text": "Vérifier date expiration attestation URSSAF CCT",
+      "category": "admin",
+      "priority": "normal",
+      "status": "done",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": "2026-04-04",
+      "done": true
+    },
+    {
+      "id": 22,
+      "text": "Confirmer le mail de Mme Kuman",
+      "category": "pro",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": null,
+      "done": false
+    },
+    {
+      "id": 23,
+      "text": "Mohand 73 — Fausse DPAE x2",
+      "category": "pro",
+      "priority": "normal",
+      "status": "done",
+      "delegated_to": "Mohand",
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": "2026-04-04",
+      "done": true
+    },
+    {
+      "id": 24,
+      "text": "Adel 69 St Priest — envoi email",
+      "category": "pro",
+      "priority": "normal",
+      "status": "delegated",
+      "delegated_to": "Adel",
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": null,
+      "done": false
+    },
+    {
+      "id": 25,
+      "text": "Tech Bourg-en-Bresse — kangoo + nacelle",
+      "category": "pro",
+      "priority": "normal",
+      "status": "delegated",
+      "delegated_to": "Tech",
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": null,
+      "done": false
+    },
+    {
+      "id": 26,
+      "text": "Centre de formation (CALLA, KCR, WhatsApp)",
+      "category": "pro",
+      "priority": "normal",
+      "status": "waiting",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": null,
+      "done": false
+    },
+    {
+      "id": 27,
+      "text": "Trier tous les espaces de mon PC",
+      "category": "admin",
+      "priority": "normal",
+      "status": "waiting",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": null,
+      "done": false
+    },
+    {
+      "id": 28,
+      "text": "Dettes UENDI 8000€ en dehors SEB",
+      "category": "finance",
+      "priority": "normal",
+      "status": "waiting",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": null,
+      "done": false
+    },
+    {
+      "id": 29,
+      "text": "Dettes JACK 2500€ avec récap Amaya",
+      "category": "finance",
+      "priority": "normal",
+      "status": "waiting",
+      "delegated_to": null,
+      "due": null,
+      "created": "2025-12-27",
+      "completed_at": null,
+      "done": false
+    },
+    {
+      "id": 32,
+      "text": "Payer les 3 000€ Luxembourg bureaux",
+      "category": "pro",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "created": "2026-04-04",
+      "completed_at": null,
+      "done": false
+    }
+  ],
+  "todos_next_id": 33
+}
