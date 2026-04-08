@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 41,
-    "updated_at": "2026-04-08T13:35:01.870Z",
+    "version": 42,
+    "updated_at": "2026-04-08T13:59:24.690Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -131,6 +131,13 @@
       "notes": "douche",
       "habitudes": {
         "Bien-être": "Oui"
+      }
+    },
+    {
+      "date": "2026-04-08",
+      "blocs": 2,
+      "habitudes": {
+        "Sport": "Oui"
       }
     }
   ],
