@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 141,
-    "updated_at": "2026-04-08T23:33:54.280Z",
+    "updated_at": "2026-04-08T23:34:01.724Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -183,20 +183,7 @@
       "completed_at": "2026-04-09",
       "duration_min": 26,
       "completed_min": 26
-    },
-    {
-      "text": "Baisser le salaire de Mounir pour qu’il coûte 2000€",
-      "category": "pro",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": 60,
-      "completed_min": null,
-      "id": 5,
-      "created": "2026-04-09"
     }
   ],
-  "todos_next_id": 6
+  "todos_next_id": 5
 }
