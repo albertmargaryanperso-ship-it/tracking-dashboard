@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 133,
-    "updated_at": "2026-04-08T23:03:30.231Z",
+    "updated_at": "2026-04-08T23:04:18.779Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -155,20 +155,7 @@
       "completed_at": null,
       "duration_min": 45,
       "completed_min": null
-    },
-    {
-      "text": "Appeler Charmois puis Rachid puis Smail pour Resonance",
-      "category": "pro",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": 30,
-      "completed_min": null,
-      "id": 3,
-      "created": "2026-04-09"
     }
   ],
-  "todos_next_id": 4
+  "todos_next_id": 3
 }
