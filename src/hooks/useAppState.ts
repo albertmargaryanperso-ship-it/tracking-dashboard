@@ -289,8 +289,6 @@ export const useAppState = () => {
   })
   const shaRef = useRef<string | null>(null)
   const pendingWriteRef = useRef<number | null>(null)
-  const firstLoadRef = useRef(true)
-  const suppressNextPushRef = useRef(false)
   const dirtyRef = useRef(false)
   const stateRef = useRef(state)
   const pushInFlightRef = useRef<Promise<void> | null>(null)
@@ -371,9 +369,10 @@ export const useAppState = () => {
       const remoteAt = remote.meta?.updated_at ?? ''
       if (localAt && remoteAt && localAt > remoteAt && !dirtyRef.current) {
         // Local is ahead — trigger a push to reconcile cloud.
+        dirtyRef.current = true
         void pushNow(stateRef.current)
       } else {
-        suppressNextPushRef.current = true
+        // HYDRATE from remote does NOT mark dirty — we explicitly skip push.
         dispatch({ type: 'HYDRATE', state: remote })
       }
 
@@ -389,27 +388,22 @@ export const useAppState = () => {
     }
   }, [flushPendingPush, pushNow])
 
-  const schedulePush = useCallback((current: AppState) => {
+  // Debounced push: called from the mutation effect when dirtyRef is true.
+  const schedulePush = useCallback(() => {
     if (pendingWriteRef.current) window.clearTimeout(pendingWriteRef.current)
     pendingWriteRef.current = window.setTimeout(() => {
       pendingWriteRef.current = null
-      const p = pushNow(current)
+      const p = pushNow(stateRef.current)
       pushInFlightRef.current = p.finally(() => { pushInFlightRef.current = null })
     }, 1500)
   }, [pushNow])
 
-  // Trigger push on mutations only — never on HYDRATE (pull) or initial mount
+  // Trigger push only when the mutation was marked dirty by a user action.
+  // HYDRATE / initial cache load / strict-mode remount do NOT set dirtyRef,
+  // so no spurious push fires on same-state rerenders.
   useEffect(() => {
-    if (firstLoadRef.current) {
-      firstLoadRef.current = false
-      return
-    }
-    if (suppressNextPushRef.current) {
-      suppressNextPushRef.current = false
-      return
-    }
-    dirtyRef.current = true
-    schedulePush(state)
+    if (!dirtyRef.current) return
+    schedulePush()
   }, [state, schedulePush])
 
   // Flush pending writes before the tab is closed — last-ditch save.
@@ -438,23 +432,31 @@ export const useAppState = () => {
   }, [pull])
 
   // ── Action creators ──────────────────────────────────────────────────────
+  // Every user action goes through userDispatch, which marks the state as
+  // dirty BEFORE dispatching. The mutation effect then observes dirtyRef
+  // and schedules a push. HYDRATE bypasses this and never sets dirty.
+  const userDispatch = useCallback((action: Action) => {
+    dirtyRef.current = true
+    dispatch(action)
+  }, [])
+
   const actions = useMemo(() => ({
-    addSession: (s: Omit<VaultSession, 'id'>) => dispatch({ type: 'ADD_SESSION', session: s }),
-    deleteSession: (id: string) => dispatch({ type: 'DELETE_SESSION', id }),
+    addSession: (s: Omit<VaultSession, 'id'>) => userDispatch({ type: 'ADD_SESSION', session: s }),
+    deleteSession: (id: string) => userDispatch({ type: 'DELETE_SESSION', id }),
     upsertDayProject: (date: string, project: string, hours: number, note?: string) =>
-      dispatch({ type: 'UPSERT_DAY_PROJECT', date, project, hours, note }),
+      userDispatch({ type: 'UPSERT_DAY_PROJECT', date, project, hours, note }),
     deleteDayProject: (date: string, project: string) =>
-      dispatch({ type: 'DELETE_DAY_PROJECT', date, project }),
-    setRoutineHours: (date: string, hours: number) => dispatch({ type: 'SET_ROUTINE_HOURS', date, hours }),
-    setHabitHours: (date: string, habit: string, hours: number) => dispatch({ type: 'SET_HABIT_HOURS', date, habit, hours }),
-    setRoutineNotes: (date: string, notes: string) => dispatch({ type: 'SET_ROUTINE_NOTES', date, notes }),
-    addHabit: (name: string) => dispatch({ type: 'ADD_HABIT', name }),
-    removeHabit: (name: string) => dispatch({ type: 'REMOVE_HABIT', name }),
-    addTodo: (t: Omit<Todo, 'id' | 'created'>) => dispatch({ type: 'ADD_TODO', todo: t }),
-    updateTodo: (id: number, patch: Partial<Todo>) => dispatch({ type: 'UPDATE_TODO', id, patch }),
-    toggleTodo: (id: number, completed_min?: number | null) => dispatch({ type: 'TOGGLE_TODO', id, completed_min }),
-    deleteTodo: (id: number) => dispatch({ type: 'DELETE_TODO', id }),
-  }), [])
+      userDispatch({ type: 'DELETE_DAY_PROJECT', date, project }),
+    setRoutineHours: (date: string, hours: number) => userDispatch({ type: 'SET_ROUTINE_HOURS', date, hours }),
+    setHabitHours: (date: string, habit: string, hours: number) => userDispatch({ type: 'SET_HABIT_HOURS', date, habit, hours }),
+    setRoutineNotes: (date: string, notes: string) => userDispatch({ type: 'SET_ROUTINE_NOTES', date, notes }),
+    addHabit: (name: string) => userDispatch({ type: 'ADD_HABIT', name }),
+    removeHabit: (name: string) => userDispatch({ type: 'REMOVE_HABIT', name }),
+    addTodo: (t: Omit<Todo, 'id' | 'created'>) => userDispatch({ type: 'ADD_TODO', todo: t }),
+    updateTodo: (id: number, patch: Partial<Todo>) => userDispatch({ type: 'UPDATE_TODO', id, patch }),
+    toggleTodo: (id: number, completed_min?: number | null) => userDispatch({ type: 'TOGGLE_TODO', id, completed_min }),
+    deleteTodo: (id: number) => userDispatch({ type: 'DELETE_TODO', id }),
+  }), [userDispatch])
 
   const stats = useMemo(() => computeStats(state), [state])
 
