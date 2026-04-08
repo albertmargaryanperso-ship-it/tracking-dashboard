@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 52,
-    "updated_at": "2026-04-08T17:15:41",
+    "version": 53,
+    "updated_at": "2026-04-08T17:23:21",
     "updated_by": "obsidian",
     "habitudes": [
       "Sport",
@@ -122,6 +122,13 @@
       "date": "2026-04-08",
       "hours": 3.0,
       "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-08::2.0::refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-08",
+      "hours": 2.0,
+      "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
     }
   ],
   "routine": [
