@@ -1,22 +1,25 @@
 import { useState } from 'react'
 import { X, Plus, Clock, Activity, CheckSquare } from 'lucide-react'
 import type { VaultSession, Todo, TodoCategory, TodoPriority } from '@/types'
-import { todayISO, cn, CATEGORY_CONFIG } from '@/lib/utils'
+import { todayISO, cn, CATEGORY_CONFIG, CATEGORY_LIST, parseHoursInput, formatHours, habitIcon } from '@/lib/utils'
 
-type QuickMode = 'session' | 'blocs' | 'todo'
+type QuickMode = 'session' | 'routine' | 'todo'
 
 interface QuickAddModalProps {
   open: boolean
   onClose: () => void
   projects: string[]
+  habits: string[]
   onAddSession: (s: Omit<VaultSession, 'id'>) => void
-  onSetBlocs: (date: string, blocs: number) => void
+  onSetRoutineHours: (date: string, hours: number) => void
+  onSetHabitHours: (date: string, habit: string, hours: number) => void
   onAddTodo: (t: Omit<Todo, 'id' | 'created'>) => void
-  currentBlocs: number
+  todayHours: number
 }
 
 export const QuickAddModal = ({
-  open, onClose, projects, onAddSession, onSetBlocs, onAddTodo, currentBlocs,
+  open, onClose, projects, habits,
+  onAddSession, onSetRoutineHours, onSetHabitHours, onAddTodo, todayHours,
 }: QuickAddModalProps) => {
   const [mode, setMode] = useState<QuickMode>('session')
 
@@ -39,7 +42,7 @@ export const QuickAddModal = ({
         <div className="flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-xl mb-4">
           {([
             ['session', 'Session', Clock, 'violet'],
-            ['blocs', 'Blocs', Activity, 'cyan'],
+            ['routine', 'Routine', Activity, 'cyan'],
             ['todo', 'Tâche', CheckSquare, 'emerald'],
           ] as const).map(([id, label, Icon, color]) => (
             <button
@@ -61,7 +64,15 @@ export const QuickAddModal = ({
         </div>
 
         {mode === 'session' && <SessionForm projects={projects} onAdd={onAddSession} onClose={onClose} />}
-        {mode === 'blocs' && <BlocsForm currentBlocs={currentBlocs} onSetBlocs={onSetBlocs} onClose={onClose} />}
+        {mode === 'routine' && (
+          <RoutineForm
+            habits={habits}
+            todayHours={todayHours}
+            onSetRoutineHours={onSetRoutineHours}
+            onSetHabitHours={onSetHabitHours}
+            onClose={onClose}
+          />
+        )}
         {mode === 'todo' && <TodoForm onAdd={onAddTodo} onClose={onClose} />}
       </div>
     </div>
@@ -77,14 +88,14 @@ const SessionForm = ({
   onClose: () => void
 }) => {
   const [project, setProject] = useState(projects[0] ?? '')
-  const [hours, setHours] = useState('1')
+  const [hoursStr, setHoursStr] = useState('1h')
   const [note, setNote] = useState('')
   const [date, setDate] = useState(todayISO())
 
   const submit = () => {
-    const h = parseFloat(hours.replace(',', '.'))
-    if (!project.trim() || isNaN(h) || h <= 0) return
-    onAdd({ project: project.trim(), hours: h, note: note.trim(), date })
+    const h = parseHoursInput(hoursStr)
+    if (!project.trim() || h === null || h <= 0) return
+    onAdd({ project: project.trim(), hours: Math.round(h * 100) / 100, note: note.trim(), date })
     onClose()
   }
 
@@ -114,11 +125,11 @@ const SessionForm = ({
           />
         </div>
         <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Heures</label>
+          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Durée</label>
           <input
-            value={hours}
-            onChange={e => setHours(e.target.value)}
-            placeholder="2.5"
+            value={hoursStr}
+            onChange={e => setHoursStr(e.target.value)}
+            placeholder="1h30 / 45min / 2.5"
             className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-violet-500 text-center font-mono"
           />
         </div>
@@ -140,60 +151,80 @@ const SessionForm = ({
   )
 }
 
-// ─── Blocs form ──────────────────────────────────────────────────────────────
-const BlocsForm = ({
-  currentBlocs, onSetBlocs, onClose,
+// ─── Routine form (replaces Blocs form) ──────────────────────────────────────
+const RoutineForm = ({
+  habits, todayHours, onSetRoutineHours, onSetHabitHours, onClose,
 }: {
-  currentBlocs: number
-  onSetBlocs: (date: string, blocs: number) => void
+  habits: string[]
+  todayHours: number
+  onSetRoutineHours: (date: string, hours: number) => void
+  onSetHabitHours: (date: string, habit: string, hours: number) => void
   onClose: () => void
 }) => {
-  const [blocs, setBlocs] = useState(currentBlocs)
-  const hours = blocs * 0.5
+  const [habit, setHabit] = useState<string>(habits[0] ?? '')
+  const [hoursStr, setHoursStr] = useState('1h')
+  const [date, setDate] = useState(todayISO())
 
-  const save = () => {
-    onSetBlocs(todayISO(), blocs)
+  const submit = () => {
+    const h = parseHoursInput(hoursStr)
+    if (h === null || h < 0) return
+    const rounded = Math.round(h * 100) / 100
+    if (habit) {
+      onSetHabitHours(date, habit, rounded)
+    } else {
+      onSetRoutineHours(date, rounded)
+    }
     onClose()
   }
 
   return (
     <div className="space-y-4">
-      <div className="text-center py-4">
-        <p className="text-6xl font-extrabold bg-gradient-to-br from-cyan-300 to-cyan-100 bg-clip-text text-transparent font-mono">
-          {blocs}
+      <div className="text-center py-2">
+        <p className="text-5xl font-extrabold bg-gradient-to-br from-cyan-300 to-cyan-100 bg-clip-text text-transparent font-mono">
+          {formatHours(todayHours)}
         </p>
-        <p className="text-xs text-zinc-500 mt-1">{hours}h aujourd'hui</p>
+        <p className="text-[10px] text-zinc-500 mt-1">aujourd'hui</p>
       </div>
-      <div className="grid grid-cols-6 gap-2">
-        {[0, 2, 4, 6, 8, 12].map(n => (
-          <button
-            key={n}
-            onClick={() => setBlocs(n)}
-            className={cn(
-              'py-2.5 rounded-xl text-xs font-semibold border transition-all',
-              blocs === n ? 'border-cyan-400 bg-cyan-500/15 text-cyan-300' : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300'
-            )}
-          >
-            {n}
-          </button>
-        ))}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Date</label>
+          <input
+            type="date"
+            value={date}
+            onChange={e => setDate(e.target.value)}
+            className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-cyan-500"
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Durée</label>
+          <input
+            value={hoursStr}
+            onChange={e => setHoursStr(e.target.value)}
+            placeholder="1h30 / 45min"
+            className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-cyan-500 font-mono text-center"
+          />
+        </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={() => setBlocs(Math.max(0, blocs - 1))}
-          className="py-2.5 rounded-xl border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 text-xs font-semibold"
-        >
-          − 30 min
-        </button>
-        <button
-          onClick={() => setBlocs(blocs + 1)}
-          className="py-2.5 rounded-xl border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 text-xs font-semibold"
-        >
-          + 30 min
-        </button>
+      <div>
+        <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Habitude</label>
+        <div className="grid grid-cols-2 gap-1.5 mt-1">
+          {habits.map(h => (
+            <button
+              key={h}
+              onClick={() => setHabit(h)}
+              className={cn(
+                'px-3 py-2 rounded-lg border text-xs font-medium flex items-center gap-2 transition-all',
+                habit === h ? 'border-cyan-500/50 bg-cyan-500/10 text-cyan-300' : 'border-zinc-800 text-zinc-500 hover:border-zinc-700'
+              )}
+            >
+              <span className="text-base">{habitIcon(h)}</span>
+              <span className="truncate">{h}</span>
+            </button>
+          ))}
+        </div>
       </div>
-      <button onClick={save} className="w-full py-3 rounded-xl bg-gradient-to-br from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-xs font-bold">
-        Enregistrer
+      <button onClick={submit} className="w-full py-3 rounded-xl bg-gradient-to-br from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-xs font-bold flex items-center justify-center gap-1.5">
+        <Plus size={14} /> Logger
       </button>
     </div>
   )
@@ -204,9 +235,11 @@ const TodoForm = ({ onAdd, onClose }: { onAdd: (t: Omit<Todo, 'id' | 'created'>)
   const [text, setText] = useState('')
   const [category, setCategory] = useState<TodoCategory>('pro')
   const [priority, setPriority] = useState<TodoPriority>('normal')
+  const [durationMin, setDurationMin] = useState('')
 
   const submit = () => {
     if (!text.trim()) return
+    const dur = durationMin.trim() ? parseInt(durationMin.trim(), 10) : null
     onAdd({
       text: text.trim(),
       category,
@@ -215,6 +248,8 @@ const TodoForm = ({ onAdd, onClose }: { onAdd: (t: Omit<Todo, 'id' | 'created'>)
       delegated_to: null,
       due: null,
       completed_at: null,
+      duration_min: dur && !isNaN(dur) && dur > 0 ? dur : null,
+      completed_min: null,
     })
     onClose()
   }
@@ -234,13 +269,13 @@ const TodoForm = ({ onAdd, onClose }: { onAdd: (t: Omit<Todo, 'id' | 'created'>)
       </div>
       <div>
         <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Catégorie</label>
-        <div className="flex gap-1.5 mt-1">
-          {(['pro', 'finance', 'admin'] as TodoCategory[]).map(c => (
+        <div className="grid grid-cols-2 gap-1.5 mt-1">
+          {CATEGORY_LIST.map(c => (
             <button
               key={c}
               onClick={() => setCategory(c)}
               className={cn(
-                'flex-1 px-3 py-2 rounded-lg text-[11px] font-semibold border transition-all flex items-center justify-center gap-1',
+                'px-3 py-2 rounded-lg text-[11px] font-semibold border transition-all flex items-center justify-center gap-1',
                 category === c ? CATEGORY_CONFIG[c].bg + ' ' + CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500'
               )}
             >
@@ -249,23 +284,34 @@ const TodoForm = ({ onAdd, onClose }: { onAdd: (t: Omit<Todo, 'id' | 'created'>)
           ))}
         </div>
       </div>
-      <div>
-        <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Priorité</label>
-        <div className="flex gap-1.5 mt-1">
-          {(['normal', 'urgent'] as TodoPriority[]).map(p => (
-            <button
-              key={p}
-              onClick={() => setPriority(p)}
-              className={cn(
-                'flex-1 px-3 py-2 rounded-lg text-[11px] font-semibold border transition-all',
-                priority === p
-                  ? p === 'urgent' ? 'border-rose-500 bg-rose-500/10 text-rose-300' : 'border-zinc-700 bg-zinc-800 text-zinc-200'
-                  : 'border-zinc-800 text-zinc-500'
-              )}
-            >
-              {p === 'urgent' ? '🔴 Urgent' : 'Normal'}
-            </button>
-          ))}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Priorité</label>
+          <div className="flex gap-1.5 mt-1">
+            {(['normal', 'urgent'] as TodoPriority[]).map(p => (
+              <button
+                key={p}
+                onClick={() => setPriority(p)}
+                className={cn(
+                  'flex-1 px-3 py-2 rounded-lg text-[11px] font-semibold border transition-all',
+                  priority === p
+                    ? p === 'urgent' ? 'border-rose-500 bg-rose-500/10 text-rose-300' : 'border-zinc-700 bg-zinc-800 text-zinc-200'
+                    : 'border-zinc-800 text-zinc-500'
+                )}
+              >
+                {p === 'urgent' ? '🔴 Urgent' : 'Normal'}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Durée estimée</label>
+          <input
+            value={durationMin}
+            onChange={e => setDurationMin(e.target.value)}
+            placeholder="minutes"
+            className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-cyan-500 text-center font-mono"
+          />
         </div>
       </div>
       <button onClick={submit} className="w-full py-3 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5">

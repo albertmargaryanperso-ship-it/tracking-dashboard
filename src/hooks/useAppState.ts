@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import type { AppState, VaultSession, RoutineEntry, Todo, HabitStatus } from '@/types'
+import type { AppState, VaultSession, RoutineEntry, Todo } from '@/types'
 import { INITIAL_STATE } from '@/lib/initialState'
 import { computeStats } from '@/lib/stats'
 import { readState, writeState, hasToken, type SyncStatus } from '@/lib/github'
@@ -11,7 +11,7 @@ import { todayISO } from '@/lib/utils'
 const loadCached = (): AppState | null => {
   try {
     const raw = localStorage.getItem(STATE_CACHE_KEY)
-    return raw ? (JSON.parse(raw) as AppState) : null
+    return raw ? migrateState(JSON.parse(raw) as AppState) : null
   } catch {
     return null
   }
@@ -26,6 +26,44 @@ const saveCached = (state: AppState): void => {
   }
 }
 
+// Migrate old-format state (blocs + habitudes Oui/Non) to new format
+// (hours + habit_hours). Idempotent.
+const migrateState = (state: AppState): AppState => {
+  const migratedRoutine: RoutineEntry[] = (state.routine ?? []).map((r: any) => {
+    if ('hours' in r && r.habit_hours) return r as RoutineEntry
+    const blocs = (r as any).blocs ?? 0
+    const hours = (r as any).hours ?? blocs * 0.5
+    const old_hab = (r as any).habitudes ?? {}
+    const habit_hours: Record<string, number> = {}
+    if (r.habit_hours) {
+      Object.assign(habit_hours, r.habit_hours)
+    } else {
+      const oui = Object.entries(old_hab).filter(([, v]) => v === 'Oui').map(([k]) => k)
+      if (oui.length > 0 && hours > 0) {
+        const share = Math.round((hours / oui.length) * 100) / 100
+        for (const h of oui) habit_hours[h] = share
+      }
+    }
+    return {
+      date: r.date,
+      hours,
+      notes: r.notes ?? '',
+      habit_hours,
+    }
+  })
+  const migratedTodos = (state.todos ?? []).map((t: any) => ({
+    ...t,
+    category: ['pro', 'finance', 'admin', 'automatisation'].includes(t.category) ? t.category : 'admin',
+    duration_min: t.duration_min ?? null,
+    completed_min: t.completed_min ?? null,
+  }))
+  return {
+    ...state,
+    routine: migratedRoutine,
+    todos: migratedTodos,
+  }
+}
+
 // ─── Reducer ────────────────────────────────────────────────────────────────
 
 type Action =
@@ -34,16 +72,27 @@ type Action =
   | { type: 'ADD_SESSION'; session: Omit<VaultSession, 'id'> }
   | { type: 'DELETE_SESSION'; id: string }
   // Routine
-  | { type: 'UPSERT_ROUTINE'; date: string; patch: Partial<RoutineEntry> }
-  | { type: 'TOGGLE_HABIT'; date: string; habit: string }
-  | { type: 'SET_BLOCS'; date: string; blocs: number }
+  | { type: 'SET_ROUTINE_HOURS'; date: string; hours: number }
+  | { type: 'SET_HABIT_HOURS'; date: string; habit: string; hours: number }
   | { type: 'ADD_HABIT'; name: string }
   | { type: 'REMOVE_HABIT'; name: string }
+  | { type: 'SET_ROUTINE_NOTES'; date: string; notes: string }
   // Todos
   | { type: 'ADD_TODO'; todo: Omit<Todo, 'id' | 'created'> }
   | { type: 'UPDATE_TODO'; id: number; patch: Partial<Todo> }
-  | { type: 'TOGGLE_TODO'; id: number }
+  | { type: 'TOGGLE_TODO'; id: number; completed_min?: number | null }
   | { type: 'DELETE_TODO'; id: number }
+
+const upsertRoutine = (
+  routine: RoutineEntry[],
+  date: string,
+  patch: (entry: RoutineEntry) => RoutineEntry,
+): RoutineEntry[] => {
+  const existing = routine.find(r => r.date === date)
+  const base: RoutineEntry = existing ?? { date, hours: 0, habit_hours: {}, notes: '' }
+  const next = patch(base)
+  return existing ? routine.map(r => (r.date === date ? next : r)) : [...routine, next]
+}
 
 const reducer = (state: AppState, action: Action): AppState => {
   const now = new Date().toISOString()
@@ -51,7 +100,7 @@ const reducer = (state: AppState, action: Action): AppState => {
 
   switch (action.type) {
     case 'HYDRATE':
-      return action.state
+      return migrateState(action.state)
 
     case 'ADD_SESSION': {
       const id = `${action.session.project}-${action.session.date}-${Date.now()}`
@@ -69,53 +118,41 @@ const reducer = (state: AppState, action: Action): AppState => {
         sessions: state.sessions.filter(s => s.id !== action.id),
       }
 
-    case 'UPSERT_ROUTINE': {
-      const existing = state.routine.find(r => r.date === action.date)
-      const merged: RoutineEntry = existing
-        ? { ...existing, ...action.patch, date: action.date }
-        : { date: action.date, blocs: 0, habitudes: {}, ...action.patch }
+    case 'SET_ROUTINE_HOURS': {
+      const newHours = Math.max(0, Math.round(action.hours * 100) / 100)
       return {
         ...state,
         meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        routine: existing
-          ? state.routine.map(r => (r.date === action.date ? merged : r))
-          : [...state.routine, merged],
+        routine: upsertRoutine(state.routine, action.date, entry => ({
+          ...entry,
+          hours: newHours,
+        })),
       }
     }
 
-    case 'TOGGLE_HABIT': {
-      const existing = state.routine.find(r => r.date === action.date)
-      const current: HabitStatus = existing?.habitudes?.[action.habit] ?? '—'
-      const next: HabitStatus = current === 'Oui' ? 'Non' : current === 'Non' ? '—' : 'Oui'
-      const habitudes = { ...(existing?.habitudes ?? {}), [action.habit]: next }
-      // Cleanup neutral values
-      if (next === '—') delete habitudes[action.habit]
-
-      const merged: RoutineEntry = existing
-        ? { ...existing, habitudes }
-        : { date: action.date, blocs: 0, habitudes }
+    case 'SET_HABIT_HOURS': {
+      const newHabitHours = Math.max(0, Math.round(action.hours * 100) / 100)
       return {
         ...state,
         meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        routine: existing
-          ? state.routine.map(r => (r.date === action.date ? merged : r))
-          : [...state.routine, merged],
+        routine: upsertRoutine(state.routine, action.date, entry => {
+          const habit_hours = { ...entry.habit_hours, [action.habit]: newHabitHours }
+          if (newHabitHours === 0) delete habit_hours[action.habit]
+          // Recompute total = sum of habit hours if it was the sole driver
+          // Otherwise keep max(current_total, sum_of_habits)
+          const sumHabits = Object.values(habit_hours).reduce((a, b) => a + b, 0)
+          const hours = Math.max(sumHabits, entry.hours ?? 0)
+          return { ...entry, habit_hours, hours: Math.round(hours * 100) / 100 }
+        }),
       }
     }
 
-    case 'SET_BLOCS': {
-      const existing = state.routine.find(r => r.date === action.date)
-      const merged: RoutineEntry = existing
-        ? { ...existing, blocs: Math.max(0, action.blocs) }
-        : { date: action.date, blocs: Math.max(0, action.blocs), habitudes: {} }
+    case 'SET_ROUTINE_NOTES':
       return {
         ...state,
         meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        routine: existing
-          ? state.routine.map(r => (r.date === action.date ? merged : r))
-          : [...state.routine, merged],
+        routine: upsertRoutine(state.routine, action.date, entry => ({ ...entry, notes: action.notes })),
       }
-    }
 
     case 'ADD_HABIT': {
       if (!action.name.trim() || state.meta.habitudes.includes(action.name)) return state
@@ -138,7 +175,16 @@ const reducer = (state: AppState, action: Action): AppState => {
         meta: { ...state.meta, updated_at: now, updated_by: 'web' },
         todos: [
           ...state.todos,
-          { ...action.todo, id, created: today, completed_at: null, delegated_to: null, due: null },
+          {
+            ...action.todo,
+            id,
+            created: today,
+            completed_at: null,
+            delegated_to: action.todo.delegated_to ?? null,
+            due: action.todo.due ?? null,
+            duration_min: action.todo.duration_min ?? null,
+            completed_min: null,
+          },
         ],
         todos_next_id: id + 1,
       }
@@ -158,11 +204,17 @@ const reducer = (state: AppState, action: Action): AppState => {
         todos: state.todos.map(t => {
           if (t.id !== action.id) return t
           const isDone = t.status === 'done'
+          if (isDone) {
+            return { ...t, status: 'open', done: false, completed_at: null, completed_min: null }
+          }
+          // marking as done — capture completed_min
+          const completed_min = action.completed_min ?? t.duration_min ?? null
           return {
             ...t,
-            status: isDone ? 'open' : 'done',
-            done: !isDone,
-            completed_at: isDone ? null : today,
+            status: 'done',
+            done: true,
+            completed_at: today,
+            completed_min,
           }
         }),
       }
@@ -263,7 +315,7 @@ export const useAppState = () => {
     schedulePush(state)
   }, [state, schedulePush])
 
-  // Initial pull + auto-refresh every 60s
+  // Initial pull + auto-refresh
   useEffect(() => {
     void pull(true)
     const id = window.setInterval(() => void pull(true), AUTO_SYNC_INTERVAL_MS)
@@ -274,13 +326,14 @@ export const useAppState = () => {
   const actions = useMemo(() => ({
     addSession: (s: Omit<VaultSession, 'id'>) => dispatch({ type: 'ADD_SESSION', session: s }),
     deleteSession: (id: string) => dispatch({ type: 'DELETE_SESSION', id }),
-    toggleHabit: (date: string, habit: string) => dispatch({ type: 'TOGGLE_HABIT', date, habit }),
-    setBlocs: (date: string, blocs: number) => dispatch({ type: 'SET_BLOCS', date, blocs }),
+    setRoutineHours: (date: string, hours: number) => dispatch({ type: 'SET_ROUTINE_HOURS', date, hours }),
+    setHabitHours: (date: string, habit: string, hours: number) => dispatch({ type: 'SET_HABIT_HOURS', date, habit, hours }),
+    setRoutineNotes: (date: string, notes: string) => dispatch({ type: 'SET_ROUTINE_NOTES', date, notes }),
     addHabit: (name: string) => dispatch({ type: 'ADD_HABIT', name }),
     removeHabit: (name: string) => dispatch({ type: 'REMOVE_HABIT', name }),
     addTodo: (t: Omit<Todo, 'id' | 'created'>) => dispatch({ type: 'ADD_TODO', todo: t }),
     updateTodo: (id: number, patch: Partial<Todo>) => dispatch({ type: 'UPDATE_TODO', id, patch }),
-    toggleTodo: (id: number) => dispatch({ type: 'TOGGLE_TODO', id }),
+    toggleTodo: (id: number, completed_min?: number | null) => dispatch({ type: 'TOGGLE_TODO', id, completed_min }),
     deleteTodo: (id: number) => dispatch({ type: 'DELETE_TODO', id }),
   }), [])
 

@@ -19,6 +19,7 @@ const VIEWS: Array<{ id: View; label: string; emoji: string }> = [
   { id: 'vault',     label: 'Vault',     emoji: '🧠' },
   { id: 'routine',   label: 'Routine',   emoji: '🔁' },
   { id: 'todos',     label: 'Todos',     emoji: '✅' },
+  { id: 'charts',    label: 'Camemberts', emoji: '🥧' },
 ]
 
 export const Header = ({

@@ -4,6 +4,7 @@ import { Dashboard } from '@/components/Dashboard'
 import { VaultView } from '@/components/VaultView'
 import { RoutineView } from '@/components/RoutineView'
 import { TodosView } from '@/components/TodosView'
+import { ChartsView } from '@/components/ChartsView'
 import { QuickAddModal } from '@/components/QuickAddModal'
 import { TokenModal } from '@/components/TokenModal'
 import { useAppState } from '@/hooks/useAppState'
@@ -37,6 +38,7 @@ export default function App() {
       if (e.key === '2') setView('vault')
       if (e.key === '3') setView('routine')
       if (e.key === '4') setView('todos')
+      if (e.key === '5') setView('charts')
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
@@ -48,9 +50,9 @@ export default function App() {
     return Array.from(set).sort()
   }, [state.sessions])
 
-  const todayBlocs = useMemo(() => {
+  const todayHours = useMemo(() => {
     const today = todayISO()
-    return state.routine.find(r => r.date === today)?.blocs ?? 0
+    return state.routine.find(r => r.date === today)?.hours ?? 0
   }, [state.routine])
 
   const handleTokenChange = () => setTokenPresent(hasToken())
@@ -102,8 +104,9 @@ export default function App() {
           <RoutineView
             state={state}
             stats={stats}
-            onToggleHabit={actions.toggleHabit}
-            onSetBlocs={actions.setBlocs}
+            onSetRoutineHours={actions.setRoutineHours}
+            onSetHabitHours={actions.setHabitHours}
+            onSetRoutineNotes={actions.setRoutineNotes}
             onAddHabit={actions.addHabit}
             onRemoveHabit={actions.removeHabit}
           />
@@ -117,6 +120,7 @@ export default function App() {
             onDelete={actions.deleteTodo}
           />
         )}
+        {view === 'charts' && <ChartsView state={state} stats={stats} />}
       </main>
 
       {/* Mobile FAB */}
@@ -131,7 +135,7 @@ export default function App() {
       <footer className="hidden lg:flex items-center justify-center gap-4 px-6 py-3 text-[10px] text-zinc-600 font-mono fixed bottom-0 inset-x-0 bg-zinc-950/80 backdrop-blur-sm border-t border-zinc-900">
         <span><kbd className="bg-zinc-800 px-1.5 py-0.5 rounded">N</kbd> ajouter</span>
         <span><kbd className="bg-zinc-800 px-1.5 py-0.5 rounded">R</kbd> sync</span>
-        <span><kbd className="bg-zinc-800 px-1.5 py-0.5 rounded">1-4</kbd> vues</span>
+        <span><kbd className="bg-zinc-800 px-1.5 py-0.5 rounded">1-5</kbd> vues</span>
         <span className="text-zinc-700">· v{state.meta.version} · push auto</span>
       </footer>
 
@@ -139,10 +143,12 @@ export default function App() {
         open={quickAddOpen}
         onClose={() => setQuickAddOpen(false)}
         projects={projects}
+        habits={state.meta.habitudes}
         onAddSession={actions.addSession}
-        onSetBlocs={actions.setBlocs}
+        onSetRoutineHours={actions.setRoutineHours}
+        onSetHabitHours={actions.setHabitHours}
         onAddTodo={actions.addTodo}
-        currentBlocs={todayBlocs}
+        todayHours={todayHours}
       />
 
       <TokenModal

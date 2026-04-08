@@ -1,5 +1,5 @@
-import type { AppState, Stats, TodoCategory, HabitStatus } from '@/types'
-import { todayISO, startOfWeekISO, startOfMonthISO, addDays, blocsToHours } from './utils'
+import type { AppState, Stats, TodoCategory } from '@/types'
+import { todayISO, startOfWeekISO, startOfMonthISO, addDays } from './utils'
 
 export const computeStats = (state: AppState): Stats => {
   const today = todayISO()
@@ -21,26 +21,29 @@ export const computeStats = (state: AppState): Stats => {
     cursor = addDays(cursor, -1)
   }
 
-  // Top project (by total hours)
-  const byProject: Record<string, number> = {}
+  // Per project aggregate
+  const byProjectMap: Record<string, number> = {}
   for (const s of state.sessions) {
-    byProject[s.project] = (byProject[s.project] ?? 0) + s.hours
+    byProjectMap[s.project] = (byProjectMap[s.project] ?? 0) + s.hours
   }
-  const projectEntries = Object.entries(byProject).sort((a, b) => b[1] - a[1])
-  const top_project = projectEntries[0] ? { name: projectEntries[0][0], hours: projectEntries[0][1] } : null
-  const active_projects = projectEntries.length
+  const by_project = Object.entries(byProjectMap)
+    .map(([name, hours]) => ({ name, hours }))
+    .sort((a, b) => b.hours - a.hours)
+  const top_project = by_project[0] ? { name: by_project[0].name, hours: by_project[0].hours } : null
+  const active_projects = by_project.length
 
   // ─── Routine stats ────────────────────────────────────────────────────────
   const routine_today_entry = state.routine.find(r => r.date === today)
-  const routine_today = routine_today_entry ? blocsToHours(routine_today_entry.blocs) : 0
+  const routine_today = routine_today_entry?.hours ?? 0
   const routine_week = state.routine
     .filter(r => r.date >= weekStart && r.date <= today)
-    .reduce((sum, r) => sum + blocsToHours(r.blocs), 0)
+    .reduce((sum, r) => sum + (r.hours ?? 0), 0)
   const routine_month = state.routine
     .filter(r => r.date >= monthStart && r.date <= today)
-    .reduce((sum, r) => sum + blocsToHours(r.blocs), 0)
+    .reduce((sum, r) => sum + (r.hours ?? 0), 0)
+  const routine_total = state.routine.reduce((sum, r) => sum + (r.hours ?? 0), 0)
 
-  const routineDates = new Set(state.routine.filter(r => r.blocs > 0).map(r => r.date))
+  const routineDates = new Set(state.routine.filter(r => (r.hours ?? 0) > 0).map(r => r.date))
   let routine_streak = 0
   cursor = today
   while (routineDates.has(cursor)) {
@@ -48,10 +51,23 @@ export const computeStats = (state: AppState): Stats => {
     cursor = addDays(cursor, -1)
   }
 
-  const habits_today: Record<string, HabitStatus> = {}
+  // Per habit today
+  const habits_today: Record<string, number> = {}
   for (const h of state.meta.habitudes) {
-    habits_today[h] = routine_today_entry?.habitudes?.[h] ?? '—'
+    habits_today[h] = routine_today_entry?.habit_hours?.[h] ?? 0
   }
+
+  // Per habit total (for pie chart)
+  const byHabitMap: Record<string, number> = {}
+  for (const h of state.meta.habitudes) byHabitMap[h] = 0
+  for (const r of state.routine) {
+    for (const [name, hrs] of Object.entries(r.habit_hours ?? {})) {
+      byHabitMap[name] = (byHabitMap[name] ?? 0) + (hrs ?? 0)
+    }
+  }
+  const by_habit = Object.entries(byHabitMap)
+    .map(([name, hours]) => ({ name, hours }))
+    .sort((a, b) => b.hours - a.hours)
 
   const intensityLabels: Array<[number, number, string]> = [
     [0, 0.5, '—'],
@@ -76,15 +92,23 @@ export const computeStats = (state: AppState): Stats => {
   const completion_rate = total > 0 ? Math.round((done / total) * 100) : 0
 
   const by_category: Record<TodoCategory, { total: number; open: number }> = {
-    pro:     { total: 0, open: 0 },
-    finance: { total: 0, open: 0 },
-    admin:   { total: 0, open: 0 },
+    pro:            { total: 0, open: 0 },
+    finance:        { total: 0, open: 0 },
+    admin:           { total: 0, open: 0 },
+    automatisation: { total: 0, open: 0 },
   }
   for (const t of state.todos) {
     const bucket = by_category[t.category] ?? by_category.admin
     bucket.total += 1
     if (t.status === 'open') bucket.open += 1
   }
+
+  const todos_today_minutes = state.todos
+    .filter(t => t.status === 'done' && t.completed_at === today)
+    .reduce((sum, t) => sum + (t.completed_min ?? 0), 0)
+  const todos_week_minutes = state.todos
+    .filter(t => t.status === 'done' && t.completed_at && t.completed_at >= weekStart && t.completed_at <= today)
+    .reduce((sum, t) => sum + (t.completed_min ?? 0), 0)
 
   return {
     vault: {
@@ -95,14 +119,17 @@ export const computeStats = (state: AppState): Stats => {
       streak_days: vault_streak,
       active_projects,
       top_project,
+      by_project,
     },
     routine: {
       today_hours: routine_today,
       today_intensity,
       week_hours: routine_week,
       month_hours: routine_month,
+      total_hours: routine_total,
       streak_days: routine_streak,
       habits_today,
+      by_habit,
     },
     todos: {
       total,
@@ -111,6 +138,8 @@ export const computeStats = (state: AppState): Stats => {
       urgent,
       completion_rate,
       by_category,
+      today_minutes: todos_today_minutes,
+      week_minutes: todos_week_minutes,
     },
   }
 }

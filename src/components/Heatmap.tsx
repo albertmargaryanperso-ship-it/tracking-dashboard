@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import type { VaultSession, RoutineEntry } from '@/types'
-import { todayISO, addDays, blocsToHours } from '@/lib/utils'
+import { todayISO, addDays } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
 interface HeatmapProps {
@@ -28,7 +28,7 @@ export const Heatmap = ({ sessions, routine, days = 182, mode }: HeatmapProps) =
     }
     for (const r of routine) {
       if (!byDate[r.date]) byDate[r.date] = { vault: 0, routine: 0 }
-      byDate[r.date].routine += blocsToHours(r.blocs)
+      byDate[r.date].routine += r.hours ?? 0
     }
 
     // Build grid: 7 rows (days of week) × N columns (weeks)

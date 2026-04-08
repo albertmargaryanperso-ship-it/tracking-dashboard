@@ -52,7 +52,7 @@ export const daysBetween = (a: string, b: string): number => {
 // ─── Format helpers ─────────────────────────────────────────────────────────
 
 export const formatHours = (hours: number): string => {
-  if (hours === 0) return '0h'
+  if (!hours || hours === 0) return '0h'
   const h = Math.floor(hours)
   const m = Math.round((hours - h) * 60)
   if (h === 0) return `${m}min`
@@ -60,9 +60,37 @@ export const formatHours = (hours: number): string => {
   return `${h}h${String(m).padStart(2, '0')}`
 }
 
-export const blocsToHours = (blocs: number): number => blocs * 0.5
+export const formatMinutes = (minutes: number | null | undefined): string => {
+  if (!minutes || minutes <= 0) return ''
+  const m = Math.round(minutes)
+  if (m < 60) return `${m}min`
+  const h = Math.floor(m / 60)
+  const rest = m % 60
+  return rest === 0 ? `${h}h` : `${h}h${String(rest).padStart(2, '0')}`
+}
 
-export const hoursToBlocs = (hours: number): number => Math.round(hours * 2)
+export const hoursToMinutes = (hours: number): number => Math.round(hours * 60)
+export const minutesToHours = (minutes: number): number => minutes / 60
+
+// Parse "1h30", "45min", "1.5", "0.75" → hours (float)
+export const parseHoursInput = (raw: string): number | null => {
+  if (!raw) return null
+  const s = raw.trim().toLowerCase().replace(',', '.')
+  // "1h30" or "1h"
+  const hm = s.match(/^(\d+)h(\d{1,2})?$/)
+  if (hm) {
+    const h = parseInt(hm[1], 10)
+    const m = hm[2] ? parseInt(hm[2], 10) : 0
+    return h + m / 60
+  }
+  // "45min"
+  const mm = s.match(/^(\d+)\s*min$/)
+  if (mm) return parseInt(mm[1], 10) / 60
+  // decimal
+  const n = parseFloat(s)
+  if (isNaN(n)) return null
+  return n
+}
 
 // ─── Routine intensity ──────────────────────────────────────────────────────
 
@@ -81,23 +109,46 @@ export const intensityLabel = (hours: number): { label: string; className: strin
   return { label: '—', className: 'text-zinc-500' }
 }
 
-// ─── Category config ────────────────────────────────────────────────────────
+// ─── Category config — 4 work categories ───────────────────────────────────
 
 export const CATEGORY_CONFIG = {
-  pro:     { label: 'Pro',     emoji: '💼', color: 'text-blue-400',   bg: 'bg-blue-500/10 border-blue-500/30' },
-  finance: { label: 'Finance', emoji: '💰', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30' },
-  admin:   { label: 'Admin',   emoji: '📋', color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/30' },
+  pro:            { label: 'Pro',            emoji: '💼', color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/30',       hex: '#60a5fa' },
+  finance:        { label: 'Finance',        emoji: '💰', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30', hex: '#34d399' },
+  admin:          { label: 'Admin',          emoji: '📋', color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/30',     hex: '#fbbf24' },
+  automatisation: { label: 'Automatisation', emoji: '⚙️',  color: 'text-violet-400',  bg: 'bg-violet-500/10 border-violet-500/30',   hex: '#a78bfa' },
 } as const
 
+export const CATEGORY_LIST: Array<keyof typeof CATEGORY_CONFIG> = ['pro', 'finance', 'admin', 'automatisation']
+
+// ─── Habit config — 4 routine categories ──────────────────────────────────
+
 export const HABIT_ICONS: Record<string, string> = {
-  Sport: '🏋️',
-  Cardio: '🏃',
-  Lecture: '📖',
+  Sport:       '🏋️',
+  Cardio:      '🏃',
+  Lecture:     '📖',
   'Bien-être': '🧘',
-  Méditation: '🧘',
+  Méditation:  '🧘',
   Hydratation: '💧',
-  Nutrition: '🥗',
-  Sommeil: '😴',
+  Nutrition:   '🥗',
+  Sommeil:     '😴',
+}
+
+export const HABIT_COLORS: Record<string, string> = {
+  Sport:       '#f472b6',
+  Cardio:      '#fb923c',
+  Lecture:     '#60a5fa',
+  'Bien-être': '#34d399',
 }
 
 export const habitIcon = (name: string): string => HABIT_ICONS[name] ?? '✨'
+export const habitColor = (name: string): string => HABIT_COLORS[name] ?? '#94a3b8'
+
+// Generate a stable color from a string (for unknown projects/habits in pies)
+export const colorFromString = (s: string): string => {
+  let hash = 0
+  for (let i = 0; i < s.length; i++) {
+    hash = (hash * 31 + s.charCodeAt(i)) | 0
+  }
+  const hue = Math.abs(hash) % 360
+  return `hsl(${hue}, 65%, 60%)`
+}

@@ -1,13 +1,13 @@
 import { useState, useMemo } from 'react'
-import { Plus, Check, Trash2, AlertCircle, Filter } from 'lucide-react'
+import { Plus, Check, Trash2, AlertCircle, Filter, Clock } from 'lucide-react'
 import type { AppState, Stats, Todo, TodoCategory, TodoPriority } from '@/types'
-import { CATEGORY_CONFIG, isoToFr, cn } from '@/lib/utils'
+import { CATEGORY_CONFIG, CATEGORY_LIST, isoToFr, cn, formatMinutes } from '@/lib/utils'
 
 interface TodosViewProps {
   state: AppState
   stats: Stats
   onAdd: (t: Omit<Todo, 'id' | 'created'>) => void
-  onToggle: (id: number) => void
+  onToggle: (id: number, completed_min?: number | null) => void
   onDelete: (id: number) => void
 }
 
@@ -30,7 +30,6 @@ export const TodosView = ({ state, stats, onAdd, onToggle, onDelete }: TodosView
         return true
       })
       .sort((a, b) => {
-        // Urgent first, then open, then recent created
         if (a.status === 'done' && b.status !== 'done') return 1
         if (a.status !== 'done' && b.status === 'done') return -1
         if (a.priority === 'urgent' && b.priority !== 'urgent') return -1
@@ -45,14 +44,24 @@ export const TodosView = ({ state, stats, onAdd, onToggle, onDelete }: TodosView
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <TodoStat label="Ouverts" value={stats.todos.open} sub={`${stats.todos.total} au total`} color="emerald" />
         <TodoStat label="Urgents" value={stats.todos.urgent} sub="à traiter" color="rose" />
-        <TodoStat label="Terminés" value={stats.todos.done} sub={`${stats.todos.completion_rate}%`} color="zinc" />
-        <TodoStat label="Pro" value={stats.todos.by_category.pro.open} sub={`${stats.todos.by_category.pro.total} au total`} color="blue" />
+        <TodoStat
+          label="Aujourd'hui"
+          value={`${formatMinutes(stats.todos.today_minutes) || '0min'}`}
+          sub={`${stats.todos.done} terminés (${stats.todos.completion_rate}%)`}
+          color="zinc"
+        />
+        <TodoStat
+          label="Semaine"
+          value={`${formatMinutes(stats.todos.week_minutes) || '0min'}`}
+          sub="temps cumulé"
+          color="blue"
+        />
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
         <Filter size={14} className="text-zinc-500" />
-        {(['all', 'pro', 'finance', 'admin'] as FilterCat[]).map(c => (
+        {(['all', ...CATEGORY_LIST] as FilterCat[]).map(c => (
           <button
             key={c}
             onClick={() => setCat(c)}
@@ -65,7 +74,7 @@ export const TodosView = ({ state, stats, onAdd, onToggle, onDelete }: TodosView
                 : 'border-zinc-800 text-zinc-500 hover:border-zinc-700'
             )}
           >
-            {c === 'all' ? 'Tout' : CATEGORY_CONFIG[c as TodoCategory].label}
+            {c === 'all' ? 'Tout' : `${CATEGORY_CONFIG[c as TodoCategory].emoji} ${CATEGORY_CONFIG[c as TodoCategory].label}`}
           </button>
         ))}
         <span className="w-px h-5 bg-zinc-800 mx-1" />
@@ -111,7 +120,7 @@ export const TodosView = ({ state, stats, onAdd, onToggle, onDelete }: TodosView
   )
 }
 
-const TodoStat = ({ label, value, sub, color }: { label: string; value: number; sub?: string; color: 'emerald' | 'rose' | 'blue' | 'zinc' }) => {
+const TodoStat = ({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color: 'emerald' | 'rose' | 'blue' | 'zinc' }) => {
   const colors = {
     emerald: 'border-emerald-500/20 text-emerald-300',
     rose: 'border-rose-500/20 text-rose-300',
@@ -132,18 +141,46 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   delegated: { label: '👤 Délégué', className: 'border-violet-500/30 bg-violet-500/10 text-violet-300' },
 }
 
-const TodoRow = ({ todo, onToggle, onDelete }: { todo: Todo; onToggle: (id: number) => void; onDelete: (id: number) => void }) => {
+const TodoRow = ({
+  todo,
+  onToggle,
+  onDelete,
+}: {
+  todo: Todo
+  onToggle: (id: number, completed_min?: number | null) => void
+  onDelete: (id: number) => void
+}) => {
   const cat = CATEGORY_CONFIG[todo.category] ?? CATEGORY_CONFIG.admin
   const isDone = todo.status === 'done'
   const statusBadge = STATUS_BADGE[todo.status]
   const createdShort = todo.created ? isoToFr(todo.created).slice(0, 5) : ''
+
+  const handleToggle = () => {
+    if (isDone) {
+      onToggle(todo.id)
+      return
+    }
+    // Marking as done — prompt for actual time if estimated exists
+    if (todo.duration_min && todo.duration_min > 0) {
+      const raw = window.prompt(
+        `Temps réel passé (en minutes) ?`,
+        String(todo.duration_min),
+      )
+      if (raw === null) return
+      const parsed = parseInt(raw.trim(), 10)
+      onToggle(todo.id, isNaN(parsed) ? todo.duration_min : Math.max(0, parsed))
+    } else {
+      onToggle(todo.id)
+    }
+  }
+
   return (
     <div className={cn(
       'group flex items-center gap-3 p-3 rounded-xl border bg-zinc-900/50 hover:bg-zinc-900 transition-all',
       isDone ? 'border-zinc-800 opacity-60' : todo.priority === 'urgent' ? 'border-rose-500/30' : 'border-zinc-800 hover:border-emerald-500/30'
     )}>
       <button
-        onClick={() => onToggle(todo.id)}
+        onClick={handleToggle}
         className={cn(
           'shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all',
           isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-zinc-600 hover:border-emerald-400'
@@ -160,6 +197,14 @@ const TodoRow = ({ todo, onToggle, onDelete }: { todo: Todo; onToggle: (id: numb
           <span className={cn('px-1.5 py-0.5 rounded border', cat.bg, cat.color)}>
             {cat.emoji} {cat.label}
           </span>
+          {todo.duration_min ? (
+            <span className="flex items-center gap-0.5 text-cyan-400">
+              <Clock size={9} /> {formatMinutes(todo.duration_min)}
+            </span>
+          ) : null}
+          {isDone && todo.completed_min ? (
+            <span className="text-emerald-400">⏱ {formatMinutes(todo.completed_min)}</span>
+          ) : null}
           {statusBadge && (
             <span className={cn('px-1.5 py-0.5 rounded border font-semibold', statusBadge.className)}>
               {statusBadge.label}
@@ -192,9 +237,11 @@ const QuickTodoForm = ({ onAdd, onCancel }: { onAdd: (t: Omit<Todo, 'id' | 'crea
   const [text, setText] = useState('')
   const [category, setCategory] = useState<TodoCategory>('pro')
   const [priority, setPriority] = useState<TodoPriority>('normal')
+  const [durationMin, setDurationMin] = useState('')
 
   const submit = () => {
     if (!text.trim()) return
+    const dur = durationMin.trim() ? parseInt(durationMin.trim(), 10) : null
     onAdd({
       text: text.trim(),
       category,
@@ -203,6 +250,8 @@ const QuickTodoForm = ({ onAdd, onCancel }: { onAdd: (t: Omit<Todo, 'id' | 'crea
       delegated_to: null,
       due: null,
       completed_at: null,
+      duration_min: dur && !isNaN(dur) && dur > 0 ? dur : null,
+      completed_min: null,
     })
   }
 
@@ -217,8 +266,8 @@ const QuickTodoForm = ({ onAdd, onCancel }: { onAdd: (t: Omit<Todo, 'id' | 'crea
         className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs focus:outline-none focus:border-emerald-500"
       />
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex gap-1">
-          {(['pro', 'finance', 'admin'] as TodoCategory[]).map(c => (
+        <div className="flex flex-wrap gap-1">
+          {CATEGORY_LIST.map(c => (
             <button
               key={c}
               onClick={() => setCategory(c)}
@@ -246,6 +295,15 @@ const QuickTodoForm = ({ onAdd, onCancel }: { onAdd: (t: Omit<Todo, 'id' | 'crea
               {p === 'urgent' ? '🔴 Urgent' : 'Normal'}
             </button>
           ))}
+        </div>
+        <div className="flex items-center gap-1">
+          <Clock size={11} className="text-zinc-500" />
+          <input
+            value={durationMin}
+            onChange={e => setDurationMin(e.target.value)}
+            placeholder="min"
+            className="w-14 px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] text-center focus:outline-none focus:border-cyan-500"
+          />
         </div>
         <div className="flex-1" />
         <button onClick={submit} className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-[11px] font-semibold">Ajouter</button>

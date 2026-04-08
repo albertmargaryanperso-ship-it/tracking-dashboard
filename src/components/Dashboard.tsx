@@ -2,7 +2,7 @@ import { Flame, TrendingUp, Target, Zap, CheckCheck, Clock, BookOpen, Activity }
 import type { AppState, Stats } from '@/types'
 import { StatCard } from './StatCard'
 import { Heatmap } from './Heatmap'
-import { formatHours, cn } from '@/lib/utils'
+import { formatHours, habitIcon, habitColor, cn } from '@/lib/utils'
 
 interface DashboardProps {
   state: AppState
@@ -120,20 +120,31 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
             <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Habitudes aujourd'hui</h3>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            {Object.entries(stats.routine.habits_today).map(([name, status]) => (
-              <div
-                key={name}
-                className={cn(
-                  'px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-2',
-                  status === 'Oui' ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' :
-                  status === 'Non' ? 'border-rose-500/30 bg-rose-500/10 text-rose-300' :
-                  'border-zinc-800 bg-zinc-900/50 text-zinc-500'
-                )}
-              >
-                <span className="truncate">{name}</span>
-                <span className="text-sm">{status === 'Oui' ? '✓' : status === 'Non' ? '✗' : '—'}</span>
-              </div>
-            ))}
+            {Object.entries(stats.routine.habits_today).map(([name, hours]) => {
+              const active = hours > 0
+              const color = habitColor(name)
+              return (
+                <div
+                  key={name}
+                  className={cn(
+                    'px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-2',
+                    active ? 'bg-zinc-900/70' : 'bg-zinc-900/30 text-zinc-500',
+                  )}
+                  style={{ borderColor: active ? color + '60' : '#27272a' }}
+                >
+                  <span className="flex items-center gap-1.5 truncate">
+                    <span>{habitIcon(name)}</span>
+                    <span className="truncate">{name}</span>
+                  </span>
+                  <span
+                    className="text-xs font-mono font-bold shrink-0"
+                    style={{ color: active ? color : undefined }}
+                  >
+                    {active ? formatHours(hours) : '—'}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>

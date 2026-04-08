@@ -1,36 +1,64 @@
 import { useMemo, useState } from 'react'
-import { Minus, Plus, X, CircleDashed, ChevronLeft, ChevronRight } from 'lucide-react'
-import type { AppState, Stats, HabitStatus } from '@/types'
-import { formatHours, isoToFr, habitIcon, intensityLabel, cn, todayISO, addDays, blocsToHours } from '@/lib/utils'
+import { Minus, Plus, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import type { AppState, Stats } from '@/types'
+import {
+  formatHours,
+  isoToFr,
+  habitIcon,
+  habitColor,
+  intensityLabel,
+  cn,
+  todayISO,
+  addDays,
+  parseHoursInput,
+} from '@/lib/utils'
 
 interface RoutineViewProps {
   state: AppState
   stats: Stats
-  onToggleHabit: (date: string, habit: string) => void
-  onSetBlocs: (date: string, blocs: number) => void
+  onSetRoutineHours: (date: string, hours: number) => void
+  onSetHabitHours: (date: string, habit: string, hours: number) => void
+  onSetRoutineNotes: (date: string, notes: string) => void
   onAddHabit: (name: string) => void
   onRemoveHabit: (name: string) => void
 }
 
-export const RoutineView = ({ state, stats, onToggleHabit, onSetBlocs, onAddHabit, onRemoveHabit }: RoutineViewProps) => {
+const QUICK_HOURS = [0, 0.5, 1, 1.5, 2, 3, 4]
+
+export const RoutineView = ({
+  state,
+  stats,
+  onSetRoutineHours,
+  onSetHabitHours,
+  onSetRoutineNotes,
+  onAddHabit,
+  onRemoveHabit,
+}: RoutineViewProps) => {
   const [selectedDate, setSelectedDate] = useState(todayISO())
   const [newHabit, setNewHabit] = useState('')
 
   const selected = state.routine.find(r => r.date === selectedDate)
-  const blocs = selected?.blocs ?? 0
-  const hours = blocsToHours(blocs)
-  const intensity = intensityLabel(hours)
+  const totalHours = selected?.hours ?? 0
+  const intensity = intensityLabel(totalHours)
 
   const last7Days = useMemo(() => {
     const today = todayISO()
     return Array.from({ length: 7 }, (_, i) => {
       const d = addDays(today, -(6 - i))
       const entry = state.routine.find(r => r.date === d)
-      return { date: d, blocs: entry?.blocs ?? 0, hours: blocsToHours(entry?.blocs ?? 0), habits: entry?.habitudes ?? {} }
+      return {
+        date: d,
+        hours: entry?.hours ?? 0,
+      }
     })
   }, [state.routine])
 
   const habits = state.meta.habitudes
+
+  const adjustTotal = (delta: number) => {
+    const next = Math.max(0, Math.round((totalHours + delta) * 100) / 100)
+    onSetRoutineHours(selectedDate, next)
+  }
 
   return (
     <div className="space-y-5">
@@ -74,6 +102,9 @@ export const RoutineView = ({ state, stats, onToggleHabit, onSetBlocs, onAddHabi
         </div>
       </div>
 
+      {/* Quick add form */}
+      <QuickRoutineAdd onSetHours={onSetRoutineHours} onSetHabitHours={onSetHabitHours} habits={habits} />
+
       {/* Selected day editor */}
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 space-y-5">
         <div className="flex items-center justify-between">
@@ -104,99 +135,95 @@ export const RoutineView = ({ state, stats, onToggleHabit, onSetBlocs, onAddHabi
           </div>
         </div>
 
-        {/* Blocs de temps */}
+        {/* Total heures */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] font-semibold text-zinc-400">Blocs de temps (30 min)</p>
+            <p className="text-[11px] font-semibold text-zinc-400">Total du jour</p>
             <p className={cn('text-xs font-semibold', intensity.className)}>{intensity.label}</p>
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => onSetBlocs(selectedDate, Math.max(0, blocs - 1))}
+              onClick={() => adjustTotal(-0.5)}
               className="p-2 rounded-xl border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 transition-all"
             >
               <Minus size={16} />
             </button>
             <div className="flex-1 text-center">
               <p className="text-4xl font-extrabold bg-gradient-to-br from-cyan-300 to-cyan-100 bg-clip-text text-transparent font-mono">
-                {blocs}
+                {formatHours(totalHours)}
               </p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">{formatHours(hours)}</p>
+              <p className="text-[10px] text-zinc-500 mt-0.5">{totalHours.toFixed(2)}h décimales</p>
             </div>
             <button
-              onClick={() => onSetBlocs(selectedDate, blocs + 1)}
+              onClick={() => adjustTotal(0.5)}
               className="p-2 rounded-xl border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 transition-all"
             >
               <Plus size={16} />
             </button>
           </div>
-          {/* Quick bloc buttons */}
-          <div className="grid grid-cols-6 gap-1.5 mt-3">
-            {[0, 2, 4, 6, 8, 12].map(n => (
+          {/* Quick hours buttons */}
+          <div className="grid grid-cols-7 gap-1.5 mt-3">
+            {QUICK_HOURS.map(n => (
               <button
                 key={n}
-                onClick={() => onSetBlocs(selectedDate, n)}
+                onClick={() => onSetRoutineHours(selectedDate, n)}
                 className={cn(
                   'py-1.5 rounded-lg text-[10px] font-semibold border transition-all',
-                  blocs === n ? 'border-cyan-400 bg-cyan-500/15 text-cyan-300' : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300'
+                  totalHours === n ? 'border-cyan-400 bg-cyan-500/15 text-cyan-300' : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300'
                 )}
               >
-                {n}
+                {n === 0 ? '0' : `${n}h`}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Habitudes */}
+        {/* Habitudes — heures par habitude */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-[11px] font-semibold text-zinc-400">Habitudes</p>
-            <div className="flex items-center gap-1.5">
-              <input
-                value={newHabit}
-                onChange={e => setNewHabit(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && newHabit.trim()) {
-                    onAddHabit(newHabit.trim())
-                    setNewHabit('')
-                  }
-                }}
-                placeholder="+ nouvelle habitude"
-                className="px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] w-32 focus:outline-none focus:border-cyan-500"
-              />
-            </div>
+            <p className="text-[11px] font-semibold text-zinc-400">Habitudes (heures)</p>
+            <input
+              value={newHabit}
+              onChange={e => setNewHabit(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && newHabit.trim()) {
+                  onAddHabit(newHabit.trim())
+                  setNewHabit('')
+                }
+              }}
+              placeholder="+ nouvelle habitude"
+              className="px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] w-32 focus:outline-none focus:border-cyan-500"
+            />
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {habits.map(h => {
-              const status: HabitStatus = selected?.habitudes?.[h] ?? '—'
+              const value = selected?.habit_hours?.[h] ?? 0
               return (
-                <div key={h} className="group relative">
-                  <button
-                    onClick={() => onToggleHabit(selectedDate, h)}
-                    className={cn(
-                      'w-full px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center gap-2 transition-all',
-                      status === 'Oui' ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300' :
-                      status === 'Non' ? 'border-rose-500/40 bg-rose-500/10 text-rose-300' :
-                      'border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:border-cyan-500/30'
-                    )}
-                  >
-                    <span className="text-base">{habitIcon(h)}</span>
-                    <span className="flex-1 text-left truncate">{h}</span>
-                    <span className="text-sm shrink-0">
-                      {status === 'Oui' ? '✓' : status === 'Non' ? '✗' : <CircleDashed size={12} />}
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => onRemoveHabit(h)}
-                    className="absolute -top-1.5 -right-1.5 opacity-0 group-hover:opacity-100 w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all"
-                  >
-                    <X size={9} />
-                  </button>
-                </div>
+                <HabitRow
+                  key={h}
+                  name={h}
+                  value={value}
+                  onChange={(v) => onSetHabitHours(selectedDate, h, v)}
+                  onRemove={() => onRemoveHabit(h)}
+                />
               )
             })}
           </div>
-          <p className="text-[10px] text-zinc-600 mt-2">Clic : ✗ → — → ✓</p>
+          <p className="text-[10px] text-zinc-600 mt-2">
+            Astuce : entre une durée comme « 1h30 » ou « 45min ». Le total se met à jour automatiquement.
+          </p>
+        </div>
+
+        {/* Notes */}
+        <div>
+          <p className="text-[11px] font-semibold text-zinc-400 mb-2">Notes</p>
+          <textarea
+            value={selected?.notes ?? ''}
+            onChange={e => onSetRoutineNotes(selectedDate, e.target.value)}
+            rows={2}
+            placeholder="Comment s'est passée la journée…"
+            className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-cyan-500 resize-none"
+          />
         </div>
       </div>
     </div>
@@ -210,3 +237,162 @@ const StatTile = ({ label, value, sub }: { label: string; value: string; sub?: s
     {sub && <p className="text-[10px] text-zinc-500 mt-0.5">{sub}</p>}
   </div>
 )
+
+// ─── Habit row with stepper + free input ───────────────────────────────────
+const HabitRow = ({
+  name,
+  value,
+  onChange,
+  onRemove,
+}: {
+  name: string
+  value: number
+  onChange: (hours: number) => void
+  onRemove: () => void
+}) => {
+  const [draft, setDraft] = useState<string | null>(null)
+  const display = draft ?? (value > 0 ? formatHours(value) : '')
+  const color = habitColor(name)
+
+  const commit = () => {
+    if (draft === null) return
+    if (draft.trim() === '') {
+      onChange(0)
+    } else {
+      const parsed = parseHoursInput(draft)
+      if (parsed !== null && parsed >= 0) onChange(Math.round(parsed * 100) / 100)
+    }
+    setDraft(null)
+  }
+
+  const step = (delta: number) => {
+    const next = Math.max(0, Math.round((value + delta) * 100) / 100)
+    onChange(next)
+  }
+
+  return (
+    <div
+      className={cn(
+        'group relative flex items-center gap-2 px-3 py-2 rounded-xl border transition-all',
+        value > 0 ? 'bg-zinc-900/70' : 'bg-zinc-900/30',
+      )}
+      style={{
+        borderColor: value > 0 ? color + '60' : '#27272a',
+      }}
+    >
+      <span className="text-base shrink-0">{habitIcon(name)}</span>
+      <span className="flex-1 text-xs font-medium text-zinc-200 truncate">{name}</span>
+      <button
+        onClick={() => step(-0.25)}
+        className="w-6 h-6 rounded-md border border-zinc-800 text-zinc-500 hover:text-zinc-200 flex items-center justify-center"
+      >
+        <Minus size={11} />
+      </button>
+      <input
+        value={display}
+        onChange={e => setDraft(e.target.value)}
+        onFocus={() => setDraft(value > 0 ? formatHours(value) : '')}
+        onBlur={commit}
+        onKeyDown={e => {
+          if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+          if (e.key === 'Escape') {
+            setDraft(null)
+            ;(e.target as HTMLInputElement).blur()
+          }
+        }}
+        placeholder="—"
+        className="w-16 px-2 py-1 bg-zinc-950 border border-zinc-800 rounded-md text-[11px] text-center font-mono focus:outline-none focus:border-cyan-500"
+        style={{ color: value > 0 ? color : undefined }}
+      />
+      <button
+        onClick={() => step(0.25)}
+        className="w-6 h-6 rounded-md border border-zinc-800 text-zinc-500 hover:text-zinc-200 flex items-center justify-center"
+      >
+        <Plus size={11} />
+      </button>
+      <button
+        onClick={onRemove}
+        className="opacity-0 group-hover:opacity-100 absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 hover:bg-rose-500 hover:text-white flex items-center justify-center transition-all"
+      >
+        <X size={9} />
+      </button>
+    </div>
+  )
+}
+
+// ─── Quick add: log routine entry for a chosen date inline ─────────────────
+const QuickRoutineAdd = ({
+  habits,
+  onSetHours,
+  onSetHabitHours,
+}: {
+  habits: string[]
+  onSetHours: (date: string, hours: number) => void
+  onSetHabitHours: (date: string, habit: string, hours: number) => void
+}) => {
+  const [open, setOpen] = useState(false)
+  const [date, setDate] = useState(todayISO())
+  const [habit, setHabit] = useState(habits[0] ?? '')
+  const [hoursStr, setHoursStr] = useState('1h')
+
+  const submit = () => {
+    const parsed = parseHoursInput(hoursStr)
+    if (parsed === null || parsed <= 0) return
+    if (habit) {
+      onSetHabitHours(date, habit, Math.round(parsed * 100) / 100)
+    } else {
+      onSetHours(date, Math.round(parsed * 100) / 100)
+    }
+    setHoursStr('1h')
+    setOpen(false)
+  }
+
+  if (!open) {
+    return (
+      <div className="flex items-center justify-end">
+        <button
+          onClick={() => setOpen(true)}
+          className="text-[10px] px-2.5 py-1.5 rounded-lg bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/20 transition-all flex items-center gap-1"
+        >
+          <Plus size={11} /> Logger une activité routine
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-2xl border border-cyan-500/30 bg-cyan-500/5 p-3 space-y-2">
+      <div className="flex flex-col sm:flex-row gap-2">
+        <input
+          type="date"
+          value={date}
+          onChange={e => setDate(e.target.value)}
+          className="w-full sm:w-36 px-2 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] focus:outline-none focus:border-cyan-500"
+        />
+        <select
+          value={habit}
+          onChange={e => setHabit(e.target.value)}
+          className="flex-1 min-w-0 px-2 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] focus:outline-none focus:border-cyan-500"
+        >
+          {habits.map(h => (
+            <option key={h} value={h}>{habitIcon(h)} {h}</option>
+          ))}
+        </select>
+        <input
+          value={hoursStr}
+          onChange={e => setHoursStr(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') submit() }}
+          placeholder="1h30 / 45min / 1.5"
+          className="w-full sm:w-32 px-2 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] focus:outline-none focus:border-cyan-500 font-mono text-center"
+        />
+        <div className="flex gap-1">
+          <button onClick={submit} className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-[11px] font-semibold">OK</button>
+          <button onClick={() => setOpen(false)} className="px-2 py-1.5 rounded-lg border border-zinc-800 text-zinc-500 text-[11px]">×</button>
+        </div>
+      </div>
+      <p className="text-[10px] text-zinc-500">
+        L'habitude sélectionnée passe à cette durée. Le total du jour est automatiquement réajusté.
+      </p>
+    </div>
+  )
+}
