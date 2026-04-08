@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 88,
-    "updated_at": "2026-04-08T22:22:32.848Z",
+    "version": 89,
+    "updated_at": "2026-04-08T22:23:03.199Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -586,7 +586,20 @@
       "completed_min": null,
       "id": 34,
       "created": "2026-04-09"
+    },
+    {
+      "text": "jkjoij",
+      "category": "pro",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "completed_at": null,
+      "duration_min": 60,
+      "completed_min": null,
+      "id": 35,
+      "created": "2026-04-09"
     }
   ],
-  "todos_next_id": 35
+  "todos_next_id": 36
 }
