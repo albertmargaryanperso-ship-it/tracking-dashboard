@@ -291,33 +291,18 @@ export const useAppState = () => {
   const pendingWriteRef = useRef<number | null>(null)
   const firstLoadRef = useRef(true)
   const suppressNextPushRef = useRef(false)
+  const dirtyRef = useRef(false)
+  const stateRef = useRef(state)
+  const pushInFlightRef = useRef<Promise<void> | null>(null)
 
-  // Persist locally on every state change
+  // Keep a ref to the latest state so async callbacks can always read it
+  // without stale-closure bugs.
   useEffect(() => {
+    stateRef.current = state
     saveCached(state)
   }, [state])
 
-  // ── Pull from GitHub ──────────────────────────────────────────────────────
-  const pull = useCallback(async (silent = false) => {
-    if (!silent) setSyncStatus('syncing')
-    try {
-      const { state: remote, sha } = await readState()
-      shaRef.current = sha
-      suppressNextPushRef.current = true
-      dispatch({ type: 'HYDRATE', state: remote })
-      const now = new Date().toISOString()
-      setLastSync(now)
-      localStorage.setItem(LAST_SYNC_KEY, now)
-      setSyncStatus('success')
-      setTimeout(() => setSyncStatus('idle'), 1500)
-    } catch (e) {
-      console.warn('[tracking] pull failed', e)
-      setSyncStatus('error')
-      setTimeout(() => setSyncStatus('idle'), 3000)
-    }
-  }, [])
-
-  // ── Push to GitHub (debounced) ───────────────────────────────────────────
+  // ── Push to GitHub ───────────────────────────────────────────────────────
   const pushNow = useCallback(async (current: AppState) => {
     if (!hasToken()) {
       setSyncStatus('no-token')
@@ -327,6 +312,7 @@ export const useAppState = () => {
     try {
       const newSha = await writeState(current, shaRef.current)
       shaRef.current = newSha
+      dirtyRef.current = false
       const now = new Date().toISOString()
       setLastSync(now)
       localStorage.setItem(LAST_SYNC_KEY, now)
@@ -339,10 +325,76 @@ export const useAppState = () => {
     }
   }, [])
 
+  // Flush any pending debounced push RIGHT NOW and wait for it to finish.
+  // Used before every pull to guarantee local edits are never overwritten.
+  const flushPendingPush = useCallback(async () => {
+    if (pendingWriteRef.current !== null) {
+      window.clearTimeout(pendingWriteRef.current)
+      pendingWriteRef.current = null
+    }
+    if (pushInFlightRef.current) {
+      try { await pushInFlightRef.current } catch { /* ignore */ }
+    }
+    if (dirtyRef.current) {
+      const p = pushNow(stateRef.current)
+      pushInFlightRef.current = p.finally(() => { pushInFlightRef.current = null })
+      try { await pushInFlightRef.current } catch { /* ignore */ }
+    }
+  }, [pushNow])
+
+  // ── Pull from GitHub ──────────────────────────────────────────────────────
+  const pull = useCallback(async (silent = false) => {
+    // CRITICAL: flush any pending local edits BEFORE pulling, otherwise a
+    // pull (manual or auto) can overwrite what the user just typed but
+    // which hasn't hit the debounce timer yet.
+    await flushPendingPush()
+
+    // If push failed above, dirtyRef is still true — abort pull to preserve
+    // local state (we don't want to clobber the user's work with stale cloud).
+    if (dirtyRef.current) {
+      if (!silent) {
+        setSyncStatus('error')
+        setTimeout(() => setSyncStatus('idle'), 3000)
+      }
+      return
+    }
+
+    if (!silent) setSyncStatus('syncing')
+    try {
+      const { state: remote, sha } = await readState()
+      shaRef.current = sha
+
+      // Extra safety: if local happens to have a newer updated_at than
+      // remote (shouldn't happen after the flush, but handles clock skew or
+      // race conditions), keep local.
+      const localAt = stateRef.current.meta?.updated_at ?? ''
+      const remoteAt = remote.meta?.updated_at ?? ''
+      if (localAt && remoteAt && localAt > remoteAt && !dirtyRef.current) {
+        // Local is ahead — trigger a push to reconcile cloud.
+        void pushNow(stateRef.current)
+      } else {
+        suppressNextPushRef.current = true
+        dispatch({ type: 'HYDRATE', state: remote })
+      }
+
+      const now = new Date().toISOString()
+      setLastSync(now)
+      localStorage.setItem(LAST_SYNC_KEY, now)
+      setSyncStatus('success')
+      setTimeout(() => setSyncStatus('idle'), 1500)
+    } catch (e) {
+      console.warn('[tracking] pull failed', e)
+      setSyncStatus('error')
+      setTimeout(() => setSyncStatus('idle'), 3000)
+    }
+  }, [flushPendingPush, pushNow])
+
   const schedulePush = useCallback((current: AppState) => {
     if (pendingWriteRef.current) window.clearTimeout(pendingWriteRef.current)
     pendingWriteRef.current = window.setTimeout(() => {
-      void pushNow(current)
+      pendingWriteRef.current = null
+      const p = pushNow(current)
+      pushInFlightRef.current = p.finally(() => { pushInFlightRef.current = null })
     }, 1500)
   }, [pushNow])
 
@@ -356,8 +408,27 @@ export const useAppState = () => {
       suppressNextPushRef.current = false
       return
     }
+    dirtyRef.current = true
     schedulePush(state)
   }, [state, schedulePush])
+
+  // Flush pending writes before the tab is closed — last-ditch save.
+  useEffect(() => {
+    const handler = () => {
+      if (dirtyRef.current && pendingWriteRef.current !== null) {
+        window.clearTimeout(pendingWriteRef.current)
+        pendingWriteRef.current = null
+        // Fire-and-forget: browser may kill it, but it often reaches GitHub
+        void pushNow(stateRef.current)
+      }
+    }
+    window.addEventListener('beforeunload', handler)
+    window.addEventListener('pagehide', handler)
+    return () => {
+      window.removeEventListener('beforeunload', handler)
+      window.removeEventListener('pagehide', handler)
+    }
+  }, [pushNow])
 
   // Initial pull + auto-refresh
   useEffect(() => {
