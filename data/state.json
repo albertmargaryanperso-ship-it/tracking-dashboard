@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 135,
-    "updated_at": "2026-04-09T01:04:22",
+    "version": 136,
+    "updated_at": "2026-04-09T01:04:23",
     "updated_by": "obsidian",
     "habitudes": [
       "Sport",
@@ -169,7 +169,21 @@
       "completed_at": "2026-04-09",
       "duration_min": 37,
       "completed_min": 37
+    },
+    {
+      "id": 4,
+      "text": "Session Claude Code — Applications (00:38-01:04)",
+      "priority": "normal",
+      "category": "automatisation",
+      "due": null,
+      "status": "done",
+      "done": true,
+      "delegated_to": null,
+      "created": "2026-04-09",
+      "completed_at": "2026-04-09",
+      "duration_min": 26,
+      "completed_min": 26
     }
   ],
-  "todos_next_id": 4
+  "todos_next_id": 5
 }
