@@ -127,9 +127,16 @@ const TodoStat = ({ label, value, sub, color }: { label: string; value: number; 
   )
 }
 
+const STATUS_BADGE: Record<string, { label: string; className: string }> = {
+  waiting: { label: '⏳ En attente', className: 'border-amber-500/30 bg-amber-500/10 text-amber-300' },
+  delegated: { label: '👤 Délégué', className: 'border-violet-500/30 bg-violet-500/10 text-violet-300' },
+}
+
 const TodoRow = ({ todo, onToggle, onDelete }: { todo: Todo; onToggle: (id: number) => void; onDelete: (id: number) => void }) => {
-  const cat = CATEGORY_CONFIG[todo.category]
+  const cat = CATEGORY_CONFIG[todo.category] ?? CATEGORY_CONFIG.admin
   const isDone = todo.status === 'done'
+  const statusBadge = STATUS_BADGE[todo.status]
+  const createdShort = todo.created ? isoToFr(todo.created).slice(0, 5) : ''
   return (
     <div className={cn(
       'group flex items-center gap-3 p-3 rounded-xl border bg-zinc-900/50 hover:bg-zinc-900 transition-all',
@@ -149,11 +156,17 @@ const TodoRow = ({ todo, onToggle, onDelete }: { todo: Todo; onToggle: (id: numb
         <p className={cn('text-xs font-medium leading-snug', isDone ? 'line-through text-zinc-500' : 'text-zinc-200')}>
           {todo.text}
         </p>
-        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-zinc-500">
+        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-zinc-500 flex-wrap">
           <span className={cn('px-1.5 py-0.5 rounded border', cat.bg, cat.color)}>
             {cat.emoji} {cat.label}
           </span>
-          <span className="font-mono">{isoToFr(todo.created).slice(0, 5)}</span>
+          {statusBadge && (
+            <span className={cn('px-1.5 py-0.5 rounded border font-semibold', statusBadge.className)}>
+              {statusBadge.label}
+              {todo.status === 'delegated' && todo.delegated_to ? ` → ${todo.delegated_to}` : ''}
+            </span>
+          )}
+          {createdShort && <span className="font-mono">{createdShort}</span>}
           {todo.priority === 'urgent' && !isDone && (
             <span className="flex items-center gap-0.5 text-rose-400 font-semibold">
               <AlertCircle size={9} /> URGENT

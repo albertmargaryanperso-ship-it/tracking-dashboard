@@ -194,6 +194,7 @@ export const useAppState = () => {
   const shaRef = useRef<string | null>(null)
   const pendingWriteRef = useRef<number | null>(null)
   const firstLoadRef = useRef(true)
+  const suppressNextPushRef = useRef(false)
 
   // Persist locally on every state change
   useEffect(() => {
@@ -206,6 +207,7 @@ export const useAppState = () => {
     try {
       const { state: remote, sha } = await readState()
       shaRef.current = sha
+      suppressNextPushRef.current = true
       dispatch({ type: 'HYDRATE', state: remote })
       const now = new Date().toISOString()
       setLastSync(now)
@@ -248,10 +250,14 @@ export const useAppState = () => {
     }, 1500)
   }, [pushNow])
 
-  // Trigger push on mutations (but not on initial hydrate)
+  // Trigger push on mutations only — never on HYDRATE (pull) or initial mount
   useEffect(() => {
     if (firstLoadRef.current) {
       firstLoadRef.current = false
+      return
+    }
+    if (suppressNextPushRef.current) {
+      suppressNextPushRef.current = false
       return
     }
     schedulePush(state)

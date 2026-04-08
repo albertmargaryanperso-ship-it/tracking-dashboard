@@ -26,8 +26,8 @@ export interface RoutineEntry {
 
 // ─── Todos ───────────────────────────────────────────────────────────────────
 export type TodoCategory = 'pro' | 'finance' | 'admin'
-export type TodoPriority = 'urgent' | 'normal'
-export type TodoStatus = 'open' | 'done'
+export type TodoPriority = 'urgent' | 'normal' | 'faible'
+export type TodoStatus = 'open' | 'done' | 'waiting' | 'delegated'
 
 export interface Todo {
   id: number

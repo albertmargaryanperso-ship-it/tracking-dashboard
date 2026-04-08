@@ -61,31 +61,31 @@ export interface ReadResult {
 export const readState = async (): Promise<ReadResult> => {
   const token = getToken()
 
-  if (token) {
-    const res = await fetch(`${CONTENTS_API_URL}?ref=${GITHUB_BRANCH}&_=${Date.now()}`, {
-      headers: {
-        Accept: 'application/vnd.github+json',
-        Authorization: `Bearer ${token}`,
-        'X-GitHub-Api-Version': '2022-11-28',
-      },
-    })
-    if (res.status === 404) {
-      throw new Error('STATE_NOT_FOUND')
-    }
-    if (!res.ok) {
-      throw new Error(`GitHub read failed: ${res.status} ${res.statusText}`)
-    }
-    const json = (await res.json()) as { content: string; encoding: string; sha: string }
-    if (json.encoding !== 'base64') throw new Error(`Unexpected encoding: ${json.encoding}`)
-    const text = fromBase64(json.content)
-    return { state: JSON.parse(text) as AppState, sha: json.sha }
+  // Always use Contents API — fresher than raw.githubusercontent CDN and
+  // returns the current sha needed for conflict-free writes. Works without
+  // token for public repos (subject to 60 req/h unauth rate limit).
+  const headers: Record<string, string> = {
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
   }
+  if (token) headers.Authorization = `Bearer ${token}`
 
-  // Public read via raw URL (no token needed)
-  const res = await fetch(`${RAW_STATE_URL}?_=${Date.now()}`, { cache: 'no-store' })
-  if (!res.ok) throw new Error(`Raw read failed: ${res.status}`)
-  const text = await res.text()
-  return { state: JSON.parse(text) as AppState, sha: null }
+  const res = await fetch(`${CONTENTS_API_URL}?ref=${GITHUB_BRANCH}&_=${Date.now()}`, {
+    headers,
+    cache: 'no-store',
+  })
+  if (res.status === 404) throw new Error('STATE_NOT_FOUND')
+  if (res.status === 403 && !token) {
+    // Rate-limited without token — fall back to raw URL
+    const fallback = await fetch(`${RAW_STATE_URL}?_=${Date.now()}`, { cache: 'no-store' })
+    if (!fallback.ok) throw new Error(`Raw read failed: ${fallback.status}`)
+    return { state: JSON.parse(await fallback.text()) as AppState, sha: null }
+  }
+  if (!res.ok) throw new Error(`GitHub read failed: ${res.status} ${res.statusText}`)
+  const json = (await res.json()) as { content: string; encoding: string; sha: string }
+  if (json.encoding !== 'base64') throw new Error(`Unexpected encoding: ${json.encoding}`)
+  const text = fromBase64(json.content)
+  return { state: JSON.parse(text) as AppState, sha: json.sha }
 }
 
 // ─── Write ───────────────────────────────────────────────────────────────────

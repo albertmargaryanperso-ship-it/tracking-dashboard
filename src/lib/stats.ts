@@ -81,8 +81,9 @@ export const computeStats = (state: AppState): Stats => {
     admin:   { total: 0, open: 0 },
   }
   for (const t of state.todos) {
-    by_category[t.category].total += 1
-    if (t.status === 'open') by_category[t.category].open += 1
+    const bucket = by_category[t.category] ?? by_category.admin
+    bucket.total += 1
+    if (t.status === 'open') bucket.open += 1
   }
 
   return {
