@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 42,
-    "updated_at": "2026-04-08T13:59:31.388Z",
+    "updated_at": "2026-04-08T13:59:36.607Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -135,7 +135,7 @@
     },
     {
       "date": "2026-04-08",
-      "blocs": 6,
+      "blocs": 0,
       "habitudes": {
         "Sport": "Oui"
       }
