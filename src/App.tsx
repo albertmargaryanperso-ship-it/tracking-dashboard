@@ -96,8 +96,9 @@ export default function App() {
           <VaultView
             state={state}
             stats={stats}
-            onDelete={actions.deleteSession}
-            onAdd={actions.addSession}
+            onUpsertDayProject={actions.upsertDayProject}
+            onDeleteDayProject={actions.deleteDayProject}
+            onAddSession={actions.addSession}
           />
         )}
         {view === 'routine' && (
@@ -116,6 +117,7 @@ export default function App() {
             state={state}
             stats={stats}
             onAdd={actions.addTodo}
+            onUpdate={actions.updateTodo}
             onToggle={actions.toggleTodo}
             onDelete={actions.deleteTodo}
           />

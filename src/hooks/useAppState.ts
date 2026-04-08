@@ -71,6 +71,8 @@ type Action =
   // Sessions
   | { type: 'ADD_SESSION'; session: Omit<VaultSession, 'id'> }
   | { type: 'DELETE_SESSION'; id: string }
+  | { type: 'UPSERT_DAY_PROJECT'; date: string; project: string; hours: number; note?: string }
+  | { type: 'DELETE_DAY_PROJECT'; date: string; project: string }
   // Routine
   | { type: 'SET_ROUTINE_HOURS'; date: string; hours: number }
   | { type: 'SET_HABIT_HOURS'; date: string; habit: string; hours: number }
@@ -116,6 +118,48 @@ const reducer = (state: AppState, action: Action): AppState => {
         ...state,
         meta: { ...state.meta, updated_at: now, updated_by: 'web' },
         sessions: state.sessions.filter(s => s.id !== action.id),
+      }
+
+    case 'UPSERT_DAY_PROJECT': {
+      // Replace all sessions for (project, date) with a single merged one.
+      // hours <= 0 → delete all sessions for that (project, date).
+      const hours = Math.max(0, Math.round(action.hours * 100) / 100)
+      const matching = state.sessions.filter(
+        s => s.project === action.project && s.date === action.date,
+      )
+      const others = state.sessions.filter(
+        s => !(s.project === action.project && s.date === action.date),
+      )
+      if (hours <= 0) {
+        return {
+          ...state,
+          meta: { ...state.meta, updated_at: now, updated_by: 'web' },
+          sessions: others,
+        }
+      }
+      const id = matching[0]?.id ?? `${action.project}-${action.date}-${Date.now()}`
+      const noteSource = action.note !== undefined ? action.note : (matching[0]?.note ?? '')
+      const merged: VaultSession = {
+        id,
+        project: action.project,
+        date: action.date,
+        hours,
+        note: noteSource,
+      }
+      return {
+        ...state,
+        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
+        sessions: [...others, merged],
+      }
+    }
+
+    case 'DELETE_DAY_PROJECT':
+      return {
+        ...state,
+        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
+        sessions: state.sessions.filter(
+          s => !(s.project === action.project && s.date === action.date),
+        ),
       }
 
     case 'SET_ROUTINE_HOURS': {
@@ -326,6 +370,10 @@ export const useAppState = () => {
   const actions = useMemo(() => ({
     addSession: (s: Omit<VaultSession, 'id'>) => dispatch({ type: 'ADD_SESSION', session: s }),
     deleteSession: (id: string) => dispatch({ type: 'DELETE_SESSION', id }),
+    upsertDayProject: (date: string, project: string, hours: number, note?: string) =>
+      dispatch({ type: 'UPSERT_DAY_PROJECT', date, project, hours, note }),
+    deleteDayProject: (date: string, project: string) =>
+      dispatch({ type: 'DELETE_DAY_PROJECT', date, project }),
     setRoutineHours: (date: string, hours: number) => dispatch({ type: 'SET_ROUTINE_HOURS', date, hours }),
     setHabitHours: (date: string, habit: string, hours: number) => dispatch({ type: 'SET_HABIT_HOURS', date, habit, hours }),
     setRoutineNotes: (date: string, notes: string) => dispatch({ type: 'SET_ROUTINE_NOTES', date, notes }),
