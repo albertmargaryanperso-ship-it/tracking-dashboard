@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 124,
-    "updated_at": "2026-04-08T22:56:45.429Z",
+    "updated_at": "2026-04-08T22:56:55.929Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -141,20 +141,6 @@
       }
     }
   ],
-  "todos": [
-    {
-      "text": "Trier emails albertmargaryan",
-      "category": "admin",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 1,
-      "created": "2026-04-09"
-    }
-  ],
+  "todos": [],
   "todos_next_id": 2
 }
