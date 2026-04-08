@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 114,
-    "updated_at": "2026-04-08T22:49:30.584Z",
+    "updated_at": "2026-04-08T22:49:38.299Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -135,7 +135,7 @@
     {
       "date": "2026-04-09",
       "hours": 1,
-      "notes": "",
+      "notes": "SYNC_TEST_1775688578281",
       "habit_hours": {}
     }
   ],
