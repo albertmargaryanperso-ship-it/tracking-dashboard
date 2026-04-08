@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 62,
-    "updated_at": "2026-04-08T22:15:58.553Z",
+    "updated_at": "2026-04-08T22:16:09.754Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -129,6 +129,13 @@
       "date": "2026-04-08",
       "hours": 2,
       "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+    },
+    {
+      "id": "Administratif-2026-04-09-1775686568252",
+      "project": "Administratif",
+      "date": "2026-04-09",
+      "hours": 1,
+      "note": ""
     }
   ],
   "routine": [
