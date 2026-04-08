@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 81,
-    "updated_at": "2026-04-08T22:19:27.622Z",
+    "version": 76,
+    "updated_at": "2026-04-08T22:19:35.371Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -136,13 +136,6 @@
       "date": "2026-04-09",
       "hours": 2,
       "note": ""
-    },
-    {
-      "project": "Développement — Cerveau Albert",
-      "date": "2026-04-09",
-      "hours": 1,
-      "note": "",
-      "id": "Développement — Cerveau Albert-2026-04-09-1775686765302"
     }
   ],
   "routine": [
