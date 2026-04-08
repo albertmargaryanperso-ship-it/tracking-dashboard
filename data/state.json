@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 97,
-    "updated_at": "2026-04-09T00:24:26",
+    "version": 98,
+    "updated_at": "2026-04-09T00:25:46",
     "updated_by": "obsidian",
     "habitudes": [
       "Sport",
@@ -601,7 +601,105 @@
       "completed_at": "2026-04-09",
       "duration_min": 60,
       "completed_min": 60
+    },
+    {
+      "id": 36,
+      "text": "Session Claude Code — Applications (00:15-00:25)",
+      "priority": "normal",
+      "category": "automatisation",
+      "due": null,
+      "status": "done",
+      "done": true,
+      "delegated_to": null,
+      "created": "2026-04-09",
+      "completed_at": "2026-04-09",
+      "duration_min": 10,
+      "completed_min": 10
+    },
+    {
+      "id": 37,
+      "text": "Session Claude Code — Applications (18:21-00:25)",
+      "priority": "normal",
+      "category": "automatisation",
+      "due": null,
+      "status": "done",
+      "done": true,
+      "delegated_to": null,
+      "created": "2026-04-09",
+      "completed_at": "2026-04-09",
+      "duration_min": 365,
+      "completed_min": 365
+    },
+    {
+      "id": 38,
+      "text": "Session Claude Code — Applications (23:27-00:25)",
+      "priority": "normal",
+      "category": "automatisation",
+      "due": null,
+      "status": "done",
+      "done": true,
+      "delegated_to": null,
+      "created": "2026-04-09",
+      "completed_at": "2026-04-09",
+      "duration_min": 58,
+      "completed_min": 58
+    },
+    {
+      "id": 39,
+      "text": "Session Claude Code — Applications (20:27-00:25)",
+      "priority": "normal",
+      "category": "automatisation",
+      "due": null,
+      "status": "done",
+      "done": true,
+      "delegated_to": null,
+      "created": "2026-04-09",
+      "completed_at": "2026-04-09",
+      "duration_min": 238,
+      "completed_min": 238
+    },
+    {
+      "id": 40,
+      "text": "Session Claude Code — Applications (21:26-00:25)",
+      "priority": "normal",
+      "category": "automatisation",
+      "due": null,
+      "status": "done",
+      "done": true,
+      "delegated_to": null,
+      "created": "2026-04-09",
+      "completed_at": "2026-04-09",
+      "duration_min": 179,
+      "completed_min": 179
+    },
+    {
+      "id": 41,
+      "text": "Session Claude Code — Applications (19:26-00:25)",
+      "priority": "normal",
+      "category": "automatisation",
+      "due": null,
+      "status": "done",
+      "done": true,
+      "delegated_to": null,
+      "created": "2026-04-09",
+      "completed_at": "2026-04-09",
+      "duration_min": 300,
+      "completed_min": 300
+    },
+    {
+      "id": 42,
+      "text": "Session Claude Code — Applications (22:28-00:25)",
+      "priority": "normal",
+      "category": "automatisation",
+      "due": null,
+      "status": "done",
+      "done": true,
+      "delegated_to": null,
+      "created": "2026-04-09",
+      "completed_at": "2026-04-09",
+      "duration_min": 117,
+      "completed_min": 117
     }
   ],
-  "todos_next_id": 36
+  "todos_next_id": 43
 }
