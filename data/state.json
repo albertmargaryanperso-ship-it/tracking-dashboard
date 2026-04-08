@@ -1,8 +1,8 @@
 {
   "meta": {
-    "version": 79,
-    "updated_at": "2026-04-09T00:19:20",
-    "updated_by": "obsidian",
+    "version": 81,
+    "updated_at": "2026-04-08T22:19:27.622Z",
+    "updated_by": "web",
     "habitudes": [
       "Sport",
       "Cardio",
@@ -29,56 +29,56 @@
       "id": "📊 Tracking — Tableau de Bord::2026-03-30::1.0::architecture multi-agents + templates",
       "project": "📊 Tracking — Tableau de Bord",
       "date": "2026-03-30",
-      "hours": 1.0,
+      "hours": 1,
       "note": "architecture multi-agents + templates"
     },
     {
       "id": "FTTH CCT 2026 - Partie 1::2026-04-03::2.0::Plateforme contrôle documentaire: scan Drive, extraction SIREN/SS, mise à jour URSSAF/IBAN, relevé conformité, documentation processus",
       "project": "FTTH CCT 2026 - Partie 1",
       "date": "2026-04-03",
-      "hours": 2.0,
+      "hours": 2,
       "note": "Plateforme contrôle documentaire: scan Drive, extraction SIREN/SS, mise à jour URSSAF/IBAN, relevé conformité, documentation processus"
     },
     {
       "id": "Développement — Cerveau Albert::2026-04-05::1.0::Session",
       "project": "Développement — Cerveau Albert",
       "date": "2026-04-05",
-      "hours": 1.0,
+      "hours": 1,
       "note": "Session"
     },
     {
       "id": "Développement — Cerveau Albert::2026-04-05::1.0::Audit parents, déplacements, category sur 53 notes, graphes catégories dashboard",
       "project": "Développement — Cerveau Albert",
       "date": "2026-04-05",
-      "hours": 1.0,
+      "hours": 1,
       "note": "Audit parents, déplacements, category sur 53 notes, graphes catégories dashboard"
     },
     {
       "id": "FTTH CCT 2026 - Partie 1::2026-04-05::1.0::Renommage FTTH CCT vers FTTH Circet 2026 vault et Drive, 5 taches todo, config graph view",
       "project": "FTTH CCT 2026 - Partie 1",
       "date": "2026-04-05",
-      "hours": 1.0,
+      "hours": 1,
       "note": "Renommage FTTH CCT vers FTTH Circet 2026 vault et Drive, 5 taches todo, config graph view"
     },
     {
       "id": "FTTH CCT 2026 - Partie 1::2026-04-05::4.0::Calcul",
       "project": "FTTH CCT 2026 - Partie 1",
       "date": "2026-04-05",
-      "hours": 4.0,
+      "hours": 4,
       "note": "Calcul"
     },
     {
       "id": "📲 Conformité Juridique FTTH::2026-04-06::2.0::Creation app Flask + dashboard web, lecture Google Sheet, documentation vision complete",
       "project": "📲 Conformité Juridique FTTH",
       "date": "2026-04-06",
-      "hours": 2.0,
+      "hours": 2,
       "note": "Creation app Flask + dashboard web, lecture Google Sheet, documentation vision complete"
     },
     {
       "id": "FTTH CCT 2026 - Partie 1::2026-04-08::3.0::Pipeline PPD Février 2026 outillé bout-en-bout (lecture Drive → 25 onglets techniciens → 4 checks → note récap → email SMTP), section matériel par chef d'équipe ajoutée",
       "project": "FTTH CCT 2026 - Partie 1",
       "date": "2026-04-08",
-      "hours": 3.0,
+      "hours": 3,
       "note": "Pipeline PPD Février 2026 outillé bout-en-bout (lecture Drive → 25 onglets techniciens → 4 checks → note récap → email SMTP), section matériel par chef d'équipe ajoutée"
     },
     {
@@ -92,21 +92,21 @@
       "id": "FTTH CCT 2026 - Partie 1::2026-04-08::1.0::Fix incohérence Defalque -1980/-1680 (orphans déplacés de _Charges globales vers ligne 'Non assignés' dans synthèse), fix float accumulation sub-cent, règle d'or \"TOTAL synthèse = Résumé source partout\", garde-fou final_audit.py renforcé (parsing tableau + check intra-note)",
       "project": "FTTH CCT 2026 - Partie 1",
       "date": "2026-04-08",
-      "hours": 1.0,
+      "hours": 1,
       "note": "Fix incohérence Defalque -1980/-1680 (orphans déplacés de _Charges globales vers ligne 'Non assignés' dans synthèse), fix float accumulation sub-cent, règle d'or \"TOTAL synthèse = Résumé source partout\", garde-fou final_audit.py renforcé (parsing tableau + check intra-note)"
     },
     {
       "id": "FTTH CCT 2026 - Partie 1::2026-04-08::4.0::Janvier 2026 PPD complet (ingestion XLSX, 5 cas particuliers: Réfaction non répartissable, Régul BLO, Bonus/Casse absents, fuzzy match MASSINISSA, format XLSX), 23 onglets Google Sheet + note Obsidian + email, fix frontmatter Récap Février, Étape 2 Tableau des paiements (16 techs + Bouzad fusionné L14 + pertes -1713,25/-29,02 en charges négatives L3), documentation Pipeline 5 étapes dans FTTH CCT 2026",
       "project": "FTTH CCT 2026 - Partie 1",
       "date": "2026-04-08",
-      "hours": 4.0,
+      "hours": 4,
       "note": "Janvier 2026 PPD complet (ingestion XLSX, 5 cas particuliers: Réfaction non répartissable, Régul BLO, Bonus/Casse absents, fuzzy match MASSINISSA, format XLSX), 23 onglets Google Sheet + note Obsidian + email, fix frontmatter Récap Février, Étape 2 Tableau des paiements (16 techs + Bouzad fusionné L14 + pertes -1713,25/-29,02 en charges négatives L3), documentation Pipeline 5 étapes dans FTTH CCT 2026"
     },
     {
       "id": "FTTH CCT 2026 - Partie 2::2026-04-08::1.0::Extraction grilles tarifaires des 4 techniciens archivés (Adem, Luca, Nikola, Yacine), tableau croisé code × tech, fusion combos doublonnés, structuration par catégorie métier",
       "project": "FTTH CCT 2026 - Partie 2",
       "date": "2026-04-08",
-      "hours": 1.0,
+      "hours": 1,
       "note": "Extraction grilles tarifaires des 4 techniciens archivés (Adem, Luca, Nikola, Yacine), tableau croisé code × tech, fusion combos doublonnés, structuration par catégorie métier"
     },
     {
@@ -120,15 +120,29 @@
       "id": "📊 Tracking — Tableau de Bord::2026-04-08::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
       "project": "📊 Tracking — Tableau de Bord",
       "date": "2026-04-08",
-      "hours": 3.0,
+      "hours": 3,
       "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
     },
     {
       "id": "📊 Tracking — Tableau de Bord::2026-04-08::2.0::refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session",
       "project": "📊 Tracking — Tableau de Bord",
       "date": "2026-04-08",
-      "hours": 2.0,
+      "hours": 2,
       "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+    },
+    {
+      "id": "💰 Financier-2026-04-09-1775686728224",
+      "project": "💰 Financier",
+      "date": "2026-04-09",
+      "hours": 2,
+      "note": ""
+    },
+    {
+      "project": "Développement — Cerveau Albert",
+      "date": "2026-04-09",
+      "hours": 1,
+      "note": "",
+      "id": "Développement — Cerveau Albert-2026-04-09-1775686765302"
     }
   ],
   "routine": [
@@ -140,7 +154,7 @@
     },
     {
       "date": "2026-04-08",
-      "hours": 0.0,
+      "hours": 0,
       "notes": "",
       "habit_hours": {}
     }
