@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 187,
-    "updated_at": "2026-04-09T16:15:20",
+    "version": 188,
+    "updated_at": "2026-04-09T17:15:22",
     "updated_by": "obsidian",
     "habitudes": [
       "Sport",
@@ -145,25 +145,11 @@
       "note": "**Scan Récap PPD Janvier 2026 - Traité** : identification de 7 techs additionnels présents dans le récap mais sans grille personnelle (Demiche Amazigh, Belal Ziane, Bouzad Mourad, Benhassen Hassen, Sadaoui Zakaria, Gharsaloui Bassem, Ferhat Amir). Validation Albert : Demiche/Belal/Benhassen → **Standard** ; Bouzad/Sadaoui/Gharsaloui/Ferhat → **Réduit**. **Suppression d'Omar Bouaziz** (n'est plus présent"
     },
     {
-      "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
-      "project": "📊 Tracking — Tableau de Bord",
+      "id": "FTTH CCT 2026 - Partie 2::2026-04-09::0.5::**Test bout-en-bout : sheet consolidé 18 techs depuis Récap PPD Janvier 2026** : génération via `cct_helper` d'1 Google Sheet unique (`TEST Calcul Janvier 2026 - 18 techs`) avec 1 onglet par tech (908 lignes prod parsées). Détection de 3 lacunes REDUIT (ETUTC absent, combo ETUTC+RCRR absent, PLPM1 absent) → **validations Albert** : `ETUTC = 30 €` · `RCRR = 30 €` · `PLPM1 = PLPM2 = 35 €` (= PLPF1, ne suit pas la règle x1↔x2). Cleanup override Kader (ETUTC redondant avec REDUIT). Re-test : **18/18 techs ✓ 0 inconnu** sur 908 lignes",
+      "project": "FTTH CCT 2026 - Partie 2",
       "date": "2026-04-09",
-      "hours": 1.0,
-      "note": "architecture multi-agents + templates"
-    },
-    {
-      "id": "📊 Tracking — Tableau de Bord::2026-04-09::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
-      "project": "📊 Tracking — Tableau de Bord",
-      "date": "2026-04-09",
-      "hours": 3.0,
-      "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
-    },
-    {
-      "id": "📊 Tracking — Tableau de Bord::2026-04-09::2.0::refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session",
-      "project": "📊 Tracking — Tableau de Bord",
-      "date": "2026-04-09",
-      "hours": 2.0,
-      "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+      "hours": 0.5,
+      "note": "**Test bout-en-bout : sheet consolidé 18 techs depuis Récap PPD Janvier 2026** : génération via `cct_helper` d'1 Google Sheet unique (`TEST Calcul Janvier 2026 - 18 techs`) avec 1 onglet par tech (908 lignes prod parsées). Détection de 3 lacunes REDUIT (ETUTC absent, combo ETUTC+RCRR absent, PLPM1 absent) → **validations Albert** : `ETUTC = 30 €` · `RCRR = 30 €` · `PLPM1 = PLPM2 = 35 €` (= PLPF1, ne suit pas la règle x1↔x2). Cleanup override Kader (ETUTC redondant avec REDUIT). Re-test : **18/18 techs ✓ 0 inconnu** sur 908 lignes"
     },
     {
       "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
@@ -306,6 +292,27 @@
       "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
     },
     {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::2.0::refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 2.0,
+      "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 1.0,
+      "note": "architecture multi-agents + templates"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 3.0,
+      "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
+    },
+    {
       "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
       "project": "📊 Tracking — Tableau de Bord",
       "date": "2026-04-09",
@@ -318,6 +325,27 @@
       "date": "2026-04-09",
       "hours": 2.0,
       "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 3.0,
+      "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::2.0::refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 2.0,
+      "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 1.0,
+      "note": "architecture multi-agents + templates"
     },
     {
       "id": "📊 Tracking — Tableau de Bord::2026-04-09::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
