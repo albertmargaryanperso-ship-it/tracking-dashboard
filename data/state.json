@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 159,
-    "updated_at": "2026-04-09T02:08:30",
+    "version": 160,
+    "updated_at": "2026-04-09T02:08:31",
     "updated_by": "obsidian",
     "habitudes": [
       "Sport",
@@ -185,17 +185,18 @@
       "completed_min": 26
     },
     {
+      "id": 10000,
       "text": "TEST sync — cette tâche doit survivre au refresh",
-      "category": "pro",
       "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
+      "category": "pro",
       "due": null,
+      "status": "open",
+      "done": false,
+      "delegated_to": null,
+      "created": "2026-04-09",
       "completed_at": null,
       "duration_min": null,
-      "completed_min": null,
-      "id": 10000,
-      "created": "2026-04-09"
+      "completed_min": null
     }
   ],
   "todos_next_id": 10001
