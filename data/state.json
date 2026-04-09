@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 155,
-    "updated_at": "2026-04-09T02:05:33",
+    "version": 156,
+    "updated_at": "2026-04-09T02:05:42",
     "updated_by": "obsidian",
     "habitudes": [
       "Sport",
@@ -183,20 +183,6 @@
       "completed_at": "2026-04-09",
       "duration_min": 26,
       "completed_min": 26
-    },
-    {
-      "id": 8888,
-      "text": "WEB-TEST survive vault race",
-      "priority": "normal",
-      "category": "admin",
-      "due": null,
-      "status": "open",
-      "done": false,
-      "delegated_to": null,
-      "created": "2026-04-09",
-      "completed_at": null,
-      "duration_min": 30,
-      "completed_min": null
     }
   ],
   "todos_next_id": 10000
