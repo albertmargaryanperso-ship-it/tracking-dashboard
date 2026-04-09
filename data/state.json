@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 184,
-    "updated_at": "2026-04-09T11:00:10.813Z",
+    "version": 181,
+    "updated_at": "2026-04-09T11:00:27.627Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -473,7 +473,20 @@
       "completed_min": null,
       "id": 10004,
       "created": "2026-04-09"
+    },
+    {
+      "text": "Récap sogetrel fevrier",
+      "category": "pro",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "completed_at": null,
+      "duration_min": null,
+      "completed_min": null,
+      "id": 10005,
+      "created": "2026-04-09"
     }
   ],
-  "todos_next_id": 10005
+  "todos_next_id": 10006
 }
