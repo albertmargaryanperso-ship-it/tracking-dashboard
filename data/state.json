@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 185,
-    "updated_at": "2026-04-09T14:16:18",
+    "version": 186,
+    "updated_at": "2026-04-09T15:16:22",
     "updated_by": "obsidian",
     "habitudes": [
       "Sport",
@@ -124,25 +124,11 @@
       "note": "**Ajout de 4 techniciens supplémentaires** : Oualid Arfa (col 5), Kader Bouziane (col 6), Massinissa Lounici (col 7), Aghilas Haddad (col 8)"
     },
     {
-      "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
-      "project": "📊 Tracking — Tableau de Bord",
+      "id": "FTTH CCT 2026 - Partie 2::2026-04-09::0.5::**Ajout Mounir Ikene (col 9)** : extraction 169 lignes prod sur 6 mois → découverte d'un **4ᵉ niveau tarifaire « ultra réduit »** (SANR/SAVA1/PLPF1/PSER1 à 25 € · LSIM1+LSIMP=35 € · LSOU1+LSOUP=80 €). Déductions : `TSFH = 15 €` 🆕 et `ETCFO = 0 €` (inclus, jamais facturé séparément). Correction d'1 combo surfacturé en faveur du prix bas (règle x1↔x2)",
+      "project": "FTTH CCT 2026 - Partie 2",
       "date": "2026-04-09",
-      "hours": 1.0,
-      "note": "architecture multi-agents + templates"
-    },
-    {
-      "id": "📊 Tracking — Tableau de Bord::2026-04-09::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
-      "project": "📊 Tracking — Tableau de Bord",
-      "date": "2026-04-09",
-      "hours": 3.0,
-      "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
-    },
-    {
-      "id": "📊 Tracking — Tableau de Bord::2026-04-09::2.0::refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session",
-      "project": "📊 Tracking — Tableau de Bord",
-      "date": "2026-04-09",
-      "hours": 2.0,
-      "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+      "hours": 0.5,
+      "note": "**Ajout Mounir Ikene (col 9)** : extraction 169 lignes prod sur 6 mois → découverte d'un **4ᵉ niveau tarifaire « ultra réduit »** (SANR/SAVA1/PLPF1/PSER1 à 25 € · LSIM1+LSIMP=35 € · LSOU1+LSOUP=80 €). Déductions : `TSFH = 15 €` 🆕 et `ETCFO = 0 €` (inclus, jamais facturé séparément). Correction d'1 combo surfacturé en faveur du prix bas (règle x1↔x2)"
     },
     {
       "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
@@ -285,6 +271,27 @@
       "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
     },
     {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::2.0::refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 2.0,
+      "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 1.0,
+      "note": "architecture multi-agents + templates"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 3.0,
+      "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
+    },
+    {
       "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
       "project": "📊 Tracking — Tableau de Bord",
       "date": "2026-04-09",
@@ -297,6 +304,27 @@
       "date": "2026-04-09",
       "hours": 2.0,
       "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 3.0,
+      "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::2.0::refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 2.0,
+      "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 1.0,
+      "note": "architecture multi-agents + templates"
     },
     {
       "id": "📊 Tracking — Tableau de Bord::2026-04-09::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
