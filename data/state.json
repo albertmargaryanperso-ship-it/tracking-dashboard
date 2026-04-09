@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 183,
-    "updated_at": "2026-04-09T13:00:55",
+    "version": 184,
+    "updated_at": "2026-04-09T13:16:20",
     "updated_by": "obsidian",
     "habitudes": [
       "Sport",
@@ -290,6 +290,111 @@
       "date": "2026-04-09",
       "hours": 2.0,
       "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 3.0,
+      "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::2.0::refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 2.0,
+      "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 1.0,
+      "note": "architecture multi-agents + templates"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 3.0,
+      "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::2.0::refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 2.0,
+      "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 1.0,
+      "note": "architecture multi-agents + templates"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 3.0,
+      "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::2.0::refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 2.0,
+      "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 1.0,
+      "note": "architecture multi-agents + templates"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 3.0,
+      "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::2.0::refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 2.0,
+      "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 1.0,
+      "note": "architecture multi-agents + templates"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 3.0,
+      "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::2.0::refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 2.0,
+      "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 1.0,
+      "note": "architecture multi-agents + templates"
     },
     {
       "id": "📊 Tracking — Tableau de Bord::2026-04-09::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
