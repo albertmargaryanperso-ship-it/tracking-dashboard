@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 174,
-    "updated_at": "2026-04-09T10:14:50",
+    "version": 175,
+    "updated_at": "2026-04-09T10:15:08",
     "updated_by": "obsidian",
     "habitudes": [
       "Sport",
@@ -115,6 +115,27 @@
       "date": "2026-04-09",
       "hours": 3.0,
       "note": "Application règle x1↔x2, dérivation cellules vides (Adem PSER/PLPF2, Nikola PLPM1), méthode de traitement mensuel formalisée, construction des fichiers `Calcul [Tech] CIRCET` pour Adem + Luca + Nikola + Yacine (Janvier + Février 2026), dérivation combo `LSOU2+LSOUP+PSER2 = 148,50 €`"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 1.0,
+      "note": "architecture multi-agents + templates"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 3.0,
+      "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
+    },
+    {
+      "id": "📊 Tracking — Tableau de Bord::2026-04-09::2.0::refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session",
+      "project": "📊 Tracking — Tableau de Bord",
+      "date": "2026-04-09",
+      "hours": 2.0,
+      "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
     },
     {
       "id": "📊 Tracking — Tableau de Bord::2026-04-09::1.0::architecture multi-agents + templates",
