@@ -2,7 +2,7 @@
 // GitHub API client — read/write state.json as a single source of truth
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { AppState } from '@/types'
+import type { AppState, VaultSession } from '@/types'
 import {
   CONTENTS_API_URL,
   RAW_STATE_URL,
@@ -10,6 +10,58 @@ import {
   GITHUB_BRANCH,
   TOKEN_STORAGE_KEY,
 } from './config'
+
+// ─── Merge helper ────────────────────────────────────────────────────────────
+// When we hit a SHA conflict on write, it means another writer (vault side)
+// has pushed since we read. Blindly re-pushing local state would erase their
+// additions. Instead, merge: local wins on items it knows about, remote items
+// not present locally are preserved.
+const sessionKey = (s: VaultSession): string =>
+  `${s.project}|${s.date}|${Math.round((s.hours ?? 0) * 100) / 100}|${(s.note ?? '').trim()}`
+
+export const mergeStates = (local: AppState, remote: AppState): AppState => {
+  // Todos — union by id, local wins on conflict
+  const localTodoIds = new Set(local.todos.map(t => t.id))
+  const preservedTodos = remote.todos.filter(t => !localTodoIds.has(t.id))
+  const mergedTodos = [...local.todos, ...preservedTodos]
+
+  // Sessions — union by content key (ids are unstable across writers)
+  const localSessionKeys = new Set(local.sessions.map(sessionKey))
+  const preservedSessions = remote.sessions.filter(s => !localSessionKeys.has(sessionKey(s)))
+  const mergedSessions = [...local.sessions, ...preservedSessions]
+
+  // Routine — union by date, local wins
+  const localRoutineDates = new Set(local.routine.map(r => r.date))
+  const preservedRoutine = remote.routine.filter(r => !localRoutineDates.has(r.date))
+  const mergedRoutine = [...local.routine, ...preservedRoutine]
+
+  // Habitudes — union, preserving order from local first
+  const mergedHabits = [...local.meta.habitudes]
+  for (const h of remote.meta.habitudes ?? []) {
+    if (!mergedHabits.includes(h)) mergedHabits.push(h)
+  }
+
+  // next_id — must exceed every known id on both sides
+  const allIds = mergedTodos.map(t => t.id).filter(id => typeof id === 'number')
+  const maxId = allIds.length > 0 ? Math.max(...allIds) : 0
+  const nextId = Math.max(
+    local.todos_next_id ?? 1,
+    remote.todos_next_id ?? 1,
+    maxId + 1,
+  )
+
+  return {
+    ...local,
+    meta: {
+      ...local.meta,
+      habitudes: mergedHabits,
+    },
+    sessions: mergedSessions,
+    routine: mergedRoutine,
+    todos: mergedTodos,
+    todos_next_id: nextId,
+  }
+}
 
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'no-token'
 
@@ -125,10 +177,21 @@ export const writeState = async (state: AppState, previousSha: string | null, re
   })
 
   if (res.status === 409 || res.status === 422) {
-    // SHA conflict — refetch and retry once
-    if (retryCount >= 1) throw new Error(`GitHub write conflict after retry: ${res.status}`)
+    // SHA conflict — someone pushed since we last read. Merge local onto
+    // the fresh remote (preserving both sides' additions) and retry.
+    if (retryCount >= 2) throw new Error(`GitHub write conflict after retry: ${res.status}`)
     const fresh = await readState()
-    return writeState({ ...stamped, meta: { ...stamped.meta, version: (fresh.state.meta.version ?? 0) + 1 } }, fresh.sha, retryCount + 1)
+    const merged = mergeStates(stamped, fresh.state)
+    const reStamped: AppState = {
+      ...merged,
+      meta: {
+        ...merged.meta,
+        updated_at: new Date().toISOString(),
+        updated_by: 'web',
+        version: (fresh.state.meta.version ?? 0) + 1,
+      },
+    }
+    return writeState(reStamped, fresh.sha, retryCount + 1)
   }
 
   if (!res.ok) {
