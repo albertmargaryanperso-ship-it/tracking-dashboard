@@ -2,9 +2,36 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'r
 import type { AppState, VaultSession, RoutineEntry, Todo } from '@/types'
 import { INITIAL_STATE } from '@/lib/initialState'
 import { computeStats } from '@/lib/stats'
-import { readState, writeState, hasToken, type SyncStatus } from '@/lib/github'
-import { STATE_CACHE_KEY, LAST_SYNC_KEY, AUTO_SYNC_INTERVAL_MS } from '@/lib/config'
+import { readState, writeState, hasToken, mergeStates, type SyncStatus } from '@/lib/github'
+import {
+  STATE_CACHE_KEY,
+  LAST_SYNC_KEY,
+  AUTO_SYNC_INTERVAL_MS,
+  PENDING_FLAG_KEY,
+  PUSH_DEBOUNCE_MS,
+} from '@/lib/config'
 import { todayISO } from '@/lib/utils'
+
+// ─── Pending flag ───────────────────────────────────────────────────────────
+// We persist a "dirty" bit to localStorage so that if iOS Safari kills the
+// tab while a push is debounced or in flight, the next load knows to flush
+// the cached state before pulling. Without this, mobile users lose edits.
+const setPendingFlag = (on: boolean): void => {
+  try {
+    if (on) localStorage.setItem(PENDING_FLAG_KEY, '1')
+    else localStorage.removeItem(PENDING_FLAG_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
+const hasPendingFlag = (): boolean => {
+  try {
+    return localStorage.getItem(PENDING_FLAG_KEY) === '1'
+  } catch {
+    return false
+  }
+}
 
 // ─── Persistence helpers ────────────────────────────────────────────────────
 
@@ -289,9 +316,12 @@ export const useAppState = () => {
   })
   const shaRef = useRef<string | null>(null)
   const pendingWriteRef = useRef<number | null>(null)
-  const dirtyRef = useRef(false)
+  // dirtyRef is seeded from the persisted pending flag so that edits made
+  // in a previous tab-life (iOS kill) still get flushed on next open.
+  const dirtyRef = useRef(hasPendingFlag())
   const stateRef = useRef(state)
   const pushInFlightRef = useRef<Promise<void> | null>(null)
+  const initialPullDoneRef = useRef(false)
 
   // Keep a ref to the latest state so async callbacks can always read it
   // without stale-closure bugs.
@@ -311,6 +341,7 @@ export const useAppState = () => {
       const newSha = await writeState(current, shaRef.current)
       shaRef.current = newSha
       dirtyRef.current = false
+      setPendingFlag(false)
       const now = new Date().toISOString()
       setLastSync(now)
       localStorage.setItem(LAST_SYNC_KEY, now)
@@ -318,6 +349,7 @@ export const useAppState = () => {
       setTimeout(() => setSyncStatus('idle'), 1500)
     } catch (e) {
       console.error('[tracking] push failed', e)
+      // Leave PENDING_FLAG set so we retry on next load / visibility change.
       setSyncStatus('error')
       setTimeout(() => setSyncStatus('idle'), 4000)
     }
@@ -349,7 +381,10 @@ export const useAppState = () => {
 
     // If push failed above, dirtyRef is still true — abort pull to preserve
     // local state (we don't want to clobber the user's work with stale cloud).
-    if (dirtyRef.current) {
+    // EXCEPTION: on the very first pull, there is no SHA yet, so writes were
+    // never possible. We instead merge local onto remote and let the merged
+    // state be pushed back.
+    if (dirtyRef.current && initialPullDoneRef.current) {
       if (!silent) {
         setSyncStatus('error')
         setTimeout(() => setSyncStatus('idle'), 3000)
@@ -362,20 +397,32 @@ export const useAppState = () => {
       const { state: remote, sha } = await readState()
       shaRef.current = sha
 
-      // Extra safety: if local happens to have a newer updated_at than
-      // remote (shouldn't happen after the flush, but handles clock skew or
-      // race conditions), keep local.
-      const localAt = stateRef.current.meta?.updated_at ?? ''
-      const remoteAt = remote.meta?.updated_at ?? ''
-      if (localAt && remoteAt && localAt > remoteAt && !dirtyRef.current) {
-        // Local is ahead — trigger a push to reconcile cloud.
-        dirtyRef.current = true
-        void pushNow(stateRef.current)
+      // Initial pull with a persisted dirty flag: merge local onto remote
+      // (preserves both sides' additions) then mark dirty so the merged
+      // result gets pushed. This is the iOS-kill recovery path.
+      if (dirtyRef.current && !initialPullDoneRef.current) {
+        const merged = mergeStates(stateRef.current, remote)
+        dispatch({ type: 'HYDRATE', state: merged })
+        // Keep dirtyRef / pending flag set — the mutation effect below will
+        // observe the state change and schedule a push.
+        setPendingFlag(true)
       } else {
-        // HYDRATE from remote does NOT mark dirty — we explicitly skip push.
-        dispatch({ type: 'HYDRATE', state: remote })
+        // Extra safety: if local happens to have a newer updated_at than
+        // remote (shouldn't happen after the flush, but handles clock skew
+        // or race conditions), keep local and trigger a reconciling push.
+        const localAt = stateRef.current.meta?.updated_at ?? ''
+        const remoteAt = remote.meta?.updated_at ?? ''
+        if (localAt && remoteAt && localAt > remoteAt && !dirtyRef.current) {
+          dirtyRef.current = true
+          setPendingFlag(true)
+          void pushNow(stateRef.current)
+        } else {
+          // HYDRATE from remote does NOT mark dirty — we explicitly skip push.
+          dispatch({ type: 'HYDRATE', state: remote })
+        }
       }
 
+      initialPullDoneRef.current = true
       const now = new Date().toISOString()
       setLastSync(now)
       localStorage.setItem(LAST_SYNC_KEY, now)
@@ -389,13 +436,16 @@ export const useAppState = () => {
   }, [flushPendingPush, pushNow])
 
   // Debounced push: called from the mutation effect when dirtyRef is true.
+  // Debounce is short (PUSH_DEBOUNCE_MS) because iOS Safari aggressively
+  // throttles/kills timers when the tab backgrounds — a long debounce
+  // effectively means "lost on mobile".
   const schedulePush = useCallback(() => {
     if (pendingWriteRef.current) window.clearTimeout(pendingWriteRef.current)
     pendingWriteRef.current = window.setTimeout(() => {
       pendingWriteRef.current = null
       const p = pushNow(stateRef.current)
       pushInFlightRef.current = p.finally(() => { pushInFlightRef.current = null })
-    }, 1500)
+    }, PUSH_DEBOUNCE_MS)
   }, [pushNow])
 
   // Trigger push only when the mutation was marked dirty by a user action.
@@ -406,21 +456,45 @@ export const useAppState = () => {
     schedulePush()
   }, [state, schedulePush])
 
-  // Flush pending writes before the tab is closed — last-ditch save.
+  // Flush pending writes when the tab is about to go away.
+  //
+  // iOS Safari is the hard case:
+  //   - beforeunload almost never fires
+  //   - pagehide fires only sometimes
+  //   - visibilitychange → 'hidden' is the only reliable signal when the
+  //     user swipes away, locks the phone, or switches apps
+  //
+  // We fire on all three. PENDING_FLAG stays set until pushNow confirms
+  // success, so if the browser kills our request mid-flight we recover on
+  // next load.
   useEffect(() => {
-    const handler = () => {
-      if (dirtyRef.current && pendingWriteRef.current !== null) {
+    const flush = () => {
+      if (!dirtyRef.current) return
+      if (pendingWriteRef.current !== null) {
         window.clearTimeout(pendingWriteRef.current)
         pendingWriteRef.current = null
-        // Fire-and-forget: browser may kill it, but it often reaches GitHub
-        void pushNow(stateRef.current)
+      }
+      // Fire-and-forget: browser may kill it, but it often reaches GitHub
+      const p = pushNow(stateRef.current)
+      pushInFlightRef.current = p.finally(() => { pushInFlightRef.current = null })
+    }
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flush()
+      else if (document.visibilityState === 'visible') {
+        // Coming back: if we still have a pending flag, retry now.
+        if (dirtyRef.current || hasPendingFlag()) {
+          dirtyRef.current = true
+          void pushNow(stateRef.current)
+        }
       }
     }
-    window.addEventListener('beforeunload', handler)
-    window.addEventListener('pagehide', handler)
+    window.addEventListener('beforeunload', flush)
+    window.addEventListener('pagehide', flush)
+    document.addEventListener('visibilitychange', onVisibility)
     return () => {
-      window.removeEventListener('beforeunload', handler)
-      window.removeEventListener('pagehide', handler)
+      window.removeEventListener('beforeunload', flush)
+      window.removeEventListener('pagehide', flush)
+      document.removeEventListener('visibilitychange', onVisibility)
     }
   }, [pushNow])
 
@@ -433,10 +507,12 @@ export const useAppState = () => {
 
   // ── Action creators ──────────────────────────────────────────────────────
   // Every user action goes through userDispatch, which marks the state as
-  // dirty BEFORE dispatching. The mutation effect then observes dirtyRef
-  // and schedules a push. HYDRATE bypasses this and never sets dirty.
+  // dirty BEFORE dispatching and persists the pending flag to localStorage.
+  // The mutation effect then observes dirtyRef and schedules a push.
+  // HYDRATE bypasses this and never sets dirty.
   const userDispatch = useCallback((action: Action) => {
     dirtyRef.current = true
+    setPendingFlag(true)
     dispatch(action)
   }, [])
 

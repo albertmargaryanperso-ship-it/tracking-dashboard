@@ -2,6 +2,10 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
+    <!-- Disable Safari's aggressive HTML caching so that a new build is
+         always fetched on next open (PWA / mobile) — hashed JS/CSS assets
+         are still long-cached via their filenames. -->
+    <meta http-equiv="Cache-Control" content="no-store, max-age=0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0f0f1a" />

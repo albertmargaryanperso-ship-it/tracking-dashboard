@@ -17,6 +17,14 @@ export const CONTENTS_API_URL = `https://api.github.com/repos/${GITHUB_OWNER}/${
 export const TOKEN_STORAGE_KEY = 'tracking-gh-token-v1'
 export const STATE_CACHE_KEY = 'tracking-state-cache-v1'
 export const LAST_SYNC_KEY = 'tracking-last-sync-v1'
+// Pending flag: set to '1' whenever the user mutates state but the push
+// hasn't completed yet. Survives reloads/iOS tab kills so that on next
+// open we know to force-flush before pulling.
+export const PENDING_FLAG_KEY = 'tracking-pending-v1'
 
 // Sync interval (auto-refresh)
 export const AUTO_SYNC_INTERVAL_MS = 60_000 // 1 minute
+// Debounce for pushes after user actions. Short enough that iOS doesn't
+// kill the timer when the tab backgrounds, long enough to batch rapid
+// edits (e.g. typing in a routine note).
+export const PUSH_DEBOUNCE_MS = 350
