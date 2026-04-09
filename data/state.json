@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 150,
-    "updated_at": "2026-04-09T02:02:22",
+    "version": 151,
+    "updated_at": "2026-04-09T02:02:54",
     "updated_by": "obsidian",
     "habitudes": [
       "Sport",
@@ -183,20 +183,6 @@
       "completed_at": "2026-04-09",
       "duration_min": 26,
       "completed_min": 26
-    },
-    {
-      "id": 9999,
-      "text": "TEST — web-added todo that should survive vault push",
-      "priority": "normal",
-      "category": "admin",
-      "due": null,
-      "status": "open",
-      "done": false,
-      "delegated_to": null,
-      "created": "2026-04-09",
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null
     }
   ],
   "todos_next_id": 10000
