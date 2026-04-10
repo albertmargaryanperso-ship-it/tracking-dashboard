@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 192,
-    "updated_at": "2026-04-10T00:48:50.464Z",
+    "updated_at": "2026-04-10T00:49:15.086Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -982,7 +982,20 @@
       "completed_min": null,
       "id": 10006,
       "created": "2026-04-10"
+    },
+    {
+      "text": "Attestation vigilance Christopher",
+      "category": "pro",
+      "priority": "normal",
+      "status": "waiting",
+      "delegated_to": null,
+      "due": null,
+      "completed_at": null,
+      "duration_min": 30,
+      "completed_min": null,
+      "id": 10007,
+      "created": "2026-04-10"
     }
   ],
-  "todos_next_id": 10007
+  "todos_next_id": 10008
 }
