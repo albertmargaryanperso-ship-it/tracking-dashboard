@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 200,
-    "updated_at": "2026-04-10T01:12:56.200Z",
+    "version": 198,
+    "updated_at": "2026-04-10T01:12:59.215Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -164,34 +164,6 @@
       "date": "2026-04-09",
       "hours": 2,
       "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
-    },
-    {
-      "id": "📊 Tracking — Tableau de Bord::2026-04-10::1.0::architecture multi-agents + templates",
-      "project": "📊 Tracking — Tableau de Bord",
-      "date": "2026-04-10",
-      "hours": 1,
-      "note": "architecture multi-agents + templates"
-    },
-    {
-      "id": "📊 Tracking — Tableau de Bord::2026-04-10::3.0::Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile",
-      "project": "📊 Tracking — Tableau de Bord",
-      "date": "2026-04-10",
-      "hours": 3,
-      "note": "Tracking Dashboard React + GitHub Pages + sync bidirectionnelle Obsidian/Web/Mobile"
-    },
-    {
-      "id": "📊 Tracking — Tableau de Bord::2026-04-10::2.0::refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session",
-      "project": "📊 Tracking — Tableau de Bord",
-      "date": "2026-04-10",
-      "hours": 2,
-      "note": "refonte schéma (4 catégories + hours model + camemberts) + sync temps réel + hooks Claude session"
-    },
-    {
-      "id": "FTTH CCT 2026 - Partie 2::2026-04-10::4.0::**Refonte majeure Février 2026** · Identification de 3 bugs critiques (défalques hors grille retournant 0 · BLOC 5 DÉFALQUE non parsé · ligne TOTAL CASSE en double-compte) · Règle de calcul finale validée Albert · Script `gen_fevrier.py` créé · 8 fichiers Wave 1 ré-écrits (Oualid, Mohand, Aghilas, Mounir, Youssef, Omar, Nikola, Yacine) · 15 techs Wave 2 écrits dans `Calcul des autres techs Février` (+8 nouveaux : Omar réintégré, Benazeddine, Bourezma, Hsaini, Idir, Jaillet, Taliouine, Tsabit) · Bénéfice Albert Février 2026 : **+10 085,85 € (+36,7 %)**",
-      "project": "FTTH CCT 2026 - Partie 2",
-      "date": "2026-04-10",
-      "hours": 15,
-      "note": "**Refonte majeure Février 2026** · Identification de 3 bugs critiques (défalques hors grille retournant 0 · BLOC 5 DÉFALQUE non parsé · ligne TOTAL CASSE en double-compte) · Règle de calcul finale validée Albert · Script `gen_fevrier.py` créé · 8 fichiers Wave 1 ré-écrits (Oualid, Mohand, Aghilas, Mounir, Youssef, Omar, Nikola, Yacine) · 15 techs Wave 2 écrits dans `Calcul des autres techs Février` (+8 nouveaux : Omar réintégré, Benazeddine, Bourezma, Hsaini, Idir, Jaillet, Taliouine, Tsabit) · Bénéfice Albert Février 2026 : **+10 085,85 € (+36,7 %)**"
     }
   ],
   "routine": [
