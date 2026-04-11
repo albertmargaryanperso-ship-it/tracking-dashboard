@@ -10,7 +10,7 @@ import {
   PENDING_FLAG_KEY,
   PUSH_DEBOUNCE_MS,
 } from '@/lib/config'
-import { todayISO } from '@/lib/utils'
+import { todayISO, CATEGORY_LIST } from '@/lib/utils'
 
 // ─── Pending flag ───────────────────────────────────────────────────────────
 // We persist a "dirty" bit to localStorage so that if iOS Safari kills the
@@ -78,11 +78,13 @@ const migrateState = (state: AppState): AppState => {
       habit_hours,
     }
   })
+  const validCategories = CATEGORY_LIST as string[]
   const migratedTodos = (state.todos ?? []).map((t: any) => ({
     ...t,
-    category: ['pro', 'finance', 'admin', 'automatisation'].includes(t.category) ? t.category : 'admin',
+    category: validCategories.includes(t.category) ? t.category : 'admin',
     duration_min: t.duration_min ?? null,
     completed_min: t.completed_min ?? null,
+    updated_at: t.updated_at ?? t.completed_at ?? t.created ?? new Date().toISOString(),
   }))
   return {
     ...state,
@@ -255,6 +257,7 @@ const reducer = (state: AppState, action: Action): AppState => {
             due: action.todo.due ?? null,
             duration_min: action.todo.duration_min ?? null,
             completed_min: null,
+            updated_at: now,
           },
         ],
         todos_next_id: id + 1,
@@ -265,7 +268,7 @@ const reducer = (state: AppState, action: Action): AppState => {
       return {
         ...state,
         meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        todos: state.todos.map(t => (t.id === action.id ? { ...t, ...action.patch } : t)),
+        todos: state.todos.map(t => (t.id === action.id ? { ...t, ...action.patch, updated_at: now } : t)),
       }
 
     case 'TOGGLE_TODO':
@@ -276,9 +279,8 @@ const reducer = (state: AppState, action: Action): AppState => {
           if (t.id !== action.id) return t
           const isDone = t.status === 'done'
           if (isDone) {
-            return { ...t, status: 'open', done: false, completed_at: null, completed_min: null }
+            return { ...t, status: 'open', done: false, completed_at: null, completed_min: null, updated_at: now }
           }
-          // marking as done — capture completed_min
           const completed_min = action.completed_min ?? t.duration_min ?? null
           return {
             ...t,
@@ -286,6 +288,7 @@ const reducer = (state: AppState, action: Action): AppState => {
             done: true,
             completed_at: today,
             completed_min,
+            updated_at: now,
           }
         }),
       }
@@ -379,47 +382,27 @@ export const useAppState = () => {
     // which hasn't hit the debounce timer yet.
     await flushPendingPush()
 
-    // If push failed above, dirtyRef is still true — abort pull to preserve
-    // local state (we don't want to clobber the user's work with stale cloud).
-    // EXCEPTION: on the very first pull, there is no SHA yet, so writes were
-    // never possible. We instead merge local onto remote and let the merged
-    // state be pushed back.
-    if (dirtyRef.current && initialPullDoneRef.current) {
-      if (!silent) {
-        setSyncStatus('error')
-        setTimeout(() => setSyncStatus('idle'), 3000)
-      }
-      return
-    }
+    // If push failed above, dirtyRef is still true. Instead of aborting
+    // (which would isolate this tab forever), we merge local onto remote
+    // to preserve both sides' changes, then retry the push.
+    // This prevents the "stuck tab" problem where a single failed push
+    // blocks all future sync.
 
     if (!silent) setSyncStatus('syncing')
     try {
       const { state: remote, sha } = await readState()
       shaRef.current = sha
 
-      // Initial pull with a persisted dirty flag: merge local onto remote
-      // (preserves both sides' additions) then mark dirty so the merged
-      // result gets pushed. This is the iOS-kill recovery path.
-      if (dirtyRef.current && !initialPullDoneRef.current) {
+      if (dirtyRef.current) {
+        // Local has unsaved changes — merge local onto remote to preserve both
         const merged = mergeStates(stateRef.current, remote)
         dispatch({ type: 'HYDRATE', state: merged })
-        // Keep dirtyRef / pending flag set — the mutation effect below will
-        // observe the state change and schedule a push.
+        // Keep dirty flag so the merged result gets pushed
         setPendingFlag(true)
+        void pushNow(merged)
       } else {
-        // Extra safety: if local happens to have a newer updated_at than
-        // remote (shouldn't happen after the flush, but handles clock skew
-        // or race conditions), keep local and trigger a reconciling push.
-        const localAt = stateRef.current.meta?.updated_at ?? ''
-        const remoteAt = remote.meta?.updated_at ?? ''
-        if (localAt && remoteAt && localAt > remoteAt && !dirtyRef.current) {
-          dirtyRef.current = true
-          setPendingFlag(true)
-          void pushNow(stateRef.current)
-        } else {
-          // HYDRATE from remote does NOT mark dirty — we explicitly skip push.
-          dispatch({ type: 'HYDRATE', state: remote })
-        }
+        // Clean state — just hydrate from remote
+        dispatch({ type: 'HYDRATE', state: remote })
       }
 
       initialPullDoneRef.current = true

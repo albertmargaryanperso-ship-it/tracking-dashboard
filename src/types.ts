@@ -2,7 +2,7 @@
 // 📊 Tracking Dashboard — Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type View = 'dashboard' | 'vault' | 'routine' | 'todos' | 'charts'
+export type View = 'dashboard' | 'travail' | 'personnel' | 'todos' | 'charts'
 
 // ─── Vault sessions (projets) ────────────────────────────────────────────────
 export interface VaultSession {
@@ -23,7 +23,9 @@ export interface RoutineEntry {
 }
 
 // ─── Todos ───────────────────────────────────────────────────────────────────
-export type TodoCategory = 'pro' | 'finance' | 'admin' | 'automatisation'
+export type TodoCategory = 'pro' | 'finance' | 'admin' | 'automatisation' | 'sport' | 'cardio' | 'lecture' | 'bien-etre'
+
+export type CategoryGroup = 'travail' | 'personnel'
 export type TodoPriority = 'urgent' | 'normal' | 'faible'
 export type TodoStatus = 'open' | 'done' | 'waiting' | 'delegated'
 
@@ -40,6 +42,7 @@ export interface Todo {
   done?: boolean
   duration_min?: number | null   // durée estimée (minutes)
   completed_min?: number | null  // temps effectif à la complétion (minutes)
+  updated_at?: string            // ISO datetime — for conflict resolution
 }
 
 // ─── State global (source de vérité sur GitHub) ─────────────────────────────
@@ -84,7 +87,8 @@ export interface Stats {
     done: number
     urgent: number
     completion_rate: number
-    by_category: Record<TodoCategory, { total: number; open: number }>
+    by_category: Record<TodoCategory, { total: number; open: number; minutes: number }>
+    by_group: Record<CategoryGroup, { total: number; open: number; minutes: number }>
     today_minutes: number      // temps activités cochées aujourd'hui
     week_minutes: number
   }

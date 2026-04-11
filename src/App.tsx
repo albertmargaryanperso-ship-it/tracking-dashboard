@@ -35,8 +35,8 @@ export default function App() {
       if (e.key === 'n' || e.key === '+') { e.preventDefault(); setQuickAddOpen(true) }
       if (e.key === 'r') { e.preventDefault(); void pull() }
       if (e.key === '1') setView('dashboard')
-      if (e.key === '2') setView('vault')
-      if (e.key === '3') setView('routine')
+      if (e.key === '2') setView('travail')
+      if (e.key === '3') setView('personnel')
       if (e.key === '4') setView('todos')
       if (e.key === '5') setView('charts')
     }
@@ -92,7 +92,7 @@ export default function App() {
 
       <main className="relative max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 pb-24">
         {view === 'dashboard' && <Dashboard state={state} stats={stats} />}
-        {view === 'vault' && (
+        {view === 'travail' && (
           <VaultView
             state={state}
             stats={stats}
@@ -101,7 +101,7 @@ export default function App() {
             onAddSession={actions.addSession}
           />
         )}
-        {view === 'routine' && (
+        {view === 'personnel' && (
           <RoutineView
             state={state}
             stats={stats}

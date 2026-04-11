@@ -25,8 +25,8 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
                 {formatHours(stats.vault.today_hours + stats.routine.today_hours)}
               </span>
               <span className="text-xs text-zinc-500">
-                vault <span className="text-violet-400 font-semibold">{formatHours(stats.vault.today_hours)}</span> ·
-                routine <span className="text-cyan-400 font-semibold"> {formatHours(stats.routine.today_hours)}</span>
+                travail <span className="text-violet-400 font-semibold">{formatHours(stats.vault.today_hours)}</span> ·
+                personnel <span className="text-cyan-400 font-semibold"> {formatHours(stats.routine.today_hours)}</span>
               </span>
             </div>
             <p className="text-xs text-zinc-400 mt-2">
@@ -48,14 +48,14 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
       {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatCard
-          label="Vault — semaine"
+          label="Travail — semaine"
           value={formatHours(stats.vault.week_hours)}
           sub={`${formatHours(stats.vault.month_hours)} ce mois`}
           accent="vault"
           icon={<Clock size={14} />}
         />
         <StatCard
-          label="Routine — semaine"
+          label="Personnel — semaine"
           value={formatHours(stats.routine.week_hours)}
           sub={`${formatHours(stats.routine.month_hours)} ce mois`}
           accent="routine"
@@ -83,7 +83,7 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-6 rounded-full bg-violet-500" />
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-violet-300">Vault — 6 mois</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-violet-300">Travail — 6 mois</h3>
             </div>
             <span className="text-[10px] text-zinc-500 font-mono">{formatHours(stats.vault.total_hours)} total</span>
           </div>
@@ -94,7 +94,7 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-6 rounded-full bg-cyan-500" />
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-cyan-300">Routine — 6 mois</h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-cyan-300">Personnel — 6 mois</h3>
             </div>
             <span className="text-[10px] text-zinc-500 font-mono">{stats.routine.streak_days}j streak</span>
           </div>

@@ -15,11 +15,11 @@ interface HeaderProps {
 }
 
 const VIEWS: Array<{ id: View; label: string; emoji: string }> = [
-  { id: 'dashboard', label: 'Dashboard', emoji: '📊' },
-  { id: 'vault',     label: 'Vault',     emoji: '🧠' },
-  { id: 'routine',   label: 'Routine',   emoji: '🔁' },
-  { id: 'todos',     label: 'Todos',     emoji: '✅' },
-  { id: 'charts',    label: 'Camemberts', emoji: '🥧' },
+  { id: 'dashboard',  label: 'Dashboard',  emoji: '📊' },
+  { id: 'travail',    label: 'Travail',    emoji: '💼' },
+  { id: 'personnel',  label: 'Personnel',  emoji: '🧘' },
+  { id: 'todos',      label: 'Todos',      emoji: '✅' },
+  { id: 'charts',     label: 'Camemberts', emoji: '🥧' },
 ]
 
 export const Header = ({

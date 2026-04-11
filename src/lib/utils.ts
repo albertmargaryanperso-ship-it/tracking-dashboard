@@ -109,18 +109,30 @@ export const intensityLabel = (hours: number): { label: string; className: strin
   return { label: '—', className: 'text-zinc-500' }
 }
 
-// ─── Category config — 4 work categories ───────────────────────────────────
+// ─── Category config — 8 categories in 2 groups ────────────────────────────
 
-export const CATEGORY_CONFIG = {
-  pro:            { label: 'Pro',            emoji: '💼', color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/30',       hex: '#60a5fa' },
-  finance:        { label: 'Finance',        emoji: '💰', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30', hex: '#34d399' },
-  admin:          { label: 'Admin',          emoji: '📋', color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/30',     hex: '#fbbf24' },
-  automatisation: { label: 'Automatisation', emoji: '⚙️',  color: 'text-violet-400',  bg: 'bg-violet-500/10 border-violet-500/30',   hex: '#a78bfa' },
-} as const
+import type { TodoCategory, CategoryGroup } from '@/types'
 
-export const CATEGORY_LIST: Array<keyof typeof CATEGORY_CONFIG> = ['pro', 'finance', 'admin', 'automatisation']
+export const CATEGORY_CONFIG: Record<TodoCategory, { label: string; emoji: string; color: string; bg: string; hex: string; group: CategoryGroup }> = {
+  // Travail
+  pro:            { label: 'Pro',            emoji: '💼', color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/30',       hex: '#60a5fa', group: 'travail' },
+  finance:        { label: 'Finance',        emoji: '💰', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30', hex: '#34d399', group: 'travail' },
+  admin:          { label: 'Admin',          emoji: '📋', color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/30',     hex: '#fbbf24', group: 'travail' },
+  automatisation: { label: 'Automatisation', emoji: '⚙️',  color: 'text-violet-400',  bg: 'bg-violet-500/10 border-violet-500/30',   hex: '#a78bfa', group: 'travail' },
+  // Personnel
+  sport:          { label: 'Sport',          emoji: '🏋️', color: 'text-pink-400',    bg: 'bg-pink-500/10 border-pink-500/30',       hex: '#f472b6', group: 'personnel' },
+  cardio:         { label: 'Cardio',         emoji: '🏃', color: 'text-orange-400',  bg: 'bg-orange-500/10 border-orange-500/30',   hex: '#fb923c', group: 'personnel' },
+  lecture:        { label: 'Lecture',         emoji: '📚', color: 'text-sky-400',     bg: 'bg-sky-500/10 border-sky-500/30',         hex: '#38bdf8', group: 'personnel' },
+  'bien-etre':    { label: 'Bien-être',      emoji: '🧘', color: 'text-teal-400',    bg: 'bg-teal-500/10 border-teal-500/30',       hex: '#2dd4bf', group: 'personnel' },
+}
 
-// ─── Habit config — 4 routine categories ──────────────────────────────────
+export const CATEGORY_LIST: TodoCategory[] = ['pro', 'finance', 'admin', 'automatisation', 'sport', 'cardio', 'lecture', 'bien-etre']
+export const TRAVAIL_CATEGORIES: TodoCategory[] = ['pro', 'finance', 'admin', 'automatisation']
+export const PERSONNEL_CATEGORIES: TodoCategory[] = ['sport', 'cardio', 'lecture', 'bien-etre']
+
+export const categoryGroup = (cat: TodoCategory): CategoryGroup => CATEGORY_CONFIG[cat]?.group ?? 'travail'
+
+// ─── Habit config — kept for backward compat with routine entries ─────────
 
 export const HABIT_ICONS: Record<string, string> = {
   Sport:       '🏋️',

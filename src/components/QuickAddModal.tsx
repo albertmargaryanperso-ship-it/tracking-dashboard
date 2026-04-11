@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { X, Plus, Clock, Activity, CheckSquare } from 'lucide-react'
 import type { VaultSession, Todo, TodoCategory, TodoPriority } from '@/types'
-import { todayISO, cn, CATEGORY_CONFIG, CATEGORY_LIST, parseHoursInput, formatHours, habitIcon } from '@/lib/utils'
+import { todayISO, cn, CATEGORY_CONFIG, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES, parseHoursInput, formatHours, habitIcon } from '@/lib/utils'
 
 type QuickMode = 'session' | 'routine' | 'todo'
 
@@ -41,8 +41,8 @@ export const QuickAddModal = ({
         {/* Mode tabs */}
         <div className="flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-xl mb-4">
           {([
-            ['session', 'Session', Clock, 'violet'],
-            ['routine', 'Routine', Activity, 'cyan'],
+            ['session', 'Travail', Clock, 'violet'],
+            ['routine', 'Personnel', Activity, 'cyan'],
             ['todo', 'Tâche', CheckSquare, 'emerald'],
           ] as const).map(([id, label, Icon, color]) => (
             <button
@@ -269,18 +269,22 @@ const TodoForm = ({ onAdd, onClose }: { onAdd: (t: Omit<Todo, 'id' | 'created'>)
       </div>
       <div>
         <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Catégorie</label>
-        <div className="grid grid-cols-2 gap-1.5 mt-1">
-          {CATEGORY_LIST.map(c => (
-            <button
-              key={c}
-              onClick={() => setCategory(c)}
-              className={cn(
-                'px-3 py-2 rounded-lg text-[11px] font-semibold border transition-all flex items-center justify-center gap-1',
+        <p className="text-[9px] text-violet-400 font-semibold mt-1.5 mb-1">Travail</p>
+        <div className="grid grid-cols-2 gap-1.5">
+          {TRAVAIL_CATEGORIES.map(c => (
+            <button key={c} onClick={() => setCategory(c)}
+              className={cn('px-3 py-2 rounded-lg text-[11px] font-semibold border transition-all flex items-center justify-center gap-1',
                 category === c ? CATEGORY_CONFIG[c].bg + ' ' + CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500'
-              )}
-            >
-              <span>{CATEGORY_CONFIG[c].emoji}</span> {CATEGORY_CONFIG[c].label}
-            </button>
+              )}><span>{CATEGORY_CONFIG[c].emoji}</span> {CATEGORY_CONFIG[c].label}</button>
+          ))}
+        </div>
+        <p className="text-[9px] text-cyan-400 font-semibold mt-2 mb-1">Personnel</p>
+        <div className="grid grid-cols-2 gap-1.5">
+          {PERSONNEL_CATEGORIES.map(c => (
+            <button key={c} onClick={() => setCategory(c)}
+              className={cn('px-3 py-2 rounded-lg text-[11px] font-semibold border transition-all flex items-center justify-center gap-1',
+                category === c ? CATEGORY_CONFIG[c].bg + ' ' + CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500'
+              )}><span>{CATEGORY_CONFIG[c].emoji}</span> {CATEGORY_CONFIG[c].label}</button>
           ))}
         </div>
       </div>

@@ -12,28 +12,49 @@ import {
 } from './config'
 
 // ─── Merge helper ────────────────────────────────────────────────────────────
-// When we hit a SHA conflict on write, it means another writer (vault side)
-// has pushed since we read. Blindly re-pushing local state would erase their
-// additions. Instead, merge: local wins on items it knows about, remote items
-// not present locally are preserved.
+// When we hit a SHA conflict on write, another writer pushed since we last
+// read. We merge by picking the NEWEST version of each item (by updated_at
+// for todos, by content key for sessions). This prevents stale local state
+// from overwriting fresh remote changes.
 const sessionKey = (s: VaultSession): string =>
   `${s.project}|${s.date}|${Math.round((s.hours ?? 0) * 100) / 100}|${(s.note ?? '').trim()}`
 
 export const mergeStates = (local: AppState, remote: AppState): AppState => {
-  // Todos — union by id, local wins on conflict
-  const localTodoIds = new Set(local.todos.map(t => t.id))
-  const preservedTodos = remote.todos.filter(t => !localTodoIds.has(t.id))
-  const mergedTodos = [...local.todos, ...preservedTodos]
+  // Todos — merge by id, NEWEST updated_at wins. Items only in one side are kept.
+  const localById = new Map(local.todos.map(t => [t.id, t]))
+  const remoteById = new Map(remote.todos.map(t => [t.id, t]))
+  const allTodoIds = new Set([...localById.keys(), ...remoteById.keys()])
+  const mergedTodos = Array.from(allTodoIds).map(id => {
+    const l = localById.get(id)
+    const r = remoteById.get(id)
+    if (!l) return r!
+    if (!r) return l
+    // Both exist — pick the one with the newest updated_at
+    const lAt = l.updated_at ?? ''
+    const rAt = r.updated_at ?? ''
+    return lAt >= rAt ? l : r
+  })
 
   // Sessions — union by content key (ids are unstable across writers)
   const localSessionKeys = new Set(local.sessions.map(sessionKey))
   const preservedSessions = remote.sessions.filter(s => !localSessionKeys.has(sessionKey(s)))
   const mergedSessions = [...local.sessions, ...preservedSessions]
 
-  // Routine — union by date, local wins
-  const localRoutineDates = new Set(local.routine.map(r => r.date))
-  const preservedRoutine = remote.routine.filter(r => !localRoutineDates.has(r.date))
-  const mergedRoutine = [...local.routine, ...preservedRoutine]
+  // Routine — union by date, newest wins (compare hours — higher = more data)
+  const localRoutineMap = new Map(local.routine.map(r => [r.date, r]))
+  const remoteRoutineMap = new Map(remote.routine.map(r => [r.date, r]))
+  const allRoutineDates = new Set([...localRoutineMap.keys(), ...remoteRoutineMap.keys()])
+  const mergedRoutine = Array.from(allRoutineDates).map(date => {
+    const l = localRoutineMap.get(date)
+    const r = remoteRoutineMap.get(date)
+    if (!l) return r!
+    if (!r) return l
+    // Keep the one with more habit data (proxy for "more complete")
+    const lHabits = Object.keys(l.habit_hours ?? {}).length
+    const rHabits = Object.keys(r.habit_hours ?? {}).length
+    if (lHabits !== rHabits) return lHabits > rHabits ? l : r
+    return (l.hours ?? 0) >= (r.hours ?? 0) ? l : r
+  })
 
   // Habitudes — union, preserving order from local first
   const mergedHabits = [...local.meta.habitudes]

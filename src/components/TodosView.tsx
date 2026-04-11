@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Plus, Check, Trash2, Clock, ChevronDown, ChevronRight } from 'lucide-react'
 import type { AppState, Stats, Todo, TodoCategory, TodoPriority, TodoStatus } from '@/types'
-import { CATEGORY_CONFIG, CATEGORY_LIST, cn, formatMinutes } from '@/lib/utils'
+import { CATEGORY_CONFIG, CATEGORY_LIST, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES, cn, formatMinutes } from '@/lib/utils'
 
 interface TodosViewProps {
   state: AppState
@@ -127,17 +127,34 @@ export const TodosView = ({ state, stats, onAdd, onUpdate, onToggle, onDelete }:
         <TodoStat label="Ouverts" value={stats.todos.open} sub={`${stats.todos.total} au total`} color="emerald" />
         <TodoStat label="Urgents" value={stats.todos.urgent} sub="à traiter" color="rose" />
         <TodoStat
-          label="Aujourd'hui"
-          value={formatMinutes(stats.todos.today_minutes) || '0min'}
-          sub={`${stats.todos.done} terminés (${stats.todos.completion_rate}%)`}
-          color="zinc"
-        />
-        <TodoStat
-          label="Semaine"
-          value={formatMinutes(stats.todos.week_minutes) || '0min'}
-          sub="temps cumulé"
+          label="Travail"
+          value={formatMinutes(stats.todos.by_group.travail.minutes) || '0min'}
+          sub={`${stats.todos.by_group.travail.open} ouverts`}
           color="blue"
         />
+        <TodoStat
+          label="Personnel"
+          value={formatMinutes(stats.todos.by_group.personnel.minutes) || '0min'}
+          sub={`${stats.todos.by_group.personnel.open} ouverts`}
+          color="zinc"
+        />
+      </div>
+
+      {/* Temps par catégorie */}
+      <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
+        {CATEGORY_LIST.map(c => {
+          const cat = CATEGORY_CONFIG[c]
+          const bucket = stats.todos.by_category[c]
+          return (
+            <div key={c} className={cn('rounded-xl border bg-zinc-900/50 p-2 text-center', cat.bg)}>
+              <span className="text-sm">{cat.emoji}</span>
+              <p className={cn('text-xs font-bold mt-0.5', cat.color)}>
+                {formatMinutes(bucket.minutes) || '—'}
+              </p>
+              <p className="text-[8px] text-zinc-500">{bucket.open} ouv.</p>
+            </div>
+          )
+        })}
       </div>
 
       {/* Kanban board */}
@@ -406,20 +423,25 @@ const QuickTodoForm = ({
         placeholder="Texte de la tâche…"
         className="w-full px-2 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] focus:outline-none focus:border-emerald-500"
       />
-      <div className="flex flex-wrap gap-1">
-        {CATEGORY_LIST.map(c => (
-          <button
-            key={c}
-            onClick={() => setCategory(c)}
-            className={cn(
-              'px-1.5 py-0.5 rounded text-[9px] font-semibold border transition-all',
-              category === c ? CATEGORY_CONFIG[c].bg + ' ' + CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500'
-            )}
-            title={CATEGORY_CONFIG[c].label}
-          >
-            {CATEGORY_CONFIG[c].emoji}
-          </button>
-        ))}
+      <div className="space-y-0.5">
+        <div className="flex flex-wrap gap-1">
+          <span className="text-[8px] text-violet-400 font-semibold self-center mr-0.5">T</span>
+          {TRAVAIL_CATEGORIES.map(c => (
+            <button key={c} onClick={() => setCategory(c)}
+              className={cn('px-1.5 py-0.5 rounded text-[9px] font-semibold border transition-all',
+                category === c ? CATEGORY_CONFIG[c].bg + ' ' + CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500'
+              )} title={CATEGORY_CONFIG[c].label}>{CATEGORY_CONFIG[c].emoji}</button>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-1">
+          <span className="text-[8px] text-cyan-400 font-semibold self-center mr-0.5">P</span>
+          {PERSONNEL_CATEGORIES.map(c => (
+            <button key={c} onClick={() => setCategory(c)}
+              className={cn('px-1.5 py-0.5 rounded text-[9px] font-semibold border transition-all',
+                category === c ? CATEGORY_CONFIG[c].bg + ' ' + CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500'
+              )} title={CATEGORY_CONFIG[c].label}>{CATEGORY_CONFIG[c].emoji}</button>
+          ))}
+        </div>
       </div>
       {column === 'delegated' && (
         <input

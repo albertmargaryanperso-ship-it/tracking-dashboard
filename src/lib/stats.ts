@@ -1,5 +1,5 @@
-import type { AppState, Stats, TodoCategory } from '@/types'
-import { todayISO, startOfWeekISO, startOfMonthISO, addDays } from './utils'
+import type { AppState, Stats, TodoCategory, CategoryGroup } from '@/types'
+import { todayISO, startOfWeekISO, startOfMonthISO, addDays, CATEGORY_LIST, categoryGroup } from './utils'
 
 export const computeStats = (state: AppState): Stats => {
   const today = todayISO()
@@ -91,16 +91,22 @@ export const computeStats = (state: AppState): Stats => {
   const urgent = state.todos.filter(t => t.status === 'open' && t.priority === 'urgent').length
   const completion_rate = total > 0 ? Math.round((done / total) * 100) : 0
 
-  const by_category: Record<TodoCategory, { total: number; open: number }> = {
-    pro:            { total: 0, open: 0 },
-    finance:        { total: 0, open: 0 },
-    admin:           { total: 0, open: 0 },
-    automatisation: { total: 0, open: 0 },
+  const by_category = Object.fromEntries(
+    CATEGORY_LIST.map(c => [c, { total: 0, open: 0, minutes: 0 }])
+  ) as Record<TodoCategory, { total: number; open: number; minutes: number }>
+  const by_group: Record<CategoryGroup, { total: number; open: number; minutes: number }> = {
+    travail:   { total: 0, open: 0, minutes: 0 },
+    personnel: { total: 0, open: 0, minutes: 0 },
   }
   for (const t of state.todos) {
     const bucket = by_category[t.category] ?? by_category.admin
     bucket.total += 1
     if (t.status === 'open') bucket.open += 1
+    if (t.status === 'done' && t.completed_min) bucket.minutes += t.completed_min
+    const grp = by_group[categoryGroup(t.category)]
+    grp.total += 1
+    if (t.status === 'open') grp.open += 1
+    if (t.status === 'done' && t.completed_min) grp.minutes += t.completed_min
   }
 
   const todos_today_minutes = state.todos
@@ -138,6 +144,7 @@ export const computeStats = (state: AppState): Stats => {
       urgent,
       completion_rate,
       by_category,
+      by_group,
       today_minutes: todos_today_minutes,
       week_minutes: todos_week_minutes,
     },
