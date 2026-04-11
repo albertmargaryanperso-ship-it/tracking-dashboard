@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 258,
-    "updated_at": "2026-04-11T17:36:44.509Z",
+    "updated_at": "2026-04-11T17:36:49.609Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -382,8 +382,7 @@
       "date": "2026-04-11",
       "hours": 2,
       "habit_hours": {
-        "Bien-être": 1,
-        "Sport": 1
+        "Bien-être": 1
       },
       "notes": "Couper les cheveux"
     }
