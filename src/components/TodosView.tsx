@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
-import { Plus, Check, Trash2, Clock, ChevronDown, ChevronRight } from 'lucide-react'
+import { Plus, Check, Trash2, Clock, ChevronDown, ChevronRight, CalendarDays } from 'lucide-react'
 import type { AppState, Stats, Todo, TodoCategory, TodoPriority, TodoStatus } from '@/types'
-import { CATEGORY_CONFIG, CATEGORY_LIST, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES, cn, formatMinutes } from '@/lib/utils'
+import { CATEGORY_CONFIG, CATEGORY_LIST, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES, cn, formatMinutes, todayISO, isoToFr } from '@/lib/utils'
 
 interface TodosViewProps {
   state: AppState
@@ -210,6 +210,12 @@ const TodoCard = ({ todo, dragging, onDragStart, onDragEnd, onToggle, onDelete }
           <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
             <span className={cn('px-1.5 py-0.5 rounded text-[9px] font-semibold border', cat.bg, cat.color)}>{cat.emoji} {cat.label}</span>
             {todo.status === 'delegated' && todo.delegated_to && <span className="text-[9px] text-violet-300 font-semibold">→ {todo.delegated_to}</span>}
+            {todo.due && !isDone && (
+              <span className={cn('flex items-center gap-0.5 text-[9px] font-semibold',
+                todo.due < todayISO() ? 'text-rose-400' : todo.due === todayISO() ? 'text-amber-400' : 'text-zinc-500')}>
+                <CalendarDays size={8} /> {isoToFr(todo.due)}{todo.due <= todayISO() ? ' !' : ''}
+              </span>
+            )}
             {todo.duration_min ? <span className="flex items-center gap-0.5 text-[9px] text-cyan-400"><Clock size={8} /> {formatMinutes(todo.duration_min)}</span> : null}
             {isDone && todo.completed_min ? <span className="text-[9px] text-emerald-400">⏱ {formatMinutes(todo.completed_min)}</span> : null}
           </div>
@@ -231,6 +237,7 @@ const QuickTodoForm = ({ column, categories, onAdd, onCancel }: {
   const [text, setText] = useState('')
   const [category, setCategory] = useState<TodoCategory>(categories[0])
   const [durationMin, setDurationMin] = useState('')
+  const [due, setDue] = useState('')
   const [delegatedTo, setDelegatedTo] = useState('')
 
   const statusFromCol = (): TodoStatus => { if (column === 'delegated') return 'delegated'; if (column === 'waiting') return 'waiting'; return 'open' }
@@ -242,7 +249,7 @@ const QuickTodoForm = ({ column, categories, onAdd, onCancel }: {
     onAdd({
       text: text.trim(), category, priority: priorityFromCol(), status: statusFromCol(),
       delegated_to: column === 'delegated' && delegatedTo.trim() ? delegatedTo.trim() : null,
-      due: null, completed_at: null,
+      due: due || null, completed_at: null,
       duration_min: dur && !isNaN(dur) && dur > 0 ? dur : null, completed_min: null,
     })
   }
@@ -269,6 +276,9 @@ const QuickTodoForm = ({ column, categories, onAdd, onCancel }: {
         <Clock size={10} className="text-zinc-500" />
         <input value={durationMin} onChange={e => setDurationMin(e.target.value)} placeholder="min"
           className="w-12 px-1.5 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-[9px] text-center focus:outline-none focus:border-cyan-500" />
+        <CalendarDays size={10} className="text-zinc-500 ml-1" />
+        <input type="date" value={due} onChange={e => setDue(e.target.value)}
+          className="w-28 px-1 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-[9px] focus:outline-none focus:border-rose-500" />
         <div className="flex-1" />
         <button onClick={submit} className="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-[10px] font-semibold">Ajouter</button>
         <button onClick={onCancel} className="px-1.5 py-0.5 rounded border border-zinc-800 text-zinc-500 text-[10px]">✕</button>

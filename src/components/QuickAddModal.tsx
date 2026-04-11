@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { X, Plus, Clock } from 'lucide-react'
-import type { Todo, TodoCategory, TodoPriority, TodoStatus } from '@/types'
+import type { Todo, TodoCategory, TodoStatus } from '@/types'
 import { cn, CATEGORY_CONFIG, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES } from '@/lib/utils'
 
 interface QuickAddModalProps {
@@ -43,8 +43,10 @@ export const QuickAddModal = ({ open, onClose, onAddTodo, onAddDoneTodo }: Quick
   )
 }
 
-const STATUS_OPTIONS: Array<{ id: TodoStatus; label: string; emoji: string; border: string; active: string }> = [
+type StatusChoice = 'open' | 'urgent' | 'delegated' | 'waiting'
+const STATUS_CHOICES: Array<{ id: StatusChoice; label: string; emoji: string; border: string; active: string }> = [
   { id: 'open', label: 'À faire', emoji: '🟡', border: 'border-amber-500', active: 'bg-amber-500/10 text-amber-300' },
+  { id: 'urgent', label: 'Urgent', emoji: '🔴', border: 'border-rose-500', active: 'bg-rose-500/10 text-rose-300' },
   { id: 'delegated', label: 'Délégué', emoji: '👤', border: 'border-violet-500', active: 'bg-violet-500/10 text-violet-300' },
   { id: 'waiting', label: 'En attente', emoji: '⏳', border: 'border-sky-500', active: 'bg-sky-500/10 text-sky-300' },
 ]
@@ -52,18 +54,20 @@ const STATUS_OPTIONS: Array<{ id: TodoStatus; label: string; emoji: string; bord
 const TodoForm = ({ onAdd, onClose }: { onAdd: (t: Omit<Todo, 'id' | 'created'>) => void; onClose: () => void }) => {
   const [text, setText] = useState('')
   const [category, setCategory] = useState<TodoCategory>('pro')
-  const [priority, setPriority] = useState<TodoPriority>('normal')
-  const [status, setStatus] = useState<TodoStatus>('open')
+  const [statusChoice, setStatusChoice] = useState<StatusChoice>('open')
   const [durationMin, setDurationMin] = useState('')
+  const [due, setDue] = useState('')
   const [delegatedTo, setDelegatedTo] = useState('')
 
   const submit = () => {
     if (!text.trim()) return
     const dur = durationMin.trim() ? parseInt(durationMin.trim(), 10) : null
+    const status: TodoStatus = statusChoice === 'urgent' ? 'open' : statusChoice
+    const priority = statusChoice === 'urgent' ? 'urgent' : 'normal'
     onAdd({
       text: text.trim(), category, priority, status,
-      delegated_to: status === 'delegated' && delegatedTo.trim() ? delegatedTo.trim() : null,
-      due: null, completed_at: null,
+      delegated_to: statusChoice === 'delegated' && delegatedTo.trim() ? delegatedTo.trim() : null,
+      due: due || null, completed_at: null,
       duration_min: dur && !isNaN(dur) && dur > 0 ? dur : null, completed_min: null,
     })
     onClose()
@@ -78,21 +82,21 @@ const TodoForm = ({ onAdd, onClose }: { onAdd: (t: Omit<Todo, 'id' | 'created'>)
           className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-emerald-500" />
       </div>
       <CategoryPicker value={category} onChange={setCategory} />
-      {/* Statut */}
+      {/* Statut — 4 choix */}
       <div>
         <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Statut</label>
-        <div className="flex gap-1.5 mt-1">
-          {STATUS_OPTIONS.map(s => (
-            <button key={s.id} onClick={() => setStatus(s.id)}
-              className={cn('flex-1 px-2 py-2 rounded-lg text-[10px] font-semibold border transition-all flex items-center justify-center gap-1',
-                status === s.id ? `${s.border} ${s.active}` : 'border-zinc-800 text-zinc-500')}>
-              {s.emoji} {s.label}
+        <div className="grid grid-cols-4 gap-1.5 mt-1">
+          {STATUS_CHOICES.map(s => (
+            <button key={s.id} onClick={() => setStatusChoice(s.id)}
+              className={cn('px-1 py-2 rounded-lg text-[9px] font-semibold border transition-all flex flex-col items-center justify-center gap-0.5',
+                statusChoice === s.id ? `${s.border} ${s.active}` : 'border-zinc-800 text-zinc-500')}>
+              <span className="text-sm">{s.emoji}</span>{s.label}
             </button>
           ))}
         </div>
       </div>
       {/* Délégué à */}
-      {status === 'delegated' && (
+      {statusChoice === 'delegated' && (
         <div>
           <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Délégué à</label>
           <input value={delegatedTo} onChange={e => setDelegatedTo(e.target.value)} placeholder="Nom de la personne…"
@@ -101,16 +105,9 @@ const TodoForm = ({ onAdd, onClose }: { onAdd: (t: Omit<Todo, 'id' | 'created'>)
       )}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Priorité</label>
-          <div className="flex gap-1.5 mt-1">
-            {(['normal', 'urgent'] as TodoPriority[]).map(p => (
-              <button key={p} onClick={() => setPriority(p)}
-                className={cn('flex-1 px-3 py-2 rounded-lg text-[11px] font-semibold border transition-all',
-                  priority === p ? p === 'urgent' ? 'border-rose-500 bg-rose-500/10 text-rose-300' : 'border-zinc-700 bg-zinc-800 text-zinc-200' : 'border-zinc-800 text-zinc-500')}>
-                {p === 'urgent' ? '🔴 Urgent' : 'Normal'}
-              </button>
-            ))}
-          </div>
+          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Échéance</label>
+          <input type="date" value={due} onChange={e => setDue(e.target.value)}
+            className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-rose-500" />
         </div>
         <div>
           <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Durée estimée</label>
