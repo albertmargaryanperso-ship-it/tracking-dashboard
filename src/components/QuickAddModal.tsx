@@ -111,8 +111,8 @@ const TodoForm = ({ onAdd, onClose }: { onAdd: (t: Omit<Todo, 'id' | 'created'>)
       {/* Échéance */}
       <div>
         <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Échéance</label>
-        <input type="date" value={due} onChange={e => setDue(e.target.value)}
-          className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-rose-500" />
+        <input type="date" value={due} onChange={e => setDue(e.target.value)} placeholder="jj/mm/aaaa"
+          className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl focus:outline-none focus:border-rose-500" />
       </div>
       <button onClick={submit} className="w-full py-3 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5">
         <Plus size={14} /> Ajouter la tâche
@@ -157,8 +157,8 @@ const DoneForm = ({ onAdd, onClose }: {
       </div>
       <div>
         <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Date (optionnel)</label>
-        <input type="date" value={date} onChange={e => setDate(e.target.value)}
-          className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-violet-500" />
+        <input type="date" value={date} onChange={e => setDate(e.target.value)} placeholder="jj/mm/aaaa"
+          className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl focus:outline-none focus:border-violet-500" />
       </div>
       <button onClick={submit} className="w-full py-3 rounded-xl bg-gradient-to-br from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 text-xs font-bold flex items-center justify-center gap-1.5">
         <Clock size={14} /> Loguer l'activité

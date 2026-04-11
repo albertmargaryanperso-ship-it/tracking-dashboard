@@ -15,5 +15,23 @@
   .animate-fade-in { animation: fadeIn 0.2s ease-out; }
 }
 
+/* iOS Safari auto-zooms on input focus when font-size < 16px.
+   Force 16px on all form elements on mobile to prevent this. */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
 @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Date inputs: show placeholder text when empty on iOS */
+input[type="date"]:not(:valid):not(:focus)::before {
+  content: attr(placeholder);
+  color: #64748b;
+}
+input[type="date"] {
+  -webkit-appearance: none;
+  min-height: 44px;
+}

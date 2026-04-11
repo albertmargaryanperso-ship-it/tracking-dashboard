@@ -282,8 +282,8 @@ const QuickTodoForm = ({ column, categories, onAdd, onCancel }: {
       </div>
       <div className="flex items-center gap-1 px-1.5 py-1 bg-zinc-900 border border-zinc-800 rounded-lg">
         <CalendarDays size={10} className="text-zinc-500 shrink-0" />
-        <input type="date" value={due} onChange={e => setDue(e.target.value)}
-          className="w-full bg-transparent text-[9px] focus:outline-none" />
+        <input type="date" value={due} onChange={e => setDue(e.target.value)} placeholder="échéance"
+          className="w-full bg-transparent focus:outline-none" />
       </div>
       <div className="flex justify-end gap-1">
         <button onClick={submit} className="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-[10px] font-semibold">Ajouter</button>
@@ -336,8 +336,8 @@ const LogDoneForm = ({ categories, onAdd, onCancel }: {
           <input value={minutes} onChange={e => setMinutes(e.target.value)} placeholder="minutes"
             className="w-16 px-1.5 py-1 bg-zinc-900 border border-zinc-800 rounded text-[10px] text-center focus:outline-none focus:border-emerald-500" />
         </div>
-        <input type="date" value={date} onChange={e => setDate(e.target.value)}
-          className="flex-1 px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] focus:outline-none focus:border-emerald-500" />
+        <input type="date" value={date} onChange={e => setDate(e.target.value)} placeholder="date"
+          className="flex-1 px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg focus:outline-none focus:border-emerald-500" />
         <button onClick={submit} className="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-[10px] font-semibold">OK</button>
         <button onClick={onCancel} className="px-2 py-1 rounded border border-zinc-800 text-zinc-500 text-[10px]">✕</button>
       </div>
