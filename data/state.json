@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 271,
-    "updated_at": "2026-04-11T19:09:38.019Z",
+    "version": 265,
+    "updated_at": "2026-04-11T19:09:56.601Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -394,13 +394,13 @@
       "priority": "normal",
       "category": "admin",
       "due": null,
-      "status": "done",
-      "done": true,
+      "status": "open",
+      "done": false,
       "delegated_to": null,
       "created": "2026-04-09",
-      "completed_at": "2026-04-11",
+      "completed_at": null,
       "duration_min": 45,
-      "completed_min": 0
+      "completed_min": null
     },
     {
       "id": 3,
@@ -499,15 +499,14 @@
       "text": "Factures Omar",
       "category": "admin",
       "priority": "normal",
-      "status": "done",
+      "status": "waiting",
       "delegated_to": null,
       "due": null,
-      "completed_at": "2026-04-11",
+      "completed_at": null,
       "duration_min": 15,
-      "completed_min": 15,
+      "completed_min": null,
       "id": 10006,
-      "created": "2026-04-10",
-      "done": true
+      "created": "2026-04-10"
     },
     {
       "text": "Attestation vigilance Christopher",
@@ -578,15 +577,14 @@
       "text": "Demander les documents de Massinissa Ferradj",
       "category": "pro",
       "priority": "urgent",
-      "status": "done",
+      "status": "open",
       "delegated_to": null,
       "due": null,
-      "completed_at": "2026-04-11",
+      "completed_at": null,
       "duration_min": null,
       "completed_min": null,
       "id": 10012,
-      "created": "2026-04-10",
-      "done": true
+      "created": "2026-04-10"
     },
     {
       "text": "Fiche de paie Morand Allard à deduire",
@@ -613,33 +611,7 @@
       "completed_min": null,
       "id": 10014,
       "created": "2026-04-11"
-    },
-    {
-      "text": "2000 euros du camion Massinissa Ferradj",
-      "category": "finance",
-      "priority": "normal",
-      "status": "waiting",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": 60,
-      "completed_min": null,
-      "id": 10015,
-      "created": "2026-04-11"
-    },
-    {
-      "text": "Trier emails albertmargaryan@gmail.com",
-      "category": "automatisation",
-      "priority": "normal",
-      "status": "delegated",
-      "delegated_to": "Claude",
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10016,
-      "created": "2026-04-11"
     }
   ],
-  "todos_next_id": 10017
+  "todos_next_id": 10015
 }
