@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 263,
-    "updated_at": "2026-04-11T19:06:01.166Z",
+    "updated_at": "2026-04-11T19:06:04.251Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -611,20 +611,7 @@
       "completed_min": null,
       "id": 10014,
       "created": "2026-04-11"
-    },
-    {
-      "text": "Dfhjj",
-      "category": "admin",
-      "priority": "normal",
-      "status": "delegated",
-      "delegated_to": "Loelia",
-      "due": null,
-      "completed_at": null,
-      "duration_min": 30,
-      "completed_min": null,
-      "id": 10015,
-      "created": "2026-04-11"
     }
   ],
-  "todos_next_id": 10016
+  "todos_next_id": 10015
 }
