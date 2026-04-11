@@ -32,17 +32,18 @@ export const VaultView = ({
   const [selectedDate, setSelectedDate] = useState(todayISO())
 
   // Find the travail entry for the selected date
-  const selected = state.travail.find(r => r.date === selectedDate)
+  const travailEntries = state.travail ?? []
+  const selected = travailEntries.find(r => r.date === selectedDate)
   const totalHours = selected?.hours ?? 0
 
   const last7Days = useMemo(() => {
     const today = todayISO()
     return Array.from({ length: 7 }, (_, i) => {
       const d = addDays(today, -(6 - i))
-      const entry = state.travail.find(r => r.date === d)
+      const entry = travailEntries.find(r => r.date === d)
       return { date: d, hours: entry?.hours ?? 0 }
     })
-  }, [state.travail])
+  }, [travailEntries])
 
   const adjustTotal = (delta: number) => {
     const next = Math.max(0, Math.round((totalHours + delta) * 100) / 100)

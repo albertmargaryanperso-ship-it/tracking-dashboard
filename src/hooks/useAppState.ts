@@ -212,7 +212,7 @@ const reducer = (state: AppState, action: Action): AppState => {
       return {
         ...state,
         meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        travail: upsertTravail(state.travail, action.date, entry => ({
+        travail: upsertTravail(state.travail ?? [], action.date, entry => ({
           ...entry,
           hours: newHours,
         })),
@@ -224,7 +224,7 @@ const reducer = (state: AppState, action: Action): AppState => {
       return {
         ...state,
         meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        travail: upsertTravail(state.travail, action.date, entry => {
+        travail: upsertTravail(state.travail ?? [], action.date, entry => {
           const category_hours = { ...entry.category_hours, [action.category]: newCatHours }
           if (newCatHours === 0) delete category_hours[action.category]
           const sumCats = Object.values(category_hours).reduce((a, b) => a + b, 0)
@@ -238,7 +238,7 @@ const reducer = (state: AppState, action: Action): AppState => {
       return {
         ...state,
         meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        travail: upsertTravail(state.travail, action.date, entry => ({ ...entry, notes: action.notes })),
+        travail: upsertTravail(state.travail ?? [], action.date, entry => ({ ...entry, notes: action.notes })),
       }
 
     case 'SET_ROUTINE_HOURS': {
