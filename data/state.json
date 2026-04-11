@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 276,
-    "updated_at": "2026-04-11T22:50:05.009Z",
+    "updated_at": "2026-04-11T22:50:05.910Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -402,21 +402,6 @@
       "completed_at": null,
       "duration_min": 45,
       "completed_min": null,
-      "updated_at": "2026-04-09"
-    },
-    {
-      "id": 4,
-      "text": "Session Claude Code — Applications (00:38-01:04)",
-      "priority": "normal",
-      "category": "automatisation",
-      "due": null,
-      "status": "done",
-      "done": true,
-      "delegated_to": null,
-      "created": "2026-04-09",
-      "completed_at": "2026-04-09",
-      "duration_min": 26,
-      "completed_min": 26,
       "updated_at": "2026-04-09"
     },
     {
