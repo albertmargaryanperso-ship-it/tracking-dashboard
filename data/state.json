@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 272,
-    "updated_at": "2026-04-11T21:52:55.953Z",
+    "updated_at": "2026-04-11T21:53:07.080Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -649,15 +649,16 @@
       "text": "Documents",
       "category": "admin",
       "priority": "normal",
-      "status": "open",
+      "status": "done",
       "delegated_to": null,
       "due": null,
-      "completed_at": null,
+      "completed_at": "2026-04-11",
       "duration_min": 50,
-      "completed_min": null,
+      "completed_min": 50,
       "id": 10016,
       "created": "2026-04-11",
-      "updated_at": "2026-04-11T21:52:55.596Z"
+      "updated_at": "2026-04-11T21:53:06.725Z",
+      "done": true
     }
   ],
   "todos_next_id": 10017
