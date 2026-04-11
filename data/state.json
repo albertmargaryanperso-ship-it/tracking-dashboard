@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 258,
-    "updated_at": "2026-04-11T17:36:31.144Z",
+    "version": 260,
+    "updated_at": "2026-04-11T17:36:32.523Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -384,7 +384,7 @@
       "habit_hours": {
         "Bien-être": 1
       },
-      "notes": "Couper les chevu"
+      "notes": "Couper les chev"
     }
   ],
   "todos": [
