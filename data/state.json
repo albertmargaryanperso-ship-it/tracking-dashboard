@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 296,
-    "updated_at": "2026-04-11T23:22:58.442Z",
+    "version": 292,
+    "updated_at": "2026-04-11T23:23:00.249Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -308,20 +308,6 @@
       "id": 10023,
       "created": "2026-04-12",
       "updated_at": "2026-04-11T23:22:36.211Z"
-    },
-    {
-      "text": "Y",
-      "category": "sport",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-11",
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10024,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-11T23:22:56.958Z"
     }
   ],
   "todos_next_id": 10025,
