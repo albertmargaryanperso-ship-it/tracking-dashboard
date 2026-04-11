@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 258,
-    "updated_at": "2026-04-11T17:36:49.609Z",
+    "version": 260,
+    "updated_at": "2026-04-11T17:36:57.191Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -380,7 +380,7 @@
     },
     {
       "date": "2026-04-11",
-      "hours": 2,
+      "hours": 1,
       "habit_hours": {
         "Bien-être": 1
       },
