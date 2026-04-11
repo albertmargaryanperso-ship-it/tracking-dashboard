@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Plus, Check, Trash2, Clock, ChevronDown, ChevronRight, CalendarDays } from 'lucide-react'
+import { Plus, Check, Trash2, Clock, ChevronDown, ChevronRight, CalendarDays, Hourglass } from 'lucide-react'
 import type { AppState, Stats, Todo, TodoCategory, TodoPriority, TodoStatus } from '@/types'
 import { CATEGORY_CONFIG, CATEGORY_LIST, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES, cn, formatMinutes, todayISO, isoToFr } from '@/lib/utils'
 
@@ -68,7 +68,8 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
       if (b) { openCount += b.open; totalMin += b.minutes }
     }
     urgentCount = filteredTodos.filter(t => t.status === 'open' && t.priority === 'urgent').length
-    return { open: openCount, urgent: urgentCount, minutes: totalMin, done: done.length }
+    const remainingMin = filteredTodos.filter(t => t.status !== 'done').reduce((s, t) => s + (t.duration_min ?? 0), 0)
+    return { open: openCount, urgent: urgentCount, minutes: totalMin, done: done.length, remainingMin }
   }, [stats, categoryFilter, filteredTodos, done])
 
   const handleDrop = (colId: ColumnId) => {
@@ -85,9 +86,9 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
     <div className="space-y-5">
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <TodoStat label="Ouverts" value={filteredStats.open} sub={`${filteredTodos.length} au total`} color="emerald" />
-        <TodoStat label="Urgents" value={filteredStats.urgent} sub="à traiter" color="rose" />
-        <TodoStat label="Temps cumulé" value={formatMinutes(filteredStats.minutes) || '0min'} sub={`${filteredStats.done} terminés`} color="blue" />
+        <TodoStat label="Ouverts" value={filteredStats.open} sub={`${filteredStats.urgent} urgent${filteredStats.urgent > 1 ? 's' : ''}`} color="emerald" />
+        <TodoStat label="Temps restant" value={formatMinutes(filteredStats.remainingMin) || '0min'} sub={`${filteredStats.open} tâches`} color="rose" icon={<Hourglass size={14} className="text-rose-400" />} />
+        <TodoStat label="Temps cumulé" value={formatMinutes(filteredStats.minutes) || '0min'} sub={`${filteredStats.done} terminés`} color="blue" icon={<Clock size={14} className="text-blue-400" />} />
         <TodoStat label="Catégories" value={availableCategories.length} sub={categoryFilter ? (categoryFilter === TRAVAIL_CATEGORIES ? 'Travail' : 'Personnel') : 'Toutes'} color="zinc" />
       </div>
 
@@ -272,17 +273,17 @@ const QuickTodoForm = ({ column, categories, onAdd, onCancel }: {
         <input value={delegatedTo} onChange={e => setDelegatedTo(e.target.value)} placeholder="Délégué à…"
           className="w-full px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] focus:outline-none focus:border-violet-500" />
       )}
-      <div className="grid grid-cols-2 gap-1.5">
-        <div className="flex items-center gap-1 px-1.5 py-1 bg-zinc-900 border border-zinc-800 rounded-lg">
-          <Clock size={10} className="text-zinc-500 shrink-0" />
-          <input value={durationMin} onChange={e => setDurationMin(e.target.value)} placeholder="durée (min)"
-            className="w-full bg-transparent text-[9px] text-center focus:outline-none" />
-        </div>
-        <div className="flex items-center gap-1 px-1.5 py-1 bg-zinc-900 border border-zinc-800 rounded-lg">
-          <CalendarDays size={10} className="text-zinc-500 shrink-0" />
-          <input type="date" value={due} onChange={e => setDue(e.target.value)}
-            className="w-full bg-transparent text-[9px] focus:outline-none" />
-        </div>
+      <div className="grid grid-cols-4 gap-1">
+        {[{ l: '15m', v: '15' }, { l: '30m', v: '30' }, { l: '1h', v: '60' }, { l: '2h', v: '120' }].map(p => (
+          <button key={p.v} type="button" onClick={() => setDurationMin(durationMin === p.v ? '' : p.v)}
+            className={cn('py-1 rounded text-[8px] font-semibold border transition-all',
+              durationMin === p.v ? 'border-cyan-500 bg-cyan-500/15 text-cyan-300' : 'border-zinc-800 text-zinc-500')}>{p.l}</button>
+        ))}
+      </div>
+      <div className="flex items-center gap-1 px-1.5 py-1 bg-zinc-900 border border-zinc-800 rounded-lg">
+        <CalendarDays size={10} className="text-zinc-500 shrink-0" />
+        <input type="date" value={due} onChange={e => setDue(e.target.value)}
+          className="w-full bg-transparent text-[9px] focus:outline-none" />
       </div>
       <div className="flex justify-end gap-1">
         <button onClick={submit} className="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-[10px] font-semibold">Ajouter</button>
@@ -344,11 +345,14 @@ const LogDoneForm = ({ categories, onAdd, onCancel }: {
   )
 }
 
-const TodoStat = ({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color: 'emerald' | 'rose' | 'blue' | 'zinc' }) => {
+const TodoStat = ({ label, value, sub, color, icon }: { label: string; value: string | number; sub?: string; color: 'emerald' | 'rose' | 'blue' | 'zinc'; icon?: React.ReactNode }) => {
   const colors = { emerald: 'border-emerald-500/20 text-emerald-300', rose: 'border-rose-500/20 text-rose-300', blue: 'border-blue-500/20 text-blue-300', zinc: 'border-zinc-800 text-zinc-300' }
   return (
     <div className={cn('rounded-xl border bg-zinc-900/50 p-3', colors[color])}>
-      <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">{label}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">{label}</p>
+        {icon}
+      </div>
       <p className="text-xl font-extrabold mt-0.5">{value}</p>
       {sub && <p className="text-[10px] text-zinc-500 mt-0.5">{sub}</p>}
     </div>

@@ -103,17 +103,16 @@ const TodoForm = ({ onAdd, onClose }: { onAdd: (t: Omit<Todo, 'id' | 'created'>)
             className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-violet-500" />
         </div>
       )}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Échéance</label>
-          <input type="date" value={due} onChange={e => setDue(e.target.value)}
-            className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-rose-500" />
-        </div>
-        <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Durée estimée</label>
-          <input value={durationMin} onChange={e => setDurationMin(e.target.value)} placeholder="minutes"
-            className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-cyan-500 text-center font-mono" />
-        </div>
+      {/* Durée estimée — boutons rapides */}
+      <div>
+        <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Durée estimée</label>
+        <DurationPicker value={durationMin} onChange={setDurationMin} />
+      </div>
+      {/* Échéance */}
+      <div>
+        <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Échéance</label>
+        <input type="date" value={due} onChange={e => setDue(e.target.value)}
+          className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-rose-500" />
       </div>
       <button onClick={submit} className="w-full py-3 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-xs font-bold flex items-center justify-center gap-1.5">
         <Plus size={14} /> Ajouter la tâche
@@ -152,17 +151,14 @@ const DoneForm = ({ onAdd, onClose }: {
           className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-violet-500" />
       </div>
       <CategoryPicker value={category} onChange={setCategory} />
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Temps passé (min)</label>
-          <input value={minutes} onChange={e => setMinutes(e.target.value)} placeholder="45"
-            className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-violet-500 text-center font-mono" />
-        </div>
-        <div>
-          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Date (optionnel)</label>
-          <input type="date" value={date} onChange={e => setDate(e.target.value)}
-            className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-violet-500" />
-        </div>
+      <div>
+        <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Temps passé</label>
+        <DurationPicker value={minutes} onChange={setMinutes} />
+      </div>
+      <div>
+        <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Date (optionnel)</label>
+        <input type="date" value={date} onChange={e => setDate(e.target.value)}
+          className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-violet-500" />
       </div>
       <button onClick={submit} className="w-full py-3 rounded-xl bg-gradient-to-br from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 text-xs font-bold flex items-center justify-center gap-1.5">
         <Clock size={14} /> Loguer l'activité
@@ -194,5 +190,34 @@ const CategoryPicker = ({ value, onChange }: { value: TodoCategory; onChange: (c
         </button>
       ))}
     </div>
+  </div>
+)
+
+const DURATION_PRESETS = [
+  { label: '5min', value: '5' },
+  { label: '10min', value: '10' },
+  { label: '15min', value: '15' },
+  { label: '30min', value: '30' },
+  { label: '45min', value: '45' },
+  { label: '1h', value: '60' },
+  { label: '1h30', value: '90' },
+  { label: '2h', value: '120' },
+]
+
+const DurationPicker = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
+  <div className="mt-1 space-y-1.5">
+    <div className="grid grid-cols-4 gap-1.5">
+      {DURATION_PRESETS.map(p => (
+        <button key={p.value} type="button" onClick={() => onChange(value === p.value ? '' : p.value)}
+          className={cn('py-2 rounded-lg text-[10px] font-semibold border transition-all',
+            value === p.value
+              ? 'border-cyan-500 bg-cyan-500/15 text-cyan-300'
+              : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700')}>
+          {p.label}
+        </button>
+      ))}
+    </div>
+    <input value={value} onChange={e => onChange(e.target.value)} placeholder="ou saisir en minutes…"
+      className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] focus:outline-none focus:border-cyan-500 text-center font-mono" />
   </div>
 )
