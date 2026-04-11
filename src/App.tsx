@@ -61,7 +61,7 @@ export default function App() {
         </div>
       )}
 
-      <main className="relative max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 pb-24">
+      <main className="relative max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 pb-24 overflow-x-hidden">
         {view === 'dashboard' && <Dashboard state={state} stats={stats} />}
         {view === 'todo-travail' && (
           <TodosView state={state} stats={stats}

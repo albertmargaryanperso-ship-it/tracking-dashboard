@@ -5,7 +5,8 @@
 
 @layer base {
   :root { color-scheme: dark; }
-  body { background-color: #09090b; color: #f4f4f5; font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  body { background-color: #09090b; color: #f4f4f5; font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  html { overflow-x: hidden; touch-action: pan-y; }
 }
 
 @layer utilities {
