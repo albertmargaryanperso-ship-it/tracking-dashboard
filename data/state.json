@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 265,
-    "updated_at": "2026-04-11T19:10:53.142Z",
+    "updated_at": "2026-04-11T19:11:10.194Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -499,15 +499,14 @@
       "text": "Factures Omar",
       "category": "admin",
       "priority": "normal",
-      "status": "done",
+      "status": "waiting",
       "delegated_to": null,
       "due": null,
-      "completed_at": "2026-04-11",
+      "completed_at": null,
       "duration_min": 15,
-      "completed_min": 0,
+      "completed_min": null,
       "id": 10006,
-      "created": "2026-04-10",
-      "done": true
+      "created": "2026-04-10"
     },
     {
       "text": "Attestation vigilance Christopher",
