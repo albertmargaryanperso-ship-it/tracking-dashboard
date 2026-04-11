@@ -272,14 +272,19 @@ const QuickTodoForm = ({ column, categories, onAdd, onCancel }: {
         <input value={delegatedTo} onChange={e => setDelegatedTo(e.target.value)} placeholder="Délégué à…"
           className="w-full px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] focus:outline-none focus:border-violet-500" />
       )}
-      <div className="flex items-center gap-1">
-        <Clock size={10} className="text-zinc-500" />
-        <input value={durationMin} onChange={e => setDurationMin(e.target.value)} placeholder="min"
-          className="w-12 px-1.5 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-[9px] text-center focus:outline-none focus:border-cyan-500" />
-        <CalendarDays size={10} className="text-zinc-500 ml-1" />
-        <input type="date" value={due} onChange={e => setDue(e.target.value)}
-          className="w-28 px-1 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-[9px] focus:outline-none focus:border-rose-500" />
-        <div className="flex-1" />
+      <div className="grid grid-cols-2 gap-1.5">
+        <div className="flex items-center gap-1 px-1.5 py-1 bg-zinc-900 border border-zinc-800 rounded-lg">
+          <Clock size={10} className="text-zinc-500 shrink-0" />
+          <input value={durationMin} onChange={e => setDurationMin(e.target.value)} placeholder="durée (min)"
+            className="w-full bg-transparent text-[9px] text-center focus:outline-none" />
+        </div>
+        <div className="flex items-center gap-1 px-1.5 py-1 bg-zinc-900 border border-zinc-800 rounded-lg">
+          <CalendarDays size={10} className="text-zinc-500 shrink-0" />
+          <input type="date" value={due} onChange={e => setDue(e.target.value)}
+            className="w-full bg-transparent text-[9px] focus:outline-none" />
+        </div>
+      </div>
+      <div className="flex justify-end gap-1">
         <button onClick={submit} className="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-[10px] font-semibold">Ajouter</button>
         <button onClick={onCancel} className="px-1.5 py-0.5 rounded border border-zinc-800 text-zinc-500 text-[10px]">✕</button>
       </div>
