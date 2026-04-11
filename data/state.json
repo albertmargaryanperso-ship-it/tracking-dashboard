@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 276,
-    "updated_at": "2026-04-11T22:49:50.873Z",
+    "updated_at": "2026-04-11T22:49:57.360Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -615,21 +615,6 @@
       "id": 10013,
       "created": "2026-04-10",
       "updated_at": "2026-04-10"
-    },
-    {
-      "text": "Payer MOURAD les 2 factures CCT",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "done",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": "2026-04-12",
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10014,
-      "created": "2026-04-11",
-      "updated_at": "2026-04-11T22:49:50.518Z",
-      "done": true
     },
     {
       "text": "Vu film avec Nicolas Cage",
