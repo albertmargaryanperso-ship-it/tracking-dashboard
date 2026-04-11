@@ -1,37 +1,34 @@
 import { useMemo } from 'react'
-import type { TravailEntry, RoutineEntry } from '@/types'
-import { todayISO, addDays } from '@/lib/utils'
-import { cn } from '@/lib/utils'
+import type { Todo } from '@/types'
+import { todayISO, addDays, cn, categoryGroup } from '@/lib/utils'
 
 interface HeatmapProps {
-  travail: TravailEntry[]
-  routine: RoutineEntry[]
+  todos: Todo[]
   days?: number
-  mode: 'vault' | 'routine' | 'combined'
+  mode: 'travail' | 'personnel' | 'combined'
 }
 
-export const Heatmap = ({ travail, routine, days = 182, mode }: HeatmapProps) => {
+export const Heatmap = ({ todos, days = 182, mode }: HeatmapProps) => {
   const data = useMemo(() => {
     const today = todayISO()
     const start = addDays(today, -(days - 1))
-
     const startDate = new Date(start + 'T12:00:00')
     const dow = startDate.getDay()
     const diff = dow === 0 ? -6 : 1 - dow
     startDate.setDate(startDate.getDate() + diff)
 
-    const byDate: Record<string, { vault: number; routine: number }> = {}
-    for (const t of travail) {
-      if (!byDate[t.date]) byDate[t.date] = { vault: 0, routine: 0 }
-      byDate[t.date].vault += t.hours ?? 0
-    }
-    for (const r of routine) {
-      if (!byDate[r.date]) byDate[r.date] = { vault: 0, routine: 0 }
-      byDate[r.date].routine += r.hours ?? 0
+    // Build per-day hours from completed todos
+    const byDate: Record<string, { travail: number; personnel: number }> = {}
+    const doneTodos = todos.filter(t => t.status === 'done' && t.completed_at && t.completed_min)
+    for (const t of doneTodos) {
+      const d = t.completed_at!
+      if (!byDate[d]) byDate[d] = { travail: 0, personnel: 0 }
+      const hours = (t.completed_min ?? 0) / 60
+      if (categoryGroup(t.category) === 'travail') byDate[d].travail += hours
+      else byDate[d].personnel += hours
     }
 
-    // Build grid: 7 rows (days of week) × N columns (weeks)
-    const cells: Array<{ date: string; vault: number; routine: number; future: boolean }> = []
+    const cells: Array<{ date: string; travail: number; personnel: number; future: boolean }> = []
     const cursor = new Date(startDate)
     const todayDate = new Date(today + 'T12:00:00')
     const totalCells = Math.ceil(days / 7) * 7 + 7
@@ -40,48 +37,48 @@ export const Heatmap = ({ travail, routine, days = 182, mode }: HeatmapProps) =>
       const m = String(cursor.getMonth() + 1).padStart(2, '0')
       const d = String(cursor.getDate()).padStart(2, '0')
       const iso = `${y}-${m}-${d}`
-      const entry = byDate[iso] ?? { vault: 0, routine: 0 }
+      const entry = byDate[iso] ?? { travail: 0, personnel: 0 }
       cells.push({ date: iso, ...entry, future: cursor > todayDate })
       cursor.setDate(cursor.getDate() + 1)
     }
     return cells
-  }, [travail, routine, days])
+  }, [todos, days])
 
+  // 6-level color scale based on cumulative hours
   const color = (cell: typeof data[number]): string => {
     if (cell.future) return 'bg-zinc-900/30'
-    const val = mode === 'vault' ? cell.vault : mode === 'routine' ? cell.routine : cell.vault + cell.routine
+    const val = mode === 'travail' ? cell.travail : mode === 'personnel' ? cell.personnel : cell.travail + cell.personnel
     if (val === 0) return 'bg-zinc-800/60'
-    if (mode === 'vault' || (mode === 'combined' && cell.vault > cell.routine)) {
-      if (val < 1)   return 'bg-violet-500/25'
-      if (val < 2.5) return 'bg-violet-500/50'
-      if (val < 4)   return 'bg-violet-500/75'
-      return 'bg-violet-400'
-    }
-    if (val < 1)   return 'bg-cyan-500/25'
-    if (val < 2.5) return 'bg-cyan-500/50'
-    if (val < 4)   return 'bg-cyan-500/75'
-    return 'bg-cyan-400'
+
+    // 8h+ = orange doré
+    if (val >= 8) return 'bg-amber-500'
+
+    // Violet for travail, cyan for personnel
+    const isViolet = mode === 'travail' || (mode === 'combined' && cell.travail >= cell.personnel)
+
+    if (val < 1)   return isViolet ? 'bg-violet-500/20' : 'bg-cyan-500/20'
+    if (val < 2)   return isViolet ? 'bg-violet-500/40' : 'bg-cyan-500/40'
+    if (val < 4)   return isViolet ? 'bg-violet-500/60' : 'bg-cyan-500/60'
+    return isViolet ? 'bg-violet-500/80' : 'bg-cyan-500/80'
   }
 
   return (
     <div className="overflow-x-auto scrollbar-thin pb-2">
       <div className="inline-grid gap-[3px]" style={{ gridTemplateRows: 'repeat(7, 12px)', gridAutoFlow: 'column' }}>
         {data.map((cell, i) => (
-          <div
-            key={i}
-            className={cn('w-3 h-3 rounded-[3px] transition-all hover:scale-150 hover:z-10 relative cursor-default', color(cell))}
-            title={cell.future ? cell.date : `${cell.date} — vault: ${cell.vault.toFixed(1)}h · routine: ${cell.routine.toFixed(1)}h`}
-          />
+          <div key={i} className={cn('w-3 h-3 rounded-[3px] transition-all hover:scale-150 hover:z-10', color(cell))}
+            title={`${cell.date} | T: ${cell.travail.toFixed(1)}h | P: ${cell.personnel.toFixed(1)}h`} />
         ))}
       </div>
-      <div className="flex items-center justify-end gap-1.5 mt-3 text-[10px] text-zinc-500">
-        <span>Moins</span>
-        <div className="w-2.5 h-2.5 rounded-[3px] bg-zinc-800/60" />
-        <div className={cn('w-2.5 h-2.5 rounded-[3px]', mode === 'routine' ? 'bg-cyan-500/25' : 'bg-violet-500/25')} />
-        <div className={cn('w-2.5 h-2.5 rounded-[3px]', mode === 'routine' ? 'bg-cyan-500/50' : 'bg-violet-500/50')} />
-        <div className={cn('w-2.5 h-2.5 rounded-[3px]', mode === 'routine' ? 'bg-cyan-500/75' : 'bg-violet-500/75')} />
-        <div className={cn('w-2.5 h-2.5 rounded-[3px]', mode === 'routine' ? 'bg-cyan-400' : 'bg-violet-400')} />
-        <span>Plus</span>
+      <div className="flex items-center gap-1 mt-2 justify-end">
+        <span className="text-[9px] text-zinc-500">Moins</span>
+        <div className="w-3 h-3 rounded-[2px] bg-zinc-800/60" />
+        <div className={cn('w-3 h-3 rounded-[2px]', mode === 'personnel' ? 'bg-cyan-500/20' : 'bg-violet-500/20')} />
+        <div className={cn('w-3 h-3 rounded-[2px]', mode === 'personnel' ? 'bg-cyan-500/40' : 'bg-violet-500/40')} />
+        <div className={cn('w-3 h-3 rounded-[2px]', mode === 'personnel' ? 'bg-cyan-500/60' : 'bg-violet-500/60')} />
+        <div className={cn('w-3 h-3 rounded-[2px]', mode === 'personnel' ? 'bg-cyan-500/80' : 'bg-violet-500/80')} />
+        <div className="w-3 h-3 rounded-[2px] bg-amber-500" />
+        <span className="text-[9px] text-zinc-500">Plus</span>
       </div>
     </div>
   )

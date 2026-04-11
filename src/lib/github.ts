@@ -2,7 +2,7 @@
 // GitHub API client — read/write state.json as a single source of truth
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { AppState, VaultSession } from '@/types'
+import type { AppState } from '@/types'
 import {
   CONTENTS_API_URL,
   RAW_STATE_URL,
@@ -12,124 +12,68 @@ import {
 } from './config'
 
 // ─── Merge helper ────────────────────────────────────────────────────────────
-// When we hit a SHA conflict on write, another writer pushed since we last
-// read. We merge by picking the NEWEST version of each item (by updated_at
-// for todos, by content key for sessions). This prevents stale local state
-// from overwriting fresh remote changes.
-const sessionKey = (s: VaultSession): string =>
-  `${s.project}|${s.date}|${Math.round((s.hours ?? 0) * 100) / 100}|${(s.note ?? '').trim()}`
+// When SHA conflict on write, merge local + remote. Newest updated_at wins
+// per todo. Archive is union by month. Legacy arrays are passed through.
 
 export const mergeStates = (local: AppState, remote: AppState): AppState => {
-  // Todos — merge by id, NEWEST updated_at wins. Items only in one side are kept.
-  const localById = new Map(local.todos.map(t => [t.id, t]))
-  const remoteById = new Map(remote.todos.map(t => [t.id, t]))
+  // Todos — merge by id, NEWEST updated_at wins
+  const localById = new Map((local.todos ?? []).map(t => [t.id, t]))
+  const remoteById = new Map((remote.todos ?? []).map(t => [t.id, t]))
   const allTodoIds = new Set([...localById.keys(), ...remoteById.keys()])
   const mergedTodos = Array.from(allTodoIds).map(id => {
     const l = localById.get(id)
     const r = remoteById.get(id)
     if (!l) return r!
     if (!r) return l
-    // Both exist — pick the one with the newest updated_at
-    const lAt = l.updated_at ?? ''
-    const rAt = r.updated_at ?? ''
-    return lAt >= rAt ? l : r
+    return (l.updated_at ?? '') >= (r.updated_at ?? '') ? l : r
   })
 
-  // Sessions — union by content key (ids are unstable across writers)
-  const localSessionKeys = new Set(local.sessions.map(sessionKey))
-  const preservedSessions = remote.sessions.filter(s => !localSessionKeys.has(sessionKey(s)))
-  const mergedSessions = [...local.sessions, ...preservedSessions]
-
-  // Travail — union by date, newest wins
-  const localTravailMap = new Map((local.travail ?? []).map(r => [r.date, r]))
-  const remoteTravailMap = new Map((remote.travail ?? []).map(r => [r.date, r]))
-  const allTravailDates = new Set([...localTravailMap.keys(), ...remoteTravailMap.keys()])
-  const mergedTravail = Array.from(allTravailDates).map(date => {
-    const l = localTravailMap.get(date)
-    const r = remoteTravailMap.get(date)
-    if (!l) return r!
-    if (!r) return l
-    const lCats = Object.keys(l.category_hours ?? {}).length
-    const rCats = Object.keys(r.category_hours ?? {}).length
-    if (lCats !== rCats) return lCats > rCats ? l : r
-    return (l.hours ?? 0) >= (r.hours ?? 0) ? l : r
-  })
-
-  // Routine — union by date, newest wins (compare hours — higher = more data)
-  const localRoutineMap = new Map(local.routine.map(r => [r.date, r]))
-  const remoteRoutineMap = new Map(remote.routine.map(r => [r.date, r]))
-  const allRoutineDates = new Set([...localRoutineMap.keys(), ...remoteRoutineMap.keys()])
-  const mergedRoutine = Array.from(allRoutineDates).map(date => {
-    const l = localRoutineMap.get(date)
-    const r = remoteRoutineMap.get(date)
-    if (!l) return r!
-    if (!r) return l
-    // Keep the one with more habit data (proxy for "more complete")
-    const lHabits = Object.keys(l.habit_hours ?? {}).length
-    const rHabits = Object.keys(r.habit_hours ?? {}).length
-    if (lHabits !== rHabits) return lHabits > rHabits ? l : r
-    return (l.hours ?? 0) >= (r.hours ?? 0) ? l : r
-  })
-
-  // Habitudes — union, preserving order from local first
-  const mergedHabits = [...local.meta.habitudes]
-  for (const h of remote.meta.habitudes ?? []) {
-    if (!mergedHabits.includes(h)) mergedHabits.push(h)
+  // Archive — union by month (immutable once created)
+  const localArchive = local.archive ?? []
+  const remoteArchive = remote.archive ?? []
+  const archiveByMonth = new Map(localArchive.map(a => [a.month, a]))
+  for (const a of remoteArchive) {
+    if (!archiveByMonth.has(a.month)) archiveByMonth.set(a.month, a)
   }
+  const mergedArchive = Array.from(archiveByMonth.values()).sort((a, b) => a.month.localeCompare(b.month))
 
-  // next_id — must exceed every known id on both sides
+  // next_id
   const allIds = mergedTodos.map(t => t.id).filter(id => typeof id === 'number')
   const maxId = allIds.length > 0 ? Math.max(...allIds) : 0
-  const nextId = Math.max(
-    local.todos_next_id ?? 1,
-    remote.todos_next_id ?? 1,
-    maxId + 1,
-  )
+  const nextId = Math.max(local.todos_next_id ?? 1, remote.todos_next_id ?? 1, maxId + 1)
+
+  // Legacy arrays — keep the longer side (no new writes happen)
+  const sessions = (local.sessions?.length ?? 0) >= (remote.sessions?.length ?? 0) ? local.sessions : remote.sessions
+  const travail = (local.travail?.length ?? 0) >= (remote.travail?.length ?? 0) ? local.travail : remote.travail
+  const routine = (local.routine?.length ?? 0) >= (remote.routine?.length ?? 0) ? local.routine : remote.routine
 
   return {
-    ...local,
-    meta: {
-      ...local.meta,
-      habitudes: mergedHabits,
-    },
-    sessions: mergedSessions,
-    travail: mergedTravail,
-    routine: mergedRoutine,
+    meta: { ...local.meta },
     todos: mergedTodos,
     todos_next_id: nextId,
+    archive: mergedArchive,
+    sessions,
+    travail,
+    routine,
   }
 }
 
 export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error' | 'no-token'
 
 export const getToken = (): string | null => {
-  try {
-    return localStorage.getItem(TOKEN_STORAGE_KEY)
-  } catch {
-    return null
-  }
+  try { return localStorage.getItem(TOKEN_STORAGE_KEY) } catch { return null }
 }
-
 export const setToken = (token: string | null): void => {
-  try {
-    if (token) localStorage.setItem(TOKEN_STORAGE_KEY, token)
-    else localStorage.removeItem(TOKEN_STORAGE_KEY)
-  } catch {
-    /* ignore */
-  }
+  try { if (token) localStorage.setItem(TOKEN_STORAGE_KEY, token); else localStorage.removeItem(TOKEN_STORAGE_KEY) } catch { /* */ }
 }
-
 export const hasToken = (): boolean => !!getToken()
 
-// Base64 helpers — GitHub Contents API needs base64-encoded content.
-// We use TextEncoder/Decoder to safely handle UTF-8 (emojis, accents).
 const toBase64 = (input: string): string => {
   const bytes = new TextEncoder().encode(input)
   let binary = ''
   for (const b of bytes) binary += String.fromCharCode(b)
   return btoa(binary)
 }
-
 const fromBase64 = (b64: string): string => {
   const binary = atob(b64.replace(/\s+/g, ''))
   const bytes = new Uint8Array(binary.length)
@@ -138,34 +82,19 @@ const fromBase64 = (b64: string): string => {
 }
 
 // ─── Read ────────────────────────────────────────────────────────────────────
-// Strategy:
-//   1. If token → use Contents API (always fresh, includes sha for writes)
-//   2. Else → fetch raw URL with cache-busting (public, no auth)
-
-export interface ReadResult {
-  state: AppState
-  sha: string | null
-}
+export interface ReadResult { state: AppState; sha: string | null }
 
 export const readState = async (): Promise<ReadResult> => {
   const token = getToken()
-
-  // Always use Contents API — fresher than raw.githubusercontent CDN and
-  // returns the current sha needed for conflict-free writes. Works without
-  // token for public repos (subject to 60 req/h unauth rate limit).
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
   }
   if (token) headers.Authorization = `Bearer ${token}`
 
-  const res = await fetch(`${CONTENTS_API_URL}?ref=${GITHUB_BRANCH}&_=${Date.now()}`, {
-    headers,
-    cache: 'no-store',
-  })
+  const res = await fetch(`${CONTENTS_API_URL}?ref=${GITHUB_BRANCH}&_=${Date.now()}`, { headers, cache: 'no-store' })
   if (res.status === 404) throw new Error('STATE_NOT_FOUND')
   if (res.status === 403 && !token) {
-    // Rate-limited without token — fall back to raw URL
     const fallback = await fetch(`${RAW_STATE_URL}?_=${Date.now()}`, { cache: 'no-store' })
     if (!fallback.ok) throw new Error(`Raw read failed: ${fallback.status}`)
     return { state: JSON.parse(await fallback.text()) as AppState, sha: null }
@@ -173,26 +102,17 @@ export const readState = async (): Promise<ReadResult> => {
   if (!res.ok) throw new Error(`GitHub read failed: ${res.status} ${res.statusText}`)
   const json = (await res.json()) as { content: string; encoding: string; sha: string }
   if (json.encoding !== 'base64') throw new Error(`Unexpected encoding: ${json.encoding}`)
-  const text = fromBase64(json.content)
-  return { state: JSON.parse(text) as AppState, sha: json.sha }
+  return { state: JSON.parse(fromBase64(json.content)) as AppState, sha: json.sha }
 }
 
 // ─── Write ───────────────────────────────────────────────────────────────────
-// Requires a token. Uses PUT on contents API. Handles sha collision by
-// refetching the latest sha and retrying once.
-
 export const writeState = async (state: AppState, previousSha: string | null, retryCount = 0): Promise<string> => {
   const token = getToken()
   if (!token) throw new Error('NO_TOKEN')
 
   const stamped: AppState = {
     ...state,
-    meta: {
-      ...state.meta,
-      updated_at: new Date().toISOString(),
-      updated_by: 'web',
-      version: (state.meta.version ?? 0) + 1,
-    },
+    meta: { ...state.meta, updated_at: new Date().toISOString(), updated_by: 'web', version: (state.meta.version ?? 0) + 1 },
   }
 
   const body = {
@@ -214,28 +134,17 @@ export const writeState = async (state: AppState, previousSha: string | null, re
   })
 
   if (res.status === 409 || res.status === 422) {
-    // SHA conflict — someone pushed since we last read. Merge local onto
-    // the fresh remote (preserving both sides' additions) and retry.
     if (retryCount >= 2) throw new Error(`GitHub write conflict after retry: ${res.status}`)
     const fresh = await readState()
     const merged = mergeStates(stamped, fresh.state)
     const reStamped: AppState = {
       ...merged,
-      meta: {
-        ...merged.meta,
-        updated_at: new Date().toISOString(),
-        updated_by: 'web',
-        version: (fresh.state.meta.version ?? 0) + 1,
-      },
+      meta: { ...merged.meta, updated_at: new Date().toISOString(), updated_by: 'web', version: (fresh.state.meta.version ?? 0) + 1 },
     }
     return writeState(reStamped, fresh.sha, retryCount + 1)
   }
 
-  if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`GitHub write failed: ${res.status} ${text}`)
-  }
-
+  if (!res.ok) throw new Error(`GitHub write failed: ${res.status} ${await res.text()}`)
   const json = (await res.json()) as { content: { sha: string } }
   return json.content.sha
 }

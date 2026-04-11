@@ -7,262 +7,166 @@ interface TodosViewProps {
   state: AppState
   stats: Stats
   onAdd: (t: Omit<Todo, 'id' | 'created'>) => void
+  onAddDone: (t: Omit<Todo, 'id' | 'created' | 'status' | 'completed_at'> & { completed_min: number; completed_at?: string }) => void
   onUpdate: (id: number, patch: Partial<Todo>) => void
   onToggle: (id: number, completed_min?: number | null) => void
   onDelete: (id: number) => void
+  categoryFilter?: TodoCategory[]
 }
-
-// ─── Kanban column definitions ─────────────────────────────────────────────
 
 type ColumnId = 'urgent' | 'todo' | 'delegated' | 'waiting'
 
 interface ColumnDef {
-  id: ColumnId
-  label: string
-  emoji: string
-  borderColor: string
-  dotColor: string
+  id: ColumnId; label: string; emoji: string; borderColor: string; dotColor: string
   match: (t: Todo) => boolean
-  // When a todo is dropped into this column, what patch to apply
   toPatch: (t: Todo) => Partial<Todo>
 }
 
 const COLUMNS: ColumnDef[] = [
-  {
-    id: 'urgent',
-    label: 'URGENT',
-    emoji: '🔴',
-    borderColor: 'border-rose-500/40',
-    dotColor: 'bg-rose-500',
-    match: (t) => t.status === 'open' && t.priority === 'urgent',
-    toPatch: () => ({ status: 'open', priority: 'urgent' }),
-  },
-  {
-    id: 'todo',
-    label: 'À FAIRE',
-    emoji: '🟡',
-    borderColor: 'border-amber-500/40',
-    dotColor: 'bg-amber-400',
-    match: (t) => t.status === 'open' && t.priority !== 'urgent',
-    toPatch: (t) => ({ status: 'open', priority: t.priority === 'urgent' ? 'normal' : t.priority }),
-  },
-  {
-    id: 'delegated',
-    label: 'DÉLÉGUÉ',
-    emoji: '👤',
-    borderColor: 'border-violet-500/40',
-    dotColor: 'bg-violet-500',
-    match: (t) => t.status === 'delegated',
-    toPatch: () => ({ status: 'delegated' }),
-  },
-  {
-    id: 'waiting',
-    label: 'EN ATTENTE',
-    emoji: '⏳',
-    borderColor: 'border-sky-500/40',
-    dotColor: 'bg-sky-500',
-    match: (t) => t.status === 'waiting',
-    toPatch: () => ({ status: 'waiting' }),
-  },
+  { id: 'urgent', label: 'URGENT', emoji: '🔴', borderColor: 'border-rose-500/40', dotColor: 'bg-rose-500',
+    match: (t) => t.status === 'open' && t.priority === 'urgent', toPatch: () => ({ status: 'open', priority: 'urgent' }) },
+  { id: 'todo', label: 'À FAIRE', emoji: '🟡', borderColor: 'border-amber-500/40', dotColor: 'bg-amber-400',
+    match: (t) => t.status === 'open' && t.priority !== 'urgent', toPatch: (t) => ({ status: 'open', priority: t.priority === 'urgent' ? 'normal' : t.priority }) },
+  { id: 'delegated', label: 'DÉLÉGUÉ', emoji: '👤', borderColor: 'border-violet-500/40', dotColor: 'bg-violet-500',
+    match: (t) => t.status === 'delegated', toPatch: () => ({ status: 'delegated' }) },
+  { id: 'waiting', label: 'EN ATTENTE', emoji: '⏳', borderColor: 'border-sky-500/40', dotColor: 'bg-sky-500',
+    match: (t) => t.status === 'waiting', toPatch: () => ({ status: 'waiting' }) },
 ]
 
-// ─── Main view ─────────────────────────────────────────────────────────────
-
-export const TodosView = ({ state, stats, onAdd, onUpdate, onToggle, onDelete }: TodosViewProps) => {
+export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, onDelete, categoryFilter }: TodosViewProps) => {
   const [quickCol, setQuickCol] = useState<ColumnId | null>(null)
   const [doneOpen, setDoneOpen] = useState(false)
+  const [logMode, setLogMode] = useState(false)
   const [dragId, setDragId] = useState<number | null>(null)
   const [dragOverCol, setDragOverCol] = useState<ColumnId | null>(null)
 
+  const filteredTodos = useMemo(() =>
+    categoryFilter ? state.todos.filter(t => categoryFilter.includes(t.category)) : state.todos,
+    [state.todos, categoryFilter]
+  )
+
+  const availableCategories = categoryFilter ?? CATEGORY_LIST
+
   const { byColumn, done } = useMemo(() => {
-    const byCol: Record<ColumnId, Todo[]> = {
-      urgent: [],
-      todo: [],
-      delegated: [],
-      waiting: [],
-    }
+    const byCol: Record<ColumnId, Todo[]> = { urgent: [], todo: [], delegated: [], waiting: [] }
     const doneList: Todo[] = []
-    for (const t of state.todos) {
-      if (t.status === 'done') {
-        doneList.push(t)
-        continue
-      }
-      for (const col of COLUMNS) {
-        if (col.match(t)) {
-          byCol[col.id].push(t)
-          break
-        }
-      }
+    for (const t of filteredTodos) {
+      if (t.status === 'done') { doneList.push(t); continue }
+      for (const col of COLUMNS) { if (col.match(t)) { byCol[col.id].push(t); break } }
     }
-    // Sort open lists by priority then id desc
-    for (const k of Object.keys(byCol) as ColumnId[]) {
-      byCol[k].sort((a, b) => b.id - a.id)
-    }
-    // Done by completion date desc
+    for (const k of Object.keys(byCol) as ColumnId[]) byCol[k].sort((a, b) => b.id - a.id)
     doneList.sort((a, b) => (b.completed_at ?? '').localeCompare(a.completed_at ?? ''))
     return { byColumn: byCol, done: doneList }
-  }, [state.todos])
+  }, [filteredTodos])
+
+  // Filtered stats
+  const filteredStats = useMemo(() => {
+    const cats = categoryFilter ?? CATEGORY_LIST
+    let openCount = 0, urgentCount = 0, totalMin = 0
+    for (const c of cats) {
+      const b = stats.tracking.by_category[c]
+      if (b) { openCount += b.open; totalMin += b.minutes }
+    }
+    urgentCount = filteredTodos.filter(t => t.status === 'open' && t.priority === 'urgent').length
+    return { open: openCount, urgent: urgentCount, minutes: totalMin, done: done.length }
+  }, [stats, categoryFilter, filteredTodos, done])
 
   const handleDrop = (colId: ColumnId) => {
     if (dragId === null) return
-    const todo = state.todos.find(t => t.id === dragId)
+    const todo = filteredTodos.find(t => t.id === dragId)
     if (!todo) return
     const col = COLUMNS.find(c => c.id === colId)!
-    const patch = col.toPatch(todo)
-    // No-op if dropping in same column
-    if (col.match(todo)) {
-      setDragId(null)
-      setDragOverCol(null)
-      return
-    }
-    onUpdate(todo.id, patch)
-    setDragId(null)
-    setDragOverCol(null)
+    if (col.match(todo)) { setDragId(null); setDragOverCol(null); return }
+    onUpdate(todo.id, col.toPatch(todo))
+    setDragId(null); setDragOverCol(null)
   }
 
   return (
     <div className="space-y-5">
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <TodoStat label="Ouverts" value={stats.todos.open} sub={`${stats.todos.total} au total`} color="emerald" />
-        <TodoStat label="Urgents" value={stats.todos.urgent} sub="à traiter" color="rose" />
-        <TodoStat
-          label="Travail"
-          value={formatMinutes(stats.todos.by_group.travail.minutes) || '0min'}
-          sub={`${stats.todos.by_group.travail.open} ouverts`}
-          color="blue"
-        />
-        <TodoStat
-          label="Personnel"
-          value={formatMinutes(stats.todos.by_group.personnel.minutes) || '0min'}
-          sub={`${stats.todos.by_group.personnel.open} ouverts`}
-          color="zinc"
-        />
+        <TodoStat label="Ouverts" value={filteredStats.open} sub={`${filteredTodos.length} au total`} color="emerald" />
+        <TodoStat label="Urgents" value={filteredStats.urgent} sub="à traiter" color="rose" />
+        <TodoStat label="Temps cumulé" value={formatMinutes(filteredStats.minutes) || '0min'} sub={`${filteredStats.done} terminés`} color="blue" />
+        <TodoStat label="Catégories" value={availableCategories.length} sub={categoryFilter ? (categoryFilter === TRAVAIL_CATEGORIES ? 'Travail' : 'Personnel') : 'Toutes'} color="zinc" />
       </div>
 
-      {/* Temps par catégorie */}
-      <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5">
-        {CATEGORY_LIST.map(c => {
-          const cat = CATEGORY_CONFIG[c]
-          const bucket = stats.todos.by_category[c]
+      {/* Category mini bar */}
+      <div className="grid grid-cols-4 gap-1.5">
+        {availableCategories.map(c => {
+          const cat = CATEGORY_CONFIG[c]; const bucket = stats.tracking.by_category[c]
           return (
             <div key={c} className={cn('rounded-xl border bg-zinc-900/50 p-2 text-center', cat.bg)}>
               <span className="text-sm">{cat.emoji}</span>
-              <p className={cn('text-xs font-bold mt-0.5', cat.color)}>
-                {formatMinutes(bucket.minutes) || '—'}
-              </p>
-              <p className="text-[8px] text-zinc-500">{bucket.open} ouv.</p>
+              <p className={cn('text-xs font-bold mt-0.5', cat.color)}>{formatMinutes(bucket?.minutes ?? 0) || '—'}</p>
+              <p className="text-[8px] text-zinc-500">{bucket?.open ?? 0} ouv.</p>
             </div>
           )
         })}
       </div>
+
+      {/* Log done todo button */}
+      <div className="flex justify-end">
+        <button onClick={() => setLogMode(!logMode)}
+          className={cn('text-[10px] px-3 py-1.5 rounded-lg border flex items-center gap-1 transition-all',
+            logMode ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300' : 'border-zinc-800 text-zinc-500 hover:text-zinc-300')}>
+          <Clock size={11} /> Loguer une activité faite
+        </button>
+      </div>
+      {logMode && <LogDoneForm categories={availableCategories} onAdd={(t) => { onAddDone(t); setLogMode(false) }} onCancel={() => setLogMode(false)} />}
 
       {/* Kanban board */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         {COLUMNS.map(col => {
-          const items = byColumn[col.id]
-          const isOver = dragOverCol === col.id
+          const items = byColumn[col.id]; const isOver = dragOverCol === col.id
           return (
-            <div
-              key={col.id}
+            <div key={col.id}
               onDragOver={(e) => { e.preventDefault(); setDragOverCol(col.id) }}
               onDragLeave={() => setDragOverCol(prev => prev === col.id ? null : prev)}
               onDrop={() => handleDrop(col.id)}
-              className={cn(
-                'rounded-2xl border bg-zinc-900/40 p-3 flex flex-col gap-2 min-h-[240px] transition-all',
-                col.borderColor,
-                isOver && 'bg-zinc-900/70 ring-2 ring-emerald-500/40',
-              )}
-            >
-              {/* Column header */}
+              className={cn('rounded-2xl border bg-zinc-900/40 p-3 flex flex-col gap-2 min-h-[240px] transition-all',
+                col.borderColor, isOver && 'bg-zinc-900/70 ring-2 ring-emerald-500/40')}>
               <div className="flex items-center justify-between gap-2 px-1">
                 <div className="flex items-center gap-2">
                   <span className={cn('w-2 h-2 rounded-full', col.dotColor)} />
                   <span className="text-[11px] font-bold tracking-wider text-zinc-200">{col.label}</span>
-                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
-                    {items.length}
-                  </span>
+                  <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">{items.length}</span>
                 </div>
-                <button
-                  onClick={() => setQuickCol(quickCol === col.id ? null : col.id)}
-                  className="w-6 h-6 rounded-md border border-zinc-800 hover:border-emerald-500/40 hover:bg-emerald-500/10 text-zinc-500 hover:text-emerald-300 flex items-center justify-center transition-all"
-                  title="Nouvelle tâche"
-                >
+                <button onClick={() => setQuickCol(quickCol === col.id ? null : col.id)}
+                  className="w-6 h-6 rounded-md border border-zinc-800 hover:border-emerald-500/40 hover:bg-emerald-500/10 text-zinc-500 hover:text-emerald-300 flex items-center justify-center transition-all">
                   <Plus size={12} />
                 </button>
               </div>
-
-              {/* Quick add form (inline) */}
-              {quickCol === col.id && (
-                <QuickTodoForm
-                  column={col.id}
-                  onAdd={(t) => { onAdd(t); setQuickCol(null) }}
-                  onCancel={() => setQuickCol(null)}
-                />
-              )}
-
-              {/* Cards */}
+              {quickCol === col.id && <QuickTodoForm column={col.id} categories={availableCategories} onAdd={(t) => { onAdd(t); setQuickCol(null) }} onCancel={() => setQuickCol(null)} />}
               <div className="flex-1 flex flex-col gap-1.5">
                 {items.length === 0 ? (
-                  <div className="flex-1 flex items-center justify-center text-[10px] text-zinc-600 italic py-6">
-                    {quickCol === col.id ? '' : 'Aucune tâche'}
-                  </div>
-                ) : (
-                  items.map(t => (
-                    <TodoCard
-                      key={t.id}
-                      todo={t}
-                      dragging={dragId === t.id}
-                      onDragStart={() => setDragId(t.id)}
-                      onDragEnd={() => { setDragId(null); setDragOverCol(null) }}
-                      onToggle={onToggle}
-                      onDelete={onDelete}
-                    />
-                  ))
-                )}
+                  <div className="flex-1 flex items-center justify-center text-[10px] text-zinc-600 italic py-6">{quickCol === col.id ? '' : 'Aucune tâche'}</div>
+                ) : items.map(t => (
+                  <TodoCard key={t.id} todo={t} dragging={dragId === t.id}
+                    onDragStart={() => setDragId(t.id)} onDragEnd={() => { setDragId(null); setDragOverCol(null) }}
+                    onToggle={onToggle} onDelete={onDelete} />
+                ))}
               </div>
             </div>
           )
         })}
       </div>
 
-      {/* Terminé section */}
+      {/* Done section */}
       <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3">
-        <button
-          onClick={() => setDoneOpen(o => !o)}
-          className="w-full flex items-center gap-2 text-left"
-        >
+        <button onClick={() => setDoneOpen(o => !o)} className="w-full flex items-center gap-2 text-left">
           {doneOpen ? <ChevronDown size={14} className="text-emerald-400" /> : <ChevronRight size={14} className="text-emerald-400" />}
           <span className="text-sm">✅</span>
           <span className="text-[11px] font-bold tracking-wider text-emerald-300">TERMINÉ</span>
-          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">
-            {done.length}
-          </span>
+          <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400">{done.length}</span>
           <span className="flex-1" />
-          <span className="text-[10px] text-zinc-500">
-            {stats.todos.completion_rate}% complétés
-          </span>
+          <span className="text-[10px] text-zinc-500">{formatMinutes(filteredStats.minutes) || '0min'} cumulés</span>
         </button>
-
         {doneOpen && (
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-1.5">
             {done.length === 0 ? (
-              <div className="col-span-full text-center text-[10px] text-zinc-600 italic py-4">
-                Rien de terminé pour le moment.
-              </div>
-            ) : (
-              done.map(t => (
-                <TodoCard
-                  key={t.id}
-                  todo={t}
-                  dragging={false}
-                  onDragStart={() => {}}
-                  onDragEnd={() => {}}
-                  onToggle={onToggle}
-                  onDelete={onDelete}
-                />
-              ))
-            )}
+              <div className="col-span-full text-center text-[10px] text-zinc-600 italic py-4">Rien de terminé pour le moment.</div>
+            ) : done.map(t => <TodoCard key={t.id} todo={t} dragging={false} onDragStart={() => {}} onDragEnd={() => {}} onToggle={onToggle} onDelete={onDelete} />)}
           </div>
         )}
       </div>
@@ -271,31 +175,16 @@ export const TodosView = ({ state, stats, onAdd, onUpdate, onToggle, onDelete }:
 }
 
 // ─── Card ──────────────────────────────────────────────────────────────────
-
-const TodoCard = ({
-  todo,
-  dragging,
-  onDragStart,
-  onDragEnd,
-  onToggle,
-  onDelete,
-}: {
-  todo: Todo
-  dragging: boolean
-  onDragStart: () => void
-  onDragEnd: () => void
-  onToggle: (id: number, completed_min?: number | null) => void
-  onDelete: (id: number) => void
+const TodoCard = ({ todo, dragging, onDragStart, onDragEnd, onToggle, onDelete }: {
+  todo: Todo; dragging: boolean; onDragStart: () => void; onDragEnd: () => void
+  onToggle: (id: number, completed_min?: number | null) => void; onDelete: (id: number) => void
 }) => {
   const cat = CATEGORY_CONFIG[todo.category] ?? CATEGORY_CONFIG.admin
   const isDone = todo.status === 'done'
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (isDone) {
-      onToggle(todo.id)
-      return
-    }
+    if (isDone) { onToggle(todo.id); return }
     if (todo.duration_min && todo.duration_min > 0) {
       const raw = window.prompt(`Temps réel passé (en minutes) ?`, String(todo.duration_min))
       if (raw === null) return
@@ -307,59 +196,26 @@ const TodoCard = ({
   }
 
   return (
-    <div
-      draggable={!isDone}
-      onDragStart={(e) => {
-        e.dataTransfer.effectAllowed = 'move'
-        onDragStart()
-      }}
-      onDragEnd={onDragEnd}
-      className={cn(
-        'group relative rounded-xl border bg-zinc-900/70 hover:bg-zinc-900 p-2.5 transition-all',
+    <div draggable={!isDone} onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart() }} onDragEnd={onDragEnd}
+      className={cn('group relative rounded-xl border bg-zinc-900/70 hover:bg-zinc-900 p-2.5 transition-all',
         isDone ? 'border-zinc-800/60 opacity-60' : 'border-zinc-800 hover:border-emerald-500/30 cursor-grab active:cursor-grabbing',
-        dragging && 'opacity-40 ring-2 ring-emerald-500/50',
-      )}
-    >
+        dragging && 'opacity-40 ring-2 ring-emerald-500/50')}>
       <div className="flex items-start gap-2">
-        <button
-          onClick={handleToggle}
-          className={cn(
-            'shrink-0 mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all',
-            isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-zinc-600 hover:border-emerald-400'
-          )}
-        >
+        <button onClick={handleToggle} className={cn('shrink-0 mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all',
+          isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-zinc-600 hover:border-emerald-400')}>
           {isDone && <Check size={9} strokeWidth={3.5} />}
         </button>
         <div className="flex-1 min-w-0">
-          <p className={cn(
-            'text-[12px] leading-snug font-medium',
-            isDone ? 'line-through text-zinc-500' : 'text-zinc-100'
-          )}>
-            {todo.text}
-          </p>
+          <p className={cn('text-[12px] leading-snug font-medium', isDone ? 'line-through text-zinc-500' : 'text-zinc-100')}>{todo.text}</p>
           <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-            <span className={cn('px-1.5 py-0.5 rounded text-[9px] font-semibold border', cat.bg, cat.color)}>
-              {cat.emoji} {cat.label}
-            </span>
-            {todo.status === 'delegated' && todo.delegated_to && (
-              <span className="text-[9px] text-violet-300 font-semibold">
-                → {todo.delegated_to}
-              </span>
-            )}
-            {todo.duration_min ? (
-              <span className="flex items-center gap-0.5 text-[9px] text-cyan-400">
-                <Clock size={8} /> {formatMinutes(todo.duration_min)}
-              </span>
-            ) : null}
-            {isDone && todo.completed_min ? (
-              <span className="text-[9px] text-emerald-400">⏱ {formatMinutes(todo.completed_min)}</span>
-            ) : null}
+            <span className={cn('px-1.5 py-0.5 rounded text-[9px] font-semibold border', cat.bg, cat.color)}>{cat.emoji} {cat.label}</span>
+            {todo.status === 'delegated' && todo.delegated_to && <span className="text-[9px] text-violet-300 font-semibold">→ {todo.delegated_to}</span>}
+            {todo.duration_min ? <span className="flex items-center gap-0.5 text-[9px] text-cyan-400"><Clock size={8} /> {formatMinutes(todo.duration_min)}</span> : null}
+            {isDone && todo.completed_min ? <span className="text-[9px] text-emerald-400">⏱ {formatMinutes(todo.completed_min)}</span> : null}
           </div>
         </div>
-        <button
-          onClick={() => onDelete(todo.id)}
-          className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
-        >
+        <button onClick={() => onDelete(todo.id)}
+          className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all">
           <Trash2 size={10} />
         </button>
       </div>
@@ -367,119 +223,114 @@ const TodoCard = ({
   )
 }
 
-// ─── Inline quick add ──────────────────────────────────────────────────────
-
-const QuickTodoForm = ({
-  column,
-  onAdd,
-  onCancel,
-}: {
-  column: ColumnId
-  onAdd: (t: Omit<Todo, 'id' | 'created'>) => void
-  onCancel: () => void
+// ─── Quick add form ──────────────────────────────────────────────────────
+const QuickTodoForm = ({ column, categories, onAdd, onCancel }: {
+  column: ColumnId; categories: TodoCategory[]
+  onAdd: (t: Omit<Todo, 'id' | 'created'>) => void; onCancel: () => void
 }) => {
   const [text, setText] = useState('')
-  const [category, setCategory] = useState<TodoCategory>('pro')
+  const [category, setCategory] = useState<TodoCategory>(categories[0])
   const [durationMin, setDurationMin] = useState('')
   const [delegatedTo, setDelegatedTo] = useState('')
 
-  const statusFromCol = (): TodoStatus => {
-    if (column === 'delegated') return 'delegated'
-    if (column === 'waiting') return 'waiting'
-    return 'open'
-  }
-
-  const priorityFromCol = (): TodoPriority => {
-    if (column === 'urgent') return 'urgent'
-    return 'normal'
-  }
+  const statusFromCol = (): TodoStatus => { if (column === 'delegated') return 'delegated'; if (column === 'waiting') return 'waiting'; return 'open' }
+  const priorityFromCol = (): TodoPriority => column === 'urgent' ? 'urgent' : 'normal'
 
   const submit = () => {
     if (!text.trim()) return
     const dur = durationMin.trim() ? parseInt(durationMin.trim(), 10) : null
     onAdd({
-      text: text.trim(),
-      category,
-      priority: priorityFromCol(),
-      status: statusFromCol(),
+      text: text.trim(), category, priority: priorityFromCol(), status: statusFromCol(),
       delegated_to: column === 'delegated' && delegatedTo.trim() ? delegatedTo.trim() : null,
-      due: null,
-      completed_at: null,
-      duration_min: dur && !isNaN(dur) && dur > 0 ? dur : null,
-      completed_min: null,
+      due: null, completed_at: null,
+      duration_min: dur && !isNaN(dur) && dur > 0 ? dur : null, completed_min: null,
     })
-    setText('')
-    setDurationMin('')
-    setDelegatedTo('')
   }
 
   return (
     <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-2 space-y-1.5">
-      <input
-        autoFocus
-        value={text}
-        onChange={e => setText(e.target.value)}
+      <input autoFocus value={text} onChange={e => setText(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') onCancel() }}
         placeholder="Texte de la tâche…"
-        className="w-full px-2 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] focus:outline-none focus:border-emerald-500"
-      />
-      <div className="space-y-0.5">
-        <div className="flex flex-wrap gap-1">
-          <span className="text-[8px] text-violet-400 font-semibold self-center mr-0.5">T</span>
-          {TRAVAIL_CATEGORIES.map(c => (
-            <button key={c} onClick={() => setCategory(c)}
-              className={cn('px-1.5 py-0.5 rounded text-[9px] font-semibold border transition-all',
-                category === c ? CATEGORY_CONFIG[c].bg + ' ' + CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500'
-              )} title={CATEGORY_CONFIG[c].label}>{CATEGORY_CONFIG[c].emoji}</button>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-1">
-          <span className="text-[8px] text-cyan-400 font-semibold self-center mr-0.5">P</span>
-          {PERSONNEL_CATEGORIES.map(c => (
-            <button key={c} onClick={() => setCategory(c)}
-              className={cn('px-1.5 py-0.5 rounded text-[9px] font-semibold border transition-all',
-                category === c ? CATEGORY_CONFIG[c].bg + ' ' + CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500'
-              )} title={CATEGORY_CONFIG[c].label}>{CATEGORY_CONFIG[c].emoji}</button>
-          ))}
-        </div>
+        className="w-full px-2 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] focus:outline-none focus:border-emerald-500" />
+      <div className="flex flex-wrap gap-1">
+        {categories.map(c => (
+          <button key={c} onClick={() => setCategory(c)}
+            className={cn('px-1.5 py-0.5 rounded text-[9px] font-semibold border transition-all',
+              category === c ? CATEGORY_CONFIG[c].bg + ' ' + CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500')}
+            title={CATEGORY_CONFIG[c].label}>{CATEGORY_CONFIG[c].emoji}</button>
+        ))}
       </div>
       {column === 'delegated' && (
-        <input
-          value={delegatedTo}
-          onChange={e => setDelegatedTo(e.target.value)}
-          placeholder="Délégué à…"
-          className="w-full px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] focus:outline-none focus:border-violet-500"
-        />
+        <input value={delegatedTo} onChange={e => setDelegatedTo(e.target.value)} placeholder="Délégué à…"
+          className="w-full px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] focus:outline-none focus:border-violet-500" />
       )}
       <div className="flex items-center gap-1">
         <Clock size={10} className="text-zinc-500" />
-        <input
-          value={durationMin}
-          onChange={e => setDurationMin(e.target.value)}
-          placeholder="min"
-          className="w-12 px-1.5 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-[9px] text-center focus:outline-none focus:border-cyan-500"
-        />
+        <input value={durationMin} onChange={e => setDurationMin(e.target.value)} placeholder="min"
+          className="w-12 px-1.5 py-0.5 bg-zinc-900 border border-zinc-800 rounded text-[9px] text-center focus:outline-none focus:border-cyan-500" />
         <div className="flex-1" />
-        <button onClick={submit} className="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-[10px] font-semibold">
-          Ajouter
-        </button>
-        <button onClick={onCancel} className="px-1.5 py-0.5 rounded border border-zinc-800 text-zinc-500 text-[10px]">
-          ✕
-        </button>
+        <button onClick={submit} className="px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 text-[10px] font-semibold">Ajouter</button>
+        <button onClick={onCancel} className="px-1.5 py-0.5 rounded border border-zinc-800 text-zinc-500 text-[10px]">✕</button>
       </div>
     </div>
   )
 }
 
-// ─── Stat tile ─────────────────────────────────────────────────────────────
+// ─── Log done form ──────────────────────────────────────────────────────
+const LogDoneForm = ({ categories, onAdd, onCancel }: {
+  categories: TodoCategory[]
+  onAdd: (t: Omit<Todo, 'id' | 'created' | 'status' | 'completed_at'> & { completed_min: number; completed_at?: string }) => void
+  onCancel: () => void
+}) => {
+  const [text, setText] = useState('')
+  const [category, setCategory] = useState<TodoCategory>(categories[0])
+  const [minutes, setMinutes] = useState('')
+  const [date, setDate] = useState('')
+
+  const submit = () => {
+    if (!text.trim() || !minutes.trim()) return
+    const min = parseInt(minutes.trim(), 10)
+    if (isNaN(min) || min <= 0) return
+    onAdd({
+      text: text.trim(), category, priority: 'normal', delegated_to: null, due: null,
+      duration_min: min, completed_min: min,
+      ...(date ? { completed_at: date } : {}),
+    })
+  }
+
+  return (
+    <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-3 space-y-2">
+      <p className="text-[10px] text-emerald-300 font-semibold uppercase tracking-wider">Loguer une activité déjà réalisée</p>
+      <input autoFocus value={text} onChange={e => setText(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') submit(); if (e.key === 'Escape') onCancel() }}
+        placeholder="Qu'est-ce qui a été fait ?"
+        className="w-full px-2 py-1.5 bg-zinc-900 border border-zinc-800 rounded-lg text-[11px] focus:outline-none focus:border-emerald-500" />
+      <div className="flex flex-wrap gap-1">
+        {categories.map(c => (
+          <button key={c} onClick={() => setCategory(c)}
+            className={cn('px-1.5 py-0.5 rounded text-[9px] font-semibold border transition-all',
+              category === c ? CATEGORY_CONFIG[c].bg + ' ' + CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500')}>
+            {CATEGORY_CONFIG[c].emoji} {CATEGORY_CONFIG[c].label}</button>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <div className="flex items-center gap-1">
+          <Clock size={10} className="text-zinc-500" />
+          <input value={minutes} onChange={e => setMinutes(e.target.value)} placeholder="minutes"
+            className="w-16 px-1.5 py-1 bg-zinc-900 border border-zinc-800 rounded text-[10px] text-center focus:outline-none focus:border-emerald-500" />
+        </div>
+        <input type="date" value={date} onChange={e => setDate(e.target.value)}
+          className="flex-1 px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg text-[10px] focus:outline-none focus:border-emerald-500" />
+        <button onClick={submit} className="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-[10px] font-semibold">OK</button>
+        <button onClick={onCancel} className="px-2 py-1 rounded border border-zinc-800 text-zinc-500 text-[10px]">✕</button>
+      </div>
+    </div>
+  )
+}
 
 const TodoStat = ({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color: 'emerald' | 'rose' | 'blue' | 'zinc' }) => {
-  const colors = {
-    emerald: 'border-emerald-500/20 text-emerald-300',
-    rose: 'border-rose-500/20 text-rose-300',
-    blue: 'border-blue-500/20 text-blue-300',
-    zinc: 'border-zinc-800 text-zinc-300',
-  }
+  const colors = { emerald: 'border-emerald-500/20 text-emerald-300', rose: 'border-rose-500/20 text-rose-300', blue: 'border-blue-500/20 text-blue-300', zinc: 'border-zinc-800 text-zinc-300' }
   return (
     <div className={cn('rounded-xl border bg-zinc-900/50 p-3', colors[color])}>
       <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">{label}</p>

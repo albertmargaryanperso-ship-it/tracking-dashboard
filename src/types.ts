@@ -2,41 +2,15 @@
 // 📊 Tracking Dashboard — Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type View = 'dashboard' | 'travail' | 'personnel' | 'todos' | 'charts'
+export type View = 'dashboard' | 'todo-travail' | 'todo-personnel' | 'charts' | 'historique'
 
-// ─── Vault sessions (projets) ────────────────────────────────────────────────
-export interface VaultSession {
-  id: string              // uuid or `${project}-${date}-${idx}`
-  project: string         // nom de la note Obsidian (ex: "FTTH CCT 2026 - Partie 1")
-  date: string            // ISO YYYY-MM-DD
-  hours: number           // float (ex: 2.5)
-  note?: string           // description libre
-  validated?: boolean     // si "(non validé)" marqué
-}
-
-// ─── Travail (heures par catégorie pro/finance/admin/auto) ──────────────────
-export interface TravailEntry {
-  date: string                            // ISO YYYY-MM-DD
-  hours: number                           // total heures du jour (float)
-  notes?: string
-  category_hours: Record<string, number>  // { pro: 2.0, finance: 1.5, admin: 0.5 }
-}
-
-// ─── Routine / Personnel (activités quantifiées en heures décimales) ────────
-export interface RoutineEntry {
-  date: string                            // ISO YYYY-MM-DD
-  hours: number                           // total heures du jour (float)
-  notes?: string
-  habit_hours: Record<string, number>     // { Sport: 1.0, Cardio: 0.5, Lecture: 0.25, 'Bien-être': 0.5 }
-}
-
-// ─── Todos ───────────────────────────────────────────────────────────────────
+// ─── Categories ─────────────────────────────────────────────────────────────
 export type TodoCategory = 'pro' | 'finance' | 'admin' | 'automatisation' | 'sport' | 'cardio' | 'lecture' | 'bien-etre'
-
 export type CategoryGroup = 'travail' | 'personnel'
 export type TodoPriority = 'urgent' | 'normal' | 'faible'
 export type TodoStatus = 'open' | 'done' | 'waiting' | 'delegated'
 
+// ─── Todos ───────────────────────────────────────────────────────────────────
 export interface Todo {
   id: number
   text: string
@@ -53,40 +27,80 @@ export interface Todo {
   updated_at?: string            // ISO datetime — for conflict resolution
 }
 
+// ─── Archive mensuelle ──────────────────────────────────────────────────────
+export interface ArchiveMonth {
+  month: string                    // "2026-04"
+  archived_at: string              // ISO datetime
+  todos: Todo[]
+  stats: {
+    total_minutes: number
+    travail_minutes: number
+    personnel_minutes: number
+    by_category: Record<string, { count: number; minutes: number }>
+    days_active: number
+    best_day: { date: string; minutes: number } | null
+  }
+}
+
+// ─── Legacy types (kept for backward compat with cloud data) ────────────────
+export interface VaultSession {
+  id: string
+  project: string
+  date: string
+  hours: number
+  note?: string
+  validated?: boolean
+}
+
+export interface TravailEntry {
+  date: string
+  hours: number
+  notes?: string
+  category_hours: Record<string, number>
+}
+
+export interface RoutineEntry {
+  date: string
+  hours: number
+  notes?: string
+  habit_hours: Record<string, number>
+}
+
 // ─── State global (source de vérité sur GitHub) ─────────────────────────────
 export interface AppState {
   meta: {
     version: number
-    updated_at: string             // ISO datetime
+    updated_at: string
     updated_by: 'obsidian' | 'web' | 'mobile'
-    habitudes: string[]            // liste configurable des habitudes (routine categories)
+    habitudes?: string[]           // legacy
   }
-  sessions: VaultSession[]          // legacy project-based sessions
-  travail: TravailEntry[]           // category-based travail entries
-  routine: RoutineEntry[]
+  // Active data
   todos: Todo[]
   todos_next_id: number
+  archive: ArchiveMonth[]
+  // Legacy (preserved, never written to)
+  sessions?: VaultSession[]
+  travail?: TravailEntry[]
+  routine?: RoutineEntry[]
 }
 
 // ─── Stats calculées ────────────────────────────────────────────────────────
 export interface Stats {
-  vault: {
-    today_hours: number
-    week_hours: number
-    month_hours: number
-    total_hours: number
-    streak_days: number
-    by_category: Array<{ name: string; hours: number; emoji: string; color: string }>
-  }
-  routine: {
-    today_hours: number
-    today_intensity: string
-    week_hours: number
-    month_hours: number
-    total_hours: number
-    streak_days: number
-    habits_today: Record<string, number>                // heures par habitude aujourd'hui
-    by_habit: Array<{ name: string; hours: number }>    // total heures par habitude (pour camembert)
+  tracking: {
+    today_minutes: number
+    week_minutes: number
+    month_minutes: number
+    total_minutes: number          // active + archived
+    travail_today_min: number
+    travail_week_min: number
+    travail_month_min: number
+    personnel_today_min: number
+    personnel_week_min: number
+    personnel_month_min: number
+    streak_travail: number
+    streak_personnel: number
+    by_category: Record<TodoCategory, { total: number; open: number; done: number; minutes: number }>
+    by_group: Record<CategoryGroup, { total: number; open: number; done: number; minutes: number }>
   }
   todos: {
     total: number
@@ -94,9 +108,5 @@ export interface Stats {
     done: number
     urgent: number
     completion_rate: number
-    by_category: Record<TodoCategory, { total: number; open: number; minutes: number }>
-    by_group: Record<CategoryGroup, { total: number; open: number; minutes: number }>
-    today_minutes: number      // temps activités cochées aujourd'hui
-    week_minutes: number
   }
 }

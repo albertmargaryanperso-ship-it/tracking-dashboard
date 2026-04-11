@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import type { AppState, VaultSession, TravailEntry, RoutineEntry, Todo } from '@/types'
+import type { AppState, Todo, TodoCategory, ArchiveMonth } from '@/types'
 import { INITIAL_STATE } from '@/lib/initialState'
 import { computeStats } from '@/lib/stats'
 import { readState, writeState, hasToken, mergeStates, type SyncStatus } from '@/lib/github'
@@ -10,75 +10,34 @@ import {
   PENDING_FLAG_KEY,
   PUSH_DEBOUNCE_MS,
 } from '@/lib/config'
-import { todayISO, CATEGORY_LIST } from '@/lib/utils'
+import { todayISO, CATEGORY_LIST, categoryGroup } from '@/lib/utils'
 
 // ─── Pending flag ───────────────────────────────────────────────────────────
-// We persist a "dirty" bit to localStorage so that if iOS Safari kills the
-// tab while a push is debounced or in flight, the next load knows to flush
-// the cached state before pulling. Without this, mobile users lose edits.
 const setPendingFlag = (on: boolean): void => {
-  try {
-    if (on) localStorage.setItem(PENDING_FLAG_KEY, '1')
-    else localStorage.removeItem(PENDING_FLAG_KEY)
-  } catch {
-    /* ignore */
-  }
+  try { if (on) localStorage.setItem(PENDING_FLAG_KEY, '1'); else localStorage.removeItem(PENDING_FLAG_KEY) } catch { /* */ }
 }
-
 const hasPendingFlag = (): boolean => {
-  try {
-    return localStorage.getItem(PENDING_FLAG_KEY) === '1'
-  } catch {
-    return false
-  }
+  try { return localStorage.getItem(PENDING_FLAG_KEY) === '1' } catch { return false }
 }
 
 // ─── Persistence helpers ────────────────────────────────────────────────────
-
 const loadCached = (): AppState | null => {
   try {
     const raw = localStorage.getItem(STATE_CACHE_KEY)
     return raw ? migrateState(JSON.parse(raw) as AppState) : null
-  } catch {
-    return null
-  }
+  } catch { return null }
 }
-
 const saveCached = (state: AppState): void => {
   try {
     localStorage.setItem(STATE_CACHE_KEY, JSON.stringify(state))
     localStorage.setItem(LAST_SYNC_KEY, new Date().toISOString())
-  } catch {
-    /* ignore */
-  }
+  } catch { /* */ }
 }
 
-// Migrate old-format state (blocs + habitudes Oui/Non) to new format
-// (hours + habit_hours). Idempotent.
+// ─── Migration ──────────────────────────────────────────────────────────────
+const validCategories = CATEGORY_LIST as string[]
+
 const migrateState = (state: AppState): AppState => {
-  const migratedRoutine: RoutineEntry[] = (state.routine ?? []).map((r: any) => {
-    if ('hours' in r && r.habit_hours) return r as RoutineEntry
-    const blocs = (r as any).blocs ?? 0
-    const hours = (r as any).hours ?? blocs * 0.5
-    const old_hab = (r as any).habitudes ?? {}
-    const habit_hours: Record<string, number> = {}
-    if (r.habit_hours) {
-      Object.assign(habit_hours, r.habit_hours)
-    } else {
-      const oui = Object.entries(old_hab).filter(([, v]) => v === 'Oui').map(([k]) => k)
-      if (oui.length > 0 && hours > 0) {
-        const share = Math.round((hours / oui.length) * 100) / 100
-        for (const h of oui) habit_hours[h] = share
-      }
-    }
-    return {
-      date: r.date,
-      hours,
-      notes: r.notes ?? '',
-      habit_hours,
-    }
-  })
-  const validCategories = CATEGORY_LIST as string[]
   const migratedTodos = (state.todos ?? []).map((t: any) => ({
     ...t,
     category: validCategories.includes(t.category) ? t.category : 'admin',
@@ -88,58 +47,68 @@ const migrateState = (state: AppState): AppState => {
   }))
   return {
     ...state,
-    travail: state.travail ?? [],
-    routine: migratedRoutine,
     todos: migratedTodos,
+    archive: state.archive ?? [],
+    // Keep legacy arrays as-is
+    sessions: state.sessions ?? [],
+    travail: state.travail ?? [],
+    routine: state.routine ?? [],
+  }
+}
+
+// ─── Archive helper ─────────────────────────────────────────────────────────
+const buildArchiveForMonth = (todos: Todo[], month: string): ArchiveMonth => {
+  const monthTodos = todos.filter(t => t.status === 'done' && t.completed_at?.startsWith(month))
+
+  const by_category: Record<string, { count: number; minutes: number }> = {}
+  for (const cat of CATEGORY_LIST) by_category[cat] = { count: 0, minutes: 0 }
+
+  let travail_minutes = 0
+  let personnel_minutes = 0
+  const dayMinutes: Record<string, number> = {}
+
+  for (const t of monthTodos) {
+    const min = t.completed_min ?? 0
+    const cat = by_category[t.category] ?? by_category.admin
+    cat.count += 1
+    cat.minutes += min
+    if (categoryGroup(t.category) === 'travail') travail_minutes += min
+    else personnel_minutes += min
+    if (t.completed_at) {
+      dayMinutes[t.completed_at] = (dayMinutes[t.completed_at] ?? 0) + min
+    }
+  }
+
+  const days_active = Object.keys(dayMinutes).length
+  const dayEntries = Object.entries(dayMinutes).sort((a, b) => b[1] - a[1])
+  const best_day = dayEntries[0] ? { date: dayEntries[0][0], minutes: dayEntries[0][1] } : null
+
+  return {
+    month,
+    archived_at: new Date().toISOString(),
+    todos: monthTodos,
+    stats: {
+      total_minutes: travail_minutes + personnel_minutes,
+      travail_minutes,
+      personnel_minutes,
+      by_category: by_category as any,
+      days_active,
+      best_day,
+    },
   }
 }
 
 // ─── Reducer ────────────────────────────────────────────────────────────────
-
 type Action =
   | { type: 'HYDRATE'; state: AppState }
-  // Sessions
-  | { type: 'ADD_SESSION'; session: Omit<VaultSession, 'id'> }
-  | { type: 'DELETE_SESSION'; id: string }
-  | { type: 'UPSERT_DAY_PROJECT'; date: string; project: string; hours: number; note?: string }
-  | { type: 'DELETE_DAY_PROJECT'; date: string; project: string }
-  // Travail
-  | { type: 'SET_TRAVAIL_HOURS'; date: string; hours: number }
-  | { type: 'SET_CATEGORY_HOURS'; date: string; category: string; hours: number }
-  | { type: 'SET_TRAVAIL_NOTES'; date: string; notes: string }
-  // Routine
-  | { type: 'SET_ROUTINE_HOURS'; date: string; hours: number }
-  | { type: 'SET_HABIT_HOURS'; date: string; habit: string; hours: number }
-  | { type: 'ADD_HABIT'; name: string }
-  | { type: 'REMOVE_HABIT'; name: string }
-  | { type: 'SET_ROUTINE_NOTES'; date: string; notes: string }
   // Todos
   | { type: 'ADD_TODO'; todo: Omit<Todo, 'id' | 'created'> }
+  | { type: 'ADD_DONE_TODO'; todo: Omit<Todo, 'id' | 'created' | 'status' | 'completed_at'> & { completed_min: number; completed_at?: string } }
   | { type: 'UPDATE_TODO'; id: number; patch: Partial<Todo> }
   | { type: 'TOGGLE_TODO'; id: number; completed_min?: number | null }
   | { type: 'DELETE_TODO'; id: number }
-
-const upsertTravail = (
-  travail: TravailEntry[],
-  date: string,
-  patch: (entry: TravailEntry) => TravailEntry,
-): TravailEntry[] => {
-  const existing = travail.find(r => r.date === date)
-  const base: TravailEntry = existing ?? { date, hours: 0, category_hours: {}, notes: '' }
-  const next = patch(base)
-  return existing ? travail.map(r => (r.date === date ? next : r)) : [...travail, next]
-}
-
-const upsertRoutine = (
-  routine: RoutineEntry[],
-  date: string,
-  patch: (entry: RoutineEntry) => RoutineEntry,
-): RoutineEntry[] => {
-  const existing = routine.find(r => r.date === date)
-  const base: RoutineEntry = existing ?? { date, hours: 0, habit_hours: {}, notes: '' }
-  const next = patch(base)
-  return existing ? routine.map(r => (r.date === date ? next : r)) : [...routine, next]
-}
+  // Archive
+  | { type: 'ARCHIVE_MONTH'; month: string }
 
 const reducer = (state: AppState, action: Action): AppState => {
   const now = new Date().toISOString()
@@ -149,167 +118,44 @@ const reducer = (state: AppState, action: Action): AppState => {
     case 'HYDRATE':
       return migrateState(action.state)
 
-    case 'ADD_SESSION': {
-      const id = `${action.session.project}-${action.session.date}-${Date.now()}`
-      return {
-        ...state,
-        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        sessions: [...state.sessions, { ...action.session, id }],
-      }
-    }
-
-    case 'DELETE_SESSION':
-      return {
-        ...state,
-        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        sessions: state.sessions.filter(s => s.id !== action.id),
-      }
-
-    case 'UPSERT_DAY_PROJECT': {
-      // Replace all sessions for (project, date) with a single merged one.
-      // hours <= 0 → delete all sessions for that (project, date).
-      const hours = Math.max(0, Math.round(action.hours * 100) / 100)
-      const matching = state.sessions.filter(
-        s => s.project === action.project && s.date === action.date,
-      )
-      const others = state.sessions.filter(
-        s => !(s.project === action.project && s.date === action.date),
-      )
-      if (hours <= 0) {
-        return {
-          ...state,
-          meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-          sessions: others,
-        }
-      }
-      const id = matching[0]?.id ?? `${action.project}-${action.date}-${Date.now()}`
-      const noteSource = action.note !== undefined ? action.note : (matching[0]?.note ?? '')
-      const merged: VaultSession = {
-        id,
-        project: action.project,
-        date: action.date,
-        hours,
-        note: noteSource,
-      }
-      return {
-        ...state,
-        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        sessions: [...others, merged],
-      }
-    }
-
-    case 'DELETE_DAY_PROJECT':
-      return {
-        ...state,
-        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        sessions: state.sessions.filter(
-          s => !(s.project === action.project && s.date === action.date),
-        ),
-      }
-
-    case 'SET_TRAVAIL_HOURS': {
-      const newHours = Math.max(0, Math.round(action.hours * 100) / 100)
-      return {
-        ...state,
-        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        travail: upsertTravail(state.travail ?? [], action.date, entry => ({
-          ...entry,
-          hours: newHours,
-        })),
-      }
-    }
-
-    case 'SET_CATEGORY_HOURS': {
-      const newCatHours = Math.max(0, Math.round(action.hours * 100) / 100)
-      return {
-        ...state,
-        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        travail: upsertTravail(state.travail ?? [], action.date, entry => {
-          const category_hours = { ...entry.category_hours, [action.category]: newCatHours }
-          if (newCatHours === 0) delete category_hours[action.category]
-          const sumCats = Object.values(category_hours).reduce((a, b) => a + b, 0)
-          const hours = Math.max(sumCats, entry.hours ?? 0)
-          return { ...entry, category_hours, hours: Math.round(hours * 100) / 100 }
-        }),
-      }
-    }
-
-    case 'SET_TRAVAIL_NOTES':
-      return {
-        ...state,
-        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        travail: upsertTravail(state.travail ?? [], action.date, entry => ({ ...entry, notes: action.notes })),
-      }
-
-    case 'SET_ROUTINE_HOURS': {
-      const newHours = Math.max(0, Math.round(action.hours * 100) / 100)
-      return {
-        ...state,
-        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        routine: upsertRoutine(state.routine, action.date, entry => ({
-          ...entry,
-          hours: newHours,
-        })),
-      }
-    }
-
-    case 'SET_HABIT_HOURS': {
-      const newHabitHours = Math.max(0, Math.round(action.hours * 100) / 100)
-      return {
-        ...state,
-        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        routine: upsertRoutine(state.routine, action.date, entry => {
-          const habit_hours = { ...entry.habit_hours, [action.habit]: newHabitHours }
-          if (newHabitHours === 0) delete habit_hours[action.habit]
-          // Recompute total = sum of habit hours if it was the sole driver
-          // Otherwise keep max(current_total, sum_of_habits)
-          const sumHabits = Object.values(habit_hours).reduce((a, b) => a + b, 0)
-          const hours = Math.max(sumHabits, entry.hours ?? 0)
-          return { ...entry, habit_hours, hours: Math.round(hours * 100) / 100 }
-        }),
-      }
-    }
-
-    case 'SET_ROUTINE_NOTES':
-      return {
-        ...state,
-        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        routine: upsertRoutine(state.routine, action.date, entry => ({ ...entry, notes: action.notes })),
-      }
-
-    case 'ADD_HABIT': {
-      if (!action.name.trim() || state.meta.habitudes.includes(action.name)) return state
-      return {
-        ...state,
-        meta: { ...state.meta, updated_at: now, updated_by: 'web', habitudes: [...state.meta.habitudes, action.name.trim()] },
-      }
-    }
-
-    case 'REMOVE_HABIT':
-      return {
-        ...state,
-        meta: { ...state.meta, updated_at: now, updated_by: 'web', habitudes: state.meta.habitudes.filter(h => h !== action.name) },
-      }
-
     case 'ADD_TODO': {
       const id = state.todos_next_id
       return {
         ...state,
         meta: { ...state.meta, updated_at: now, updated_by: 'web' },
-        todos: [
-          ...state.todos,
-          {
-            ...action.todo,
-            id,
-            created: today,
-            completed_at: null,
-            delegated_to: action.todo.delegated_to ?? null,
-            due: action.todo.due ?? null,
-            duration_min: action.todo.duration_min ?? null,
-            completed_min: null,
-            updated_at: now,
-          },
-        ],
+        todos: [...state.todos, {
+          ...action.todo,
+          id,
+          created: today,
+          completed_at: null,
+          delegated_to: action.todo.delegated_to ?? null,
+          due: action.todo.due ?? null,
+          duration_min: action.todo.duration_min ?? null,
+          completed_min: null,
+          updated_at: now,
+        }],
+        todos_next_id: id + 1,
+      }
+    }
+
+    case 'ADD_DONE_TODO': {
+      const id = state.todos_next_id
+      return {
+        ...state,
+        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
+        todos: [...state.todos, {
+          ...action.todo,
+          id,
+          created: today,
+          status: 'done' as const,
+          done: true,
+          completed_at: action.todo.completed_at ?? today,
+          delegated_to: null,
+          due: null,
+          duration_min: action.todo.completed_min,
+          completed_min: action.todo.completed_min,
+          updated_at: now,
+        }],
         todos_next_id: id + 1,
       }
     }
@@ -328,18 +174,9 @@ const reducer = (state: AppState, action: Action): AppState => {
         todos: state.todos.map(t => {
           if (t.id !== action.id) return t
           const isDone = t.status === 'done'
-          if (isDone) {
-            return { ...t, status: 'open', done: false, completed_at: null, completed_min: null, updated_at: now }
-          }
+          if (isDone) return { ...t, status: 'open' as const, done: false, completed_at: null, completed_min: null, updated_at: now }
           const completed_min = action.completed_min ?? t.duration_min ?? null
-          return {
-            ...t,
-            status: 'done',
-            done: true,
-            completed_at: today,
-            completed_min,
-            updated_at: now,
-          }
+          return { ...t, status: 'done' as const, done: true, completed_at: today, completed_min, updated_at: now }
         }),
       }
 
@@ -350,115 +187,97 @@ const reducer = (state: AppState, action: Action): AppState => {
         todos: state.todos.filter(t => t.id !== action.id),
       }
 
+    case 'ARCHIVE_MONTH': {
+      const existing = (state.archive ?? []).find(a => a.month === action.month)
+      if (existing) return state // already archived
+
+      const archiveEntry = buildArchiveForMonth(state.todos, action.month)
+      if (archiveEntry.todos.length === 0) return state // nothing to archive
+
+      const remainingTodos = state.todos.filter(
+        t => !(t.status === 'done' && t.completed_at?.startsWith(action.month))
+      )
+      return {
+        ...state,
+        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
+        todos: remainingTodos,
+        archive: [...(state.archive ?? []), archiveEntry],
+      }
+    }
+
     default:
       return state
   }
 }
 
 // ─── Hook ───────────────────────────────────────────────────────────────────
-
 export const useAppState = () => {
   const [state, dispatch] = useReducer(reducer, undefined, () => loadCached() ?? INITIAL_STATE)
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle')
   const [lastSync, setLastSync] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem(LAST_SYNC_KEY)
-    } catch {
-      return null
-    }
+    try { return localStorage.getItem(LAST_SYNC_KEY) } catch { return null }
   })
   const shaRef = useRef<string | null>(null)
   const pendingWriteRef = useRef<number | null>(null)
-  // dirtyRef is seeded from the persisted pending flag so that edits made
-  // in a previous tab-life (iOS kill) still get flushed on next open.
   const dirtyRef = useRef(hasPendingFlag())
   const stateRef = useRef(state)
   const pushInFlightRef = useRef<Promise<void> | null>(null)
   const initialPullDoneRef = useRef(false)
 
-  // Keep a ref to the latest state so async callbacks can always read it
-  // without stale-closure bugs.
-  useEffect(() => {
-    stateRef.current = state
-    saveCached(state)
-  }, [state])
+  useEffect(() => { stateRef.current = state; saveCached(state) }, [state])
 
   // ── Push to GitHub ───────────────────────────────────────────────────────
   const pushNow = useCallback(async (current: AppState) => {
-    if (!hasToken()) {
-      setSyncStatus('no-token')
-      return
-    }
+    if (!hasToken()) { setSyncStatus('no-token'); return }
     setSyncStatus('syncing')
     try {
       const newSha = await writeState(current, shaRef.current)
       shaRef.current = newSha
       dirtyRef.current = false
       setPendingFlag(false)
-      const now = new Date().toISOString()
-      setLastSync(now)
-      localStorage.setItem(LAST_SYNC_KEY, now)
+      const ts = new Date().toISOString()
+      setLastSync(ts)
+      localStorage.setItem(LAST_SYNC_KEY, ts)
       setSyncStatus('success')
       setTimeout(() => setSyncStatus('idle'), 1500)
     } catch (e) {
       console.error('[tracking] push failed', e)
-      // Leave PENDING_FLAG set so we retry on next load / visibility change.
       setSyncStatus('error')
       setTimeout(() => setSyncStatus('idle'), 4000)
     }
   }, [])
 
-  // Flush any pending debounced push RIGHT NOW and wait for it to finish.
-  // Used before every pull to guarantee local edits are never overwritten.
   const flushPendingPush = useCallback(async () => {
-    if (pendingWriteRef.current !== null) {
-      window.clearTimeout(pendingWriteRef.current)
-      pendingWriteRef.current = null
-    }
-    if (pushInFlightRef.current) {
-      try { await pushInFlightRef.current } catch { /* ignore */ }
-    }
+    if (pendingWriteRef.current !== null) { window.clearTimeout(pendingWriteRef.current); pendingWriteRef.current = null }
+    if (pushInFlightRef.current) { try { await pushInFlightRef.current } catch { /* */ } }
     if (dirtyRef.current) {
       const p = pushNow(stateRef.current)
       pushInFlightRef.current = p.finally(() => { pushInFlightRef.current = null })
-      try { await pushInFlightRef.current } catch { /* ignore */ }
+      try { await pushInFlightRef.current } catch { /* */ }
     }
   }, [pushNow])
 
   // ── Pull from GitHub ──────────────────────────────────────────────────────
   const pull = useCallback(async (silent = false) => {
-    // CRITICAL: flush any pending local edits BEFORE pulling, otherwise a
-    // pull (manual or auto) can overwrite what the user just typed but
-    // which hasn't hit the debounce timer yet.
     await flushPendingPush()
-
-    // If push failed above, dirtyRef is still true. Instead of aborting
-    // (which would isolate this tab forever), we merge local onto remote
-    // to preserve both sides' changes, then retry the push.
-    // This prevents the "stuck tab" problem where a single failed push
-    // blocks all future sync.
-
     if (!silent) setSyncStatus('syncing')
     try {
       const { state: remote, sha } = await readState()
       shaRef.current = sha
 
       if (dirtyRef.current) {
-        // Local has unsaved changes — merge local onto remote to preserve both
         const merged = mergeStates(stateRef.current, remote)
         dispatch({ type: 'HYDRATE', state: merged })
-        // Keep dirty flag so the merged result gets pushed
         setPendingFlag(true)
         void pushNow(merged)
       } else {
-        // Clean state — just hydrate from remote
         dispatch({ type: 'HYDRATE', state: remote })
       }
 
       initialPullDoneRef.current = true
-      const now = new Date().toISOString()
-      setLastSync(now)
-      localStorage.setItem(LAST_SYNC_KEY, now)
+      const ts = new Date().toISOString()
+      setLastSync(ts)
+      localStorage.setItem(LAST_SYNC_KEY, ts)
       setSyncStatus('success')
       setTimeout(() => setSyncStatus('idle'), 1500)
     } catch (e) {
@@ -468,10 +287,6 @@ export const useAppState = () => {
     }
   }, [flushPendingPush, pushNow])
 
-  // Debounced push: called from the mutation effect when dirtyRef is true.
-  // Debounce is short (PUSH_DEBOUNCE_MS) because iOS Safari aggressively
-  // throttles/kills timers when the tab backgrounds — a long debounce
-  // effectively means "lost on mobile".
   const schedulePush = useCallback(() => {
     if (pendingWriteRef.current) window.clearTimeout(pendingWriteRef.current)
     pendingWriteRef.current = window.setTimeout(() => {
@@ -481,44 +296,21 @@ export const useAppState = () => {
     }, PUSH_DEBOUNCE_MS)
   }, [pushNow])
 
-  // Trigger push only when the mutation was marked dirty by a user action.
-  // HYDRATE / initial cache load / strict-mode remount do NOT set dirtyRef,
-  // so no spurious push fires on same-state rerenders.
-  useEffect(() => {
-    if (!dirtyRef.current) return
-    schedulePush()
-  }, [state, schedulePush])
+  useEffect(() => { if (!dirtyRef.current) return; schedulePush() }, [state, schedulePush])
 
-  // Flush pending writes when the tab is about to go away.
-  //
-  // iOS Safari is the hard case:
-  //   - beforeunload almost never fires
-  //   - pagehide fires only sometimes
-  //   - visibilitychange → 'hidden' is the only reliable signal when the
-  //     user swipes away, locks the phone, or switches apps
-  //
-  // We fire on all three. PENDING_FLAG stays set until pushNow confirms
-  // success, so if the browser kills our request mid-flight we recover on
-  // next load.
+  // Flush on tab hide / beforeunload
   useEffect(() => {
     const flush = () => {
       if (!dirtyRef.current) return
-      if (pendingWriteRef.current !== null) {
-        window.clearTimeout(pendingWriteRef.current)
-        pendingWriteRef.current = null
-      }
-      // Fire-and-forget: browser may kill it, but it often reaches GitHub
+      if (pendingWriteRef.current !== null) { window.clearTimeout(pendingWriteRef.current); pendingWriteRef.current = null }
       const p = pushNow(stateRef.current)
       pushInFlightRef.current = p.finally(() => { pushInFlightRef.current = null })
     }
     const onVisibility = () => {
       if (document.visibilityState === 'hidden') flush()
-      else if (document.visibilityState === 'visible') {
-        // Coming back: if we still have a pending flag, retry now.
-        if (dirtyRef.current || hasPendingFlag()) {
-          dirtyRef.current = true
-          void pushNow(stateRef.current)
-        }
+      else if (document.visibilityState === 'visible' && (dirtyRef.current || hasPendingFlag())) {
+        dirtyRef.current = true
+        void pushNow(stateRef.current)
       }
     }
     window.addEventListener('beforeunload', flush)
@@ -538,11 +330,25 @@ export const useAppState = () => {
     return () => window.clearInterval(id)
   }, [pull])
 
+  // ── Auto-archive: move completed todos from past months ──────────────────
+  useEffect(() => {
+    if (!initialPullDoneRef.current) return
+    const currentMonth = todayISO().slice(0, 7)
+    const staleMonths = new Set<string>()
+    for (const t of stateRef.current.todos) {
+      if (t.status === 'done' && t.completed_at) {
+        const m = t.completed_at.slice(0, 7)
+        if (m < currentMonth) staleMonths.add(m)
+      }
+    }
+    for (const m of staleMonths) {
+      dispatch({ type: 'ARCHIVE_MONTH', month: m })
+      dirtyRef.current = true
+      setPendingFlag(true)
+    }
+  }, [state.meta.version]) // re-check after each sync
+
   // ── Action creators ──────────────────────────────────────────────────────
-  // Every user action goes through userDispatch, which marks the state as
-  // dirty BEFORE dispatching and persists the pending flag to localStorage.
-  // The mutation effect then observes dirtyRef and schedules a push.
-  // HYDRATE bypasses this and never sets dirty.
   const userDispatch = useCallback((action: Action) => {
     dirtyRef.current = true
     setPendingFlag(true)
@@ -550,35 +356,16 @@ export const useAppState = () => {
   }, [])
 
   const actions = useMemo(() => ({
-    addSession: (s: Omit<VaultSession, 'id'>) => userDispatch({ type: 'ADD_SESSION', session: s }),
-    deleteSession: (id: string) => userDispatch({ type: 'DELETE_SESSION', id }),
-    upsertDayProject: (date: string, project: string, hours: number, note?: string) =>
-      userDispatch({ type: 'UPSERT_DAY_PROJECT', date, project, hours, note }),
-    deleteDayProject: (date: string, project: string) =>
-      userDispatch({ type: 'DELETE_DAY_PROJECT', date, project }),
-    setTravailHours: (date: string, hours: number) => userDispatch({ type: 'SET_TRAVAIL_HOURS', date, hours }),
-    setCategoryHours: (date: string, category: string, hours: number) => userDispatch({ type: 'SET_CATEGORY_HOURS', date, category, hours }),
-    setTravailNotes: (date: string, notes: string) => userDispatch({ type: 'SET_TRAVAIL_NOTES', date, notes }),
-    setRoutineHours: (date: string, hours: number) => userDispatch({ type: 'SET_ROUTINE_HOURS', date, hours }),
-    setHabitHours: (date: string, habit: string, hours: number) => userDispatch({ type: 'SET_HABIT_HOURS', date, habit, hours }),
-    setRoutineNotes: (date: string, notes: string) => userDispatch({ type: 'SET_ROUTINE_NOTES', date, notes }),
-    addHabit: (name: string) => userDispatch({ type: 'ADD_HABIT', name }),
-    removeHabit: (name: string) => userDispatch({ type: 'REMOVE_HABIT', name }),
     addTodo: (t: Omit<Todo, 'id' | 'created'>) => userDispatch({ type: 'ADD_TODO', todo: t }),
+    addDoneTodo: (t: Omit<Todo, 'id' | 'created' | 'status' | 'completed_at'> & { completed_min: number; completed_at?: string }) =>
+      userDispatch({ type: 'ADD_DONE_TODO', todo: t }),
     updateTodo: (id: number, patch: Partial<Todo>) => userDispatch({ type: 'UPDATE_TODO', id, patch }),
     toggleTodo: (id: number, completed_min?: number | null) => userDispatch({ type: 'TOGGLE_TODO', id, completed_min }),
     deleteTodo: (id: number) => userDispatch({ type: 'DELETE_TODO', id }),
+    archiveMonth: (month: string) => userDispatch({ type: 'ARCHIVE_MONTH', month }),
   }), [userDispatch])
 
   const stats = useMemo(() => computeStats(state), [state])
 
-  return {
-    state,
-    stats,
-    actions,
-    syncStatus,
-    lastSync,
-    pull,
-    pushNow: () => pushNow(state),
-  }
+  return { state, stats, actions, syncStatus, lastSync, pull, pushNow: () => pushNow(state) }
 }
