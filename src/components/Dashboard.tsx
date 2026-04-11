@@ -69,9 +69,9 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
           icon={<CheckCheck size={14} />}
         />
         <StatCard
-          label="Projets actifs"
-          value={stats.vault.active_projects}
-          sub={stats.vault.top_project ? `#1 ${stats.vault.top_project.name.slice(0, 18)}…` : '—'}
+          label="Streak"
+          value={`${Math.max(stats.vault.streak_days, stats.routine.streak_days)}j`}
+          sub="d'affilée"
           accent="neutral"
           icon={<Target size={14} />}
         />
@@ -87,7 +87,7 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
             </div>
             <span className="text-[10px] text-zinc-500 font-mono">{formatHours(stats.vault.total_hours)} total</span>
           </div>
-          <Heatmap sessions={state.sessions} routine={state.routine} mode="vault" days={182} />
+          <Heatmap travail={state.travail ?? []} routine={state.routine} mode="vault" days={182} />
         </div>
 
         <div className="rounded-2xl border border-cyan-500/20 bg-zinc-900/50 p-5">
@@ -98,48 +98,59 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
             </div>
             <span className="text-[10px] text-zinc-500 font-mono">{stats.routine.streak_days}j streak</span>
           </div>
-          <Heatmap sessions={state.sessions} routine={state.routine} mode="routine" days={182} />
+          <Heatmap travail={state.travail ?? []} routine={state.routine} mode="routine" days={182} />
         </div>
       </div>
 
-      {/* Top projects + habitudes aujourd'hui */}
+      {/* Catégories Travail + Personnel aujourd'hui */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Top projects */}
+        {/* Travail catégories */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
           <div className="flex items-center gap-2 mb-4">
             <TrendingUp className="text-violet-400" size={16} />
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Top projets</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Travail — catégories</h3>
           </div>
-          <TopProjectsList state={state} />
+          <div className="grid grid-cols-2 gap-2">
+            {stats.vault.by_category.map(cat => {
+              const active = cat.hours > 0
+              return (
+                <div key={cat.name}
+                  className={cn('px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-2',
+                    active ? 'bg-zinc-900/70' : 'bg-zinc-900/30 text-zinc-500')}
+                  style={{ borderColor: active ? cat.color + '60' : '#27272a' }}>
+                  <span className="flex items-center gap-1.5 truncate">
+                    <span>{cat.emoji}</span><span className="truncate">{cat.name}</span>
+                  </span>
+                  <span className="text-xs font-mono font-bold shrink-0"
+                    style={{ color: active ? cat.color : undefined }}>
+                    {active ? formatHours(cat.hours) : '—'}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
         </div>
 
-        {/* Habitudes aujourd'hui */}
+        {/* Personnel catégories */}
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
           <div className="flex items-center gap-2 mb-4">
             <Zap className="text-cyan-400" size={16} />
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Habitudes aujourd'hui</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">Personnel — catégories</h3>
           </div>
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(stats.routine.habits_today).map(([name, hours]) => {
               const active = hours > 0
               const color = habitColor(name)
               return (
-                <div
-                  key={name}
-                  className={cn(
-                    'px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-2',
-                    active ? 'bg-zinc-900/70' : 'bg-zinc-900/30 text-zinc-500',
-                  )}
-                  style={{ borderColor: active ? color + '60' : '#27272a' }}
-                >
+                <div key={name}
+                  className={cn('px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-2',
+                    active ? 'bg-zinc-900/70' : 'bg-zinc-900/30 text-zinc-500')}
+                  style={{ borderColor: active ? color + '60' : '#27272a' }}>
                   <span className="flex items-center gap-1.5 truncate">
-                    <span>{habitIcon(name)}</span>
-                    <span className="truncate">{name}</span>
+                    <span>{habitIcon(name)}</span><span className="truncate">{name}</span>
                   </span>
-                  <span
-                    className="text-xs font-mono font-bold shrink-0"
-                    style={{ color: active ? color : undefined }}
-                  >
+                  <span className="text-xs font-mono font-bold shrink-0"
+                    style={{ color: active ? color : undefined }}>
                     {active ? formatHours(hours) : '—'}
                   </span>
                 </div>
@@ -149,36 +160,6 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
         </div>
       </div>
     </div>
-  )
-}
-
-const TopProjectsList = ({ state }: { state: AppState }) => {
-  const byProject: Record<string, number> = {}
-  for (const s of state.sessions) byProject[s.project] = (byProject[s.project] ?? 0) + s.hours
-  const sorted = Object.entries(byProject).sort((a, b) => b[1] - a[1]).slice(0, 5)
-  const max = sorted[0]?.[1] ?? 1
-
-  if (sorted.length === 0) {
-    return <p className="text-xs text-zinc-500 text-center py-4">Aucune session enregistrée</p>
-  }
-
-  return (
-    <ul className="space-y-2.5">
-      {sorted.map(([name, hours]) => (
-        <li key={name}>
-          <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-zinc-300 truncate pr-2">{name}</span>
-            <span className="text-violet-400 font-mono font-semibold shrink-0">{formatHours(hours)}</span>
-          </div>
-          <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-violet-500 to-cyan-500 transition-all"
-              style={{ width: `${(hours / max) * 100}%` }}
-            />
-          </div>
-        </li>
-      ))}
-    </ul>
   )
 }
 

@@ -1,36 +1,45 @@
 import type { AppState, Stats, TodoCategory, CategoryGroup } from '@/types'
-import { todayISO, startOfWeekISO, startOfMonthISO, addDays, CATEGORY_LIST, categoryGroup } from './utils'
+import { todayISO, startOfWeekISO, startOfMonthISO, addDays, CATEGORY_LIST, TRAVAIL_CATEGORIES, CATEGORY_CONFIG, categoryGroup } from './utils'
 
 export const computeStats = (state: AppState): Stats => {
   const today = todayISO()
   const weekStart = startOfWeekISO(today)
   const monthStart = startOfMonthISO(today)
 
-  // ─── Vault stats ──────────────────────────────────────────────────────────
-  const vault_today = state.sessions.filter(s => s.date === today).reduce((sum, s) => sum + s.hours, 0)
-  const vault_week = state.sessions.filter(s => s.date >= weekStart && s.date <= today).reduce((sum, s) => sum + s.hours, 0)
-  const vault_month = state.sessions.filter(s => s.date >= monthStart && s.date <= today).reduce((sum, s) => sum + s.hours, 0)
-  const vault_total = state.sessions.reduce((sum, s) => sum + s.hours, 0)
+  // ─── Vault / Travail stats ─────────────────────────────────────────────────
+  const travail = state.travail ?? []
+  const vault_today = travail.find(t => t.date === today)?.hours ?? 0
+  const vault_week = travail
+    .filter(t => t.date >= weekStart && t.date <= today)
+    .reduce((sum, t) => sum + (t.hours ?? 0), 0)
+  const vault_month = travail
+    .filter(t => t.date >= monthStart && t.date <= today)
+    .reduce((sum, t) => sum + (t.hours ?? 0), 0)
+  const vault_total = travail.reduce((sum, t) => sum + (t.hours ?? 0), 0)
 
-  // Vault streak: consecutive days (back from today) with at least one session
-  const sessionDates = new Set(state.sessions.map(s => s.date))
+  // Vault streak: consecutive days with travail hours > 0
+  const travailDates = new Set(travail.filter(t => (t.hours ?? 0) > 0).map(t => t.date))
   let vault_streak = 0
   let cursor = today
-  while (sessionDates.has(cursor)) {
+  while (travailDates.has(cursor)) {
     vault_streak += 1
     cursor = addDays(cursor, -1)
   }
 
-  // Per project aggregate
-  const byProjectMap: Record<string, number> = {}
-  for (const s of state.sessions) {
-    byProjectMap[s.project] = (byProjectMap[s.project] ?? 0) + s.hours
+  // Per category aggregate for travail
+  const byCatMap: Record<string, number> = {}
+  for (const cat of TRAVAIL_CATEGORIES) byCatMap[cat] = 0
+  for (const t of travail) {
+    for (const [cat, hrs] of Object.entries(t.category_hours ?? {})) {
+      byCatMap[cat] = (byCatMap[cat] ?? 0) + (hrs ?? 0)
+    }
   }
-  const by_project = Object.entries(byProjectMap)
-    .map(([name, hours]) => ({ name, hours }))
-    .sort((a, b) => b.hours - a.hours)
-  const top_project = by_project[0] ? { name: by_project[0].name, hours: by_project[0].hours } : null
-  const active_projects = by_project.length
+  const vault_by_category = TRAVAIL_CATEGORIES.map(cat => ({
+    name: CATEGORY_CONFIG[cat].label,
+    hours: byCatMap[cat] ?? 0,
+    emoji: CATEGORY_CONFIG[cat].emoji,
+    color: CATEGORY_CONFIG[cat].hex,
+  }))
 
   // ─── Routine stats ────────────────────────────────────────────────────────
   const routine_today_entry = state.routine.find(r => r.date === today)
@@ -123,9 +132,7 @@ export const computeStats = (state: AppState): Stats => {
       month_hours: vault_month,
       total_hours: vault_total,
       streak_days: vault_streak,
-      active_projects,
-      top_project,
-      by_project,
+      by_category: vault_by_category,
     },
     routine: {
       today_hours: routine_today,

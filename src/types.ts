@@ -14,7 +14,15 @@ export interface VaultSession {
   validated?: boolean     // si "(non validé)" marqué
 }
 
-// ─── Routine (activités quantifiées en heures décimales) ────────────────────
+// ─── Travail (heures par catégorie pro/finance/admin/auto) ──────────────────
+export interface TravailEntry {
+  date: string                            // ISO YYYY-MM-DD
+  hours: number                           // total heures du jour (float)
+  notes?: string
+  category_hours: Record<string, number>  // { pro: 2.0, finance: 1.5, admin: 0.5 }
+}
+
+// ─── Routine / Personnel (activités quantifiées en heures décimales) ────────
 export interface RoutineEntry {
   date: string                            // ISO YYYY-MM-DD
   hours: number                           // total heures du jour (float)
@@ -53,7 +61,8 @@ export interface AppState {
     updated_by: 'obsidian' | 'web' | 'mobile'
     habitudes: string[]            // liste configurable des habitudes (routine categories)
   }
-  sessions: VaultSession[]
+  sessions: VaultSession[]          // legacy project-based sessions
+  travail: TravailEntry[]           // category-based travail entries
   routine: RoutineEntry[]
   todos: Todo[]
   todos_next_id: number
@@ -67,9 +76,7 @@ export interface Stats {
     month_hours: number
     total_hours: number
     streak_days: number
-    active_projects: number
-    top_project: { name: string; hours: number } | null
-    by_project: Array<{ name: string; hours: number }>  // pour camembert
+    by_category: Array<{ name: string; hours: number; emoji: string; color: string }>
   }
   routine: {
     today_hours: number

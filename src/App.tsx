@@ -44,13 +44,12 @@ export default function App() {
     return () => window.removeEventListener('keydown', handler)
   }, [pull])
 
-  const projects = useMemo(() => {
-    const set = new Set<string>()
-    for (const s of state.sessions) set.add(s.project)
-    return Array.from(set).sort()
-  }, [state.sessions])
+  const todayTravailHours = useMemo(() => {
+    const today = todayISO()
+    return (state.travail ?? []).find(t => t.date === today)?.hours ?? 0
+  }, [state.travail])
 
-  const todayHours = useMemo(() => {
+  const todayRoutineHours = useMemo(() => {
     const today = todayISO()
     return state.routine.find(r => r.date === today)?.hours ?? 0
   }, [state.routine])
@@ -96,9 +95,9 @@ export default function App() {
           <VaultView
             state={state}
             stats={stats}
-            onUpsertDayProject={actions.upsertDayProject}
-            onDeleteDayProject={actions.deleteDayProject}
-            onAddSession={actions.addSession}
+            onSetTravailHours={actions.setTravailHours}
+            onSetCategoryHours={actions.setCategoryHours}
+            onSetTravailNotes={actions.setTravailNotes}
           />
         )}
         {view === 'personnel' && (
@@ -144,13 +143,13 @@ export default function App() {
       <QuickAddModal
         open={quickAddOpen}
         onClose={() => setQuickAddOpen(false)}
-        projects={projects}
         habits={state.meta.habitudes}
-        onAddSession={actions.addSession}
+        onSetCategoryHours={actions.setCategoryHours}
         onSetRoutineHours={actions.setRoutineHours}
         onSetHabitHours={actions.setHabitHours}
         onAddTodo={actions.addTodo}
-        todayHours={todayHours}
+        todayTravailHours={todayTravailHours}
+        todayRoutineHours={todayRoutineHours}
       />
 
       <TokenModal

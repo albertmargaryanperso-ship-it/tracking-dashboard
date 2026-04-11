@@ -1,30 +1,29 @@
 import { useMemo } from 'react'
-import type { VaultSession, RoutineEntry } from '@/types'
+import type { TravailEntry, RoutineEntry } from '@/types'
 import { todayISO, addDays } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 
 interface HeatmapProps {
-  sessions: VaultSession[]
+  travail: TravailEntry[]
   routine: RoutineEntry[]
-  days?: number // total days to show (default 182 = 6 months)
+  days?: number
   mode: 'vault' | 'routine' | 'combined'
 }
 
-export const Heatmap = ({ sessions, routine, days = 182, mode }: HeatmapProps) => {
+export const Heatmap = ({ travail, routine, days = 182, mode }: HeatmapProps) => {
   const data = useMemo(() => {
     const today = todayISO()
     const start = addDays(today, -(days - 1))
 
-    // Align start to a Monday (beginning of week)
     const startDate = new Date(start + 'T12:00:00')
     const dow = startDate.getDay()
     const diff = dow === 0 ? -6 : 1 - dow
     startDate.setDate(startDate.getDate() + diff)
 
     const byDate: Record<string, { vault: number; routine: number }> = {}
-    for (const s of sessions) {
-      if (!byDate[s.date]) byDate[s.date] = { vault: 0, routine: 0 }
-      byDate[s.date].vault += s.hours
+    for (const t of travail) {
+      if (!byDate[t.date]) byDate[t.date] = { vault: 0, routine: 0 }
+      byDate[t.date].vault += t.hours ?? 0
     }
     for (const r of routine) {
       if (!byDate[r.date]) byDate[r.date] = { vault: 0, routine: 0 }
@@ -46,7 +45,7 @@ export const Heatmap = ({ sessions, routine, days = 182, mode }: HeatmapProps) =
       cursor.setDate(cursor.getDate() + 1)
     }
     return cells
-  }, [sessions, routine, days])
+  }, [travail, routine, days])
 
   const color = (cell: typeof data[number]): string => {
     if (cell.future) return 'bg-zinc-900/30'

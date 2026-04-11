@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import type { AppState, VaultSession, RoutineEntry, Todo } from '@/types'
+import type { AppState, VaultSession, TravailEntry, RoutineEntry, Todo } from '@/types'
 import { INITIAL_STATE } from '@/lib/initialState'
 import { computeStats } from '@/lib/stats'
 import { readState, writeState, hasToken, mergeStates, type SyncStatus } from '@/lib/github'
@@ -88,6 +88,7 @@ const migrateState = (state: AppState): AppState => {
   }))
   return {
     ...state,
+    travail: state.travail ?? [],
     routine: migratedRoutine,
     todos: migratedTodos,
   }
@@ -102,6 +103,10 @@ type Action =
   | { type: 'DELETE_SESSION'; id: string }
   | { type: 'UPSERT_DAY_PROJECT'; date: string; project: string; hours: number; note?: string }
   | { type: 'DELETE_DAY_PROJECT'; date: string; project: string }
+  // Travail
+  | { type: 'SET_TRAVAIL_HOURS'; date: string; hours: number }
+  | { type: 'SET_CATEGORY_HOURS'; date: string; category: string; hours: number }
+  | { type: 'SET_TRAVAIL_NOTES'; date: string; notes: string }
   // Routine
   | { type: 'SET_ROUTINE_HOURS'; date: string; hours: number }
   | { type: 'SET_HABIT_HOURS'; date: string; habit: string; hours: number }
@@ -113,6 +118,17 @@ type Action =
   | { type: 'UPDATE_TODO'; id: number; patch: Partial<Todo> }
   | { type: 'TOGGLE_TODO'; id: number; completed_min?: number | null }
   | { type: 'DELETE_TODO'; id: number }
+
+const upsertTravail = (
+  travail: TravailEntry[],
+  date: string,
+  patch: (entry: TravailEntry) => TravailEntry,
+): TravailEntry[] => {
+  const existing = travail.find(r => r.date === date)
+  const base: TravailEntry = existing ?? { date, hours: 0, category_hours: {}, notes: '' }
+  const next = patch(base)
+  return existing ? travail.map(r => (r.date === date ? next : r)) : [...travail, next]
+}
 
 const upsertRoutine = (
   routine: RoutineEntry[],
@@ -189,6 +205,40 @@ const reducer = (state: AppState, action: Action): AppState => {
         sessions: state.sessions.filter(
           s => !(s.project === action.project && s.date === action.date),
         ),
+      }
+
+    case 'SET_TRAVAIL_HOURS': {
+      const newHours = Math.max(0, Math.round(action.hours * 100) / 100)
+      return {
+        ...state,
+        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
+        travail: upsertTravail(state.travail, action.date, entry => ({
+          ...entry,
+          hours: newHours,
+        })),
+      }
+    }
+
+    case 'SET_CATEGORY_HOURS': {
+      const newCatHours = Math.max(0, Math.round(action.hours * 100) / 100)
+      return {
+        ...state,
+        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
+        travail: upsertTravail(state.travail, action.date, entry => {
+          const category_hours = { ...entry.category_hours, [action.category]: newCatHours }
+          if (newCatHours === 0) delete category_hours[action.category]
+          const sumCats = Object.values(category_hours).reduce((a, b) => a + b, 0)
+          const hours = Math.max(sumCats, entry.hours ?? 0)
+          return { ...entry, category_hours, hours: Math.round(hours * 100) / 100 }
+        }),
+      }
+    }
+
+    case 'SET_TRAVAIL_NOTES':
+      return {
+        ...state,
+        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
+        travail: upsertTravail(state.travail, action.date, entry => ({ ...entry, notes: action.notes })),
       }
 
     case 'SET_ROUTINE_HOURS': {
@@ -506,6 +556,9 @@ export const useAppState = () => {
       userDispatch({ type: 'UPSERT_DAY_PROJECT', date, project, hours, note }),
     deleteDayProject: (date: string, project: string) =>
       userDispatch({ type: 'DELETE_DAY_PROJECT', date, project }),
+    setTravailHours: (date: string, hours: number) => userDispatch({ type: 'SET_TRAVAIL_HOURS', date, hours }),
+    setCategoryHours: (date: string, category: string, hours: number) => userDispatch({ type: 'SET_CATEGORY_HOURS', date, category, hours }),
+    setTravailNotes: (date: string, notes: string) => userDispatch({ type: 'SET_TRAVAIL_NOTES', date, notes }),
     setRoutineHours: (date: string, hours: number) => userDispatch({ type: 'SET_ROUTINE_HOURS', date, hours }),
     setHabitHours: (date: string, habit: string, hours: number) => userDispatch({ type: 'SET_HABIT_HOURS', date, habit, hours }),
     setRoutineNotes: (date: string, notes: string) => userDispatch({ type: 'SET_ROUTINE_NOTES', date, notes }),

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { X, Plus, Clock, Activity, CheckSquare } from 'lucide-react'
-import type { VaultSession, Todo, TodoCategory, TodoPriority } from '@/types'
+import type { Todo, TodoCategory, TodoPriority } from '@/types'
 import { todayISO, cn, CATEGORY_CONFIG, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES, parseHoursInput, formatHours, habitIcon } from '@/lib/utils'
 
 type QuickMode = 'session' | 'routine' | 'todo'
@@ -8,18 +8,18 @@ type QuickMode = 'session' | 'routine' | 'todo'
 interface QuickAddModalProps {
   open: boolean
   onClose: () => void
-  projects: string[]
   habits: string[]
-  onAddSession: (s: Omit<VaultSession, 'id'>) => void
+  onSetCategoryHours: (date: string, category: string, hours: number) => void
   onSetRoutineHours: (date: string, hours: number) => void
   onSetHabitHours: (date: string, habit: string, hours: number) => void
   onAddTodo: (t: Omit<Todo, 'id' | 'created'>) => void
-  todayHours: number
+  todayTravailHours: number
+  todayRoutineHours: number
 }
 
 export const QuickAddModal = ({
-  open, onClose, projects, habits,
-  onAddSession, onSetRoutineHours, onSetHabitHours, onAddTodo, todayHours,
+  open, onClose, habits,
+  onSetCategoryHours, onSetRoutineHours, onSetHabitHours, onAddTodo, todayTravailHours, todayRoutineHours,
 }: QuickAddModalProps) => {
   const [mode, setMode] = useState<QuickMode>('session')
 
@@ -63,11 +63,13 @@ export const QuickAddModal = ({
           ))}
         </div>
 
-        {mode === 'session' && <SessionForm projects={projects} onAdd={onAddSession} onClose={onClose} />}
+        {mode === 'session' && (
+          <TravailForm todayHours={todayTravailHours} onSetCategoryHours={onSetCategoryHours} onClose={onClose} />
+        )}
         {mode === 'routine' && (
           <RoutineForm
             habits={habits}
-            todayHours={todayHours}
+            todayHours={todayRoutineHours}
             onSetRoutineHours={onSetRoutineHours}
             onSetHabitHours={onSetHabitHours}
             onClose={onClose}
@@ -79,73 +81,63 @@ export const QuickAddModal = ({
   )
 }
 
-// ─── Session form ────────────────────────────────────────────────────────────
-const SessionForm = ({
-  projects, onAdd, onClose,
+// ─── Travail form (category-based) ──────────────────────────────────────────
+const TravailForm = ({
+  todayHours, onSetCategoryHours, onClose,
 }: {
-  projects: string[]
-  onAdd: (s: Omit<VaultSession, 'id'>) => void
+  todayHours: number
+  onSetCategoryHours: (date: string, category: string, hours: number) => void
   onClose: () => void
 }) => {
-  const [project, setProject] = useState(projects[0] ?? '')
+  const [category, setCategory] = useState<string>(TRAVAIL_CATEGORIES[0])
   const [hoursStr, setHoursStr] = useState('1h')
-  const [note, setNote] = useState('')
   const [date, setDate] = useState(todayISO())
 
   const submit = () => {
     const h = parseHoursInput(hoursStr)
-    if (!project.trim() || h === null || h <= 0) return
-    onAdd({ project: project.trim(), hours: Math.round(h * 100) / 100, note: note.trim(), date })
+    if (h === null || h < 0) return
+    onSetCategoryHours(date, category, Math.round(h * 100) / 100)
     onClose()
   }
 
   return (
-    <div className="space-y-3">
-      <div>
-        <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Projet</label>
-        <input
-          list="quick-projects"
-          value={project}
-          onChange={e => setProject(e.target.value)}
-          placeholder="Ex: FTTH CCT 2026 - Partie 1"
-          className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-violet-500"
-        />
-        <datalist id="quick-projects">
-          {projects.map(p => <option key={p} value={p} />)}
-        </datalist>
+    <div className="space-y-4">
+      <div className="text-center py-2">
+        <p className="text-5xl font-extrabold bg-gradient-to-br from-violet-300 to-violet-100 bg-clip-text text-transparent font-mono">
+          {formatHours(todayHours)}
+        </p>
+        <p className="text-[10px] text-zinc-500 mt-1">aujourd'hui</p>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Date</label>
-          <input
-            type="date"
-            value={date}
-            onChange={e => setDate(e.target.value)}
-            className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-violet-500"
-          />
+          <input type="date" value={date} onChange={e => setDate(e.target.value)}
+            className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-violet-500" />
         </div>
         <div>
           <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Durée</label>
-          <input
-            value={hoursStr}
-            onChange={e => setHoursStr(e.target.value)}
-            placeholder="1h30 / 45min / 2.5"
-            className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-violet-500 text-center font-mono"
-          />
+          <input value={hoursStr} onChange={e => setHoursStr(e.target.value)} placeholder="1h30 / 45min"
+            className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-violet-500 font-mono text-center" />
         </div>
       </div>
       <div>
-        <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Note (optionnelle)</label>
-        <textarea
-          value={note}
-          onChange={e => setNote(e.target.value)}
-          rows={2}
-          placeholder="Ce que tu as fait…"
-          className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-violet-500 resize-none"
-        />
+        <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Catégorie</label>
+        <div className="grid grid-cols-2 gap-1.5 mt-1">
+          {TRAVAIL_CATEGORIES.map(c => {
+            const cfg = CATEGORY_CONFIG[c]
+            return (
+              <button key={c} onClick={() => setCategory(c)}
+                className={cn('px-3 py-2 rounded-lg border text-xs font-medium flex items-center gap-2 transition-all',
+                  category === c ? 'border-violet-500/50 bg-violet-500/10 text-violet-300' : 'border-zinc-800 text-zinc-500 hover:border-zinc-700')}>
+                <span className="text-base">{cfg.emoji}</span>
+                <span className="truncate">{cfg.label}</span>
+              </button>
+            )
+          })}
+        </div>
       </div>
       <button onClick={submit} className="w-full py-3 rounded-xl bg-gradient-to-br from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 text-xs font-bold flex items-center justify-center gap-1.5">
-        <Plus size={14} /> Ajouter la session
+        <Plus size={14} /> Logger
       </button>
     </div>
   )

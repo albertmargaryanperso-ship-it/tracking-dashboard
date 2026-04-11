@@ -10,6 +10,7 @@ export const INITIAL_STATE: AppState = {
     habitudes: ['Sport', 'Cardio', 'Lecture', 'Bien-être'],
   },
   sessions: [],
+  travail: [],
   routine: [],
   todos: [],
   todos_next_id: 1,

@@ -40,6 +40,21 @@ export const mergeStates = (local: AppState, remote: AppState): AppState => {
   const preservedSessions = remote.sessions.filter(s => !localSessionKeys.has(sessionKey(s)))
   const mergedSessions = [...local.sessions, ...preservedSessions]
 
+  // Travail — union by date, newest wins
+  const localTravailMap = new Map((local.travail ?? []).map(r => [r.date, r]))
+  const remoteTravailMap = new Map((remote.travail ?? []).map(r => [r.date, r]))
+  const allTravailDates = new Set([...localTravailMap.keys(), ...remoteTravailMap.keys()])
+  const mergedTravail = Array.from(allTravailDates).map(date => {
+    const l = localTravailMap.get(date)
+    const r = remoteTravailMap.get(date)
+    if (!l) return r!
+    if (!r) return l
+    const lCats = Object.keys(l.category_hours ?? {}).length
+    const rCats = Object.keys(r.category_hours ?? {}).length
+    if (lCats !== rCats) return lCats > rCats ? l : r
+    return (l.hours ?? 0) >= (r.hours ?? 0) ? l : r
+  })
+
   // Routine — union by date, newest wins (compare hours — higher = more data)
   const localRoutineMap = new Map(local.routine.map(r => [r.date, r]))
   const remoteRoutineMap = new Map(remote.routine.map(r => [r.date, r]))
@@ -78,6 +93,7 @@ export const mergeStates = (local: AppState, remote: AppState): AppState => {
       habitudes: mergedHabits,
     },
     sessions: mergedSessions,
+    travail: mergedTravail,
     routine: mergedRoutine,
     todos: mergedTodos,
     todos_next_id: nextId,
