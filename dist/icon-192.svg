@@ -1,16 +1,39 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#8b5cf6"/>
-      <stop offset="1" stop-color="#06b6d4"/>
+    <linearGradient id="board" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d4a056"/>
+      <stop offset="100%" stop-color="#8b6914"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e8e8e8"/>
+    </linearGradient>
+    <linearGradient id="check" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#16a34a"/>
+    </linearGradient>
+    <linearGradient id="clip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#b0b0b0"/>
+      <stop offset="100%" stop-color="#787878"/>
     </linearGradient>
   </defs>
-  <rect width="192" height="192" rx="42" fill="#0f0f1a"/>
-  <g transform="translate(36,36)">
-    <rect x="0"  y="70" width="20" height="50" rx="5" fill="url(#g)"/>
-    <rect x="30" y="40" width="20" height="80" rx="5" fill="url(#g)"/>
-    <rect x="60" y="15" width="20" height="105" rx="5" fill="url(#g)"/>
-    <rect x="90" y="50" width="20" height="70" rx="5" fill="url(#g)"/>
-    <circle cx="110" cy="20" r="10" fill="#f59e0b"/>
+  <!-- Clipboard board -->
+  <rect x="16" y="28" width="140" height="152" rx="12" fill="url(#board)"/>
+  <!-- Paper -->
+  <rect x="26" y="42" width="120" height="130" rx="6" fill="url(#paper)"/>
+  <!-- Lines on paper -->
+  <line x1="38" y1="62" x2="134" y2="62" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="38" y1="78" x2="134" y2="78" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="38" y1="94" x2="134" y2="94" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="38" y1="110" x2="134" y2="110" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="38" y1="126" x2="134" y2="126" stroke="#ccc" stroke-width="1.5"/>
+  <line x1="38" y1="142" x2="134" y2="142" stroke="#ccc" stroke-width="1.5"/>
+  <!-- Clip -->
+  <rect x="56" y="18" width="60" height="24" rx="5" fill="url(#clip)"/>
+  <rect x="66" y="22" width="40" height="16" rx="4" fill="#999"/>
+  <!-- Check mark -->
+  <g transform="translate(100, 95)">
+    <circle cx="30" cy="30" r="38" fill="url(#check)" opacity="0.9"/>
+    <polyline points="12,30 26,44 50,16" fill="none" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>
