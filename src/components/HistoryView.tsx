@@ -304,9 +304,9 @@ const CategoryAccordion = ({ cfg, pct, minutes, count, open, todos, month, onEdi
                   <span className="flex-1 text-zinc-300 truncate">{t.text}</span>
                   {t.completed_min ? <span className="text-emerald-400 font-mono shrink-0">{formatMinutes(t.completed_min)}</span> : null}
                   {editable && (
-                    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-all shrink-0">
-                      <button onClick={(e) => { e.stopPropagation(); startEdit(t) }} className="p-0.5 text-zinc-500 hover:text-zinc-300 rounded"><Pencil size={9} /></button>
-                      <button onClick={(e) => { e.stopPropagation(); handleDelete(t.id) }} className="p-0.5 text-zinc-500 hover:text-rose-400 rounded"><Trash2 size={9} /></button>
+                    <div className="flex gap-0.5 shrink-0">
+                      <button onClick={(e) => { e.stopPropagation(); startEdit(t) }} className="p-1 text-zinc-500 hover:text-zinc-300 rounded"><Pencil size={10} /></button>
+                      <button onClick={(e) => { e.stopPropagation(); handleDelete(t.id) }} className="p-1 text-zinc-500 hover:text-rose-400 rounded"><Trash2 size={10} /></button>
                     </div>
                   )}
                 </>
