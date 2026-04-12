@@ -1,13 +1,69 @@
 {
   "meta": {
-    "version": 370,
-    "updated_at": "2026-04-12T17:33:26.650Z",
+    "version": 367,
+    "updated_at": "2026-04-12T17:33:36.374Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
       "Cardio",
       "Lecture",
       "Bien-être"
+    ],
+    "custom_tabs": [
+      {
+        "id": "dashboard",
+        "label": "Dashboard",
+        "emoji": "📊",
+        "type": "dashboard",
+        "removable": false
+      },
+      {
+        "id": "todo-travail",
+        "label": "Travail",
+        "emoji": "💼",
+        "type": "todos",
+        "categoryFilter": [
+          "pro",
+          "finance",
+          "admin",
+          "automatisation"
+        ],
+        "removable": true
+      },
+      {
+        "id": "todo-personnel",
+        "label": "Personnel",
+        "emoji": "🧘",
+        "type": "todos",
+        "categoryFilter": [
+          "sport",
+          "cardio",
+          "lecture",
+          "bien-etre"
+        ],
+        "removable": true
+      },
+      {
+        "id": "charts",
+        "label": "Camemberts",
+        "emoji": "🥧",
+        "type": "charts",
+        "removable": true
+      },
+      {
+        "id": "historique",
+        "label": "Historique",
+        "emoji": "📜",
+        "type": "historique",
+        "removable": true
+      },
+      {
+        "id": "settings",
+        "label": "Paramètres",
+        "emoji": "⚙️",
+        "type": "settings",
+        "removable": false
+      }
     ]
   },
   "todos": [
