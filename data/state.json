@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 305,
-    "updated_at": "2026-04-12T00:11:46.829Z",
+    "updated_at": "2026-04-12T00:11:55.604Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -416,20 +416,6 @@
       "completed_at": null,
       "duration_min": 45,
       "completed_min": null,
-      "updated_at": "2026-04-09"
-    },
-    {
-      "text": "Virement Djaffar Nadjim Massi",
-      "category": "finance",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10002,
-      "created": "2026-04-09",
       "updated_at": "2026-04-09"
     },
     {
