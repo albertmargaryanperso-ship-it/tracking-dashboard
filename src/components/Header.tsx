@@ -83,7 +83,7 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, customCategorie
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-md">
+    <header className="sticky top-0 z-20 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-md pt-[env(safe-area-inset-top)]">
       <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
         {/* Brand */}
         <div className="flex items-center gap-3 min-w-0 shrink-0">
