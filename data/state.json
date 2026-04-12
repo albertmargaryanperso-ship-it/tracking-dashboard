@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 418,
-    "updated_at": "2026-04-12T19:00:20.005Z",
+    "updated_at": "2026-04-12T19:00:30.103Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -140,6 +140,16 @@
         "emoji": "📜",
         "type": "historique",
         "removable": false
+      },
+      {
+        "id": "tab_1776020429749",
+        "label": "Nouveau",
+        "emoji": "🌟",
+        "type": "todos",
+        "removable": true,
+        "categoryFilter": [
+          "cat_1776020403131"
+        ]
       },
       {
         "id": "settings",
