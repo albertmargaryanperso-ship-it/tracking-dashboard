@@ -71,7 +71,7 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
     const isEditing = editingTabId === tab.id
     return (
       <div key={tab.id} className="relative flex items-center shrink-0">
-        {reorderMode && (
+        {reorderMode && !isMobile && (
           <button onClick={(e) => { e.stopPropagation(); moveTab(tab.id, -1) }}
             className="p-0.5 text-zinc-500 hover:text-zinc-200 transition-all">
             <ChevronLeft size={12} />
@@ -81,22 +81,23 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
           <input value={editLabel} onChange={e => setEditLabel(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') setEditingTabId(null) }}
             onBlur={saveRename} autoFocus
-            className="px-2 py-1 rounded-lg text-xs font-semibold bg-zinc-800 border border-emerald-500 text-zinc-100 focus:outline-none w-24" />
+            className="px-2 py-1 rounded-lg text-[11px] font-semibold bg-zinc-800 border border-emerald-500 text-zinc-100 focus:outline-none w-20" />
         ) : (
           <button
             onClick={() => { if (reorderMode) startRename(tab); else onViewChange(tab.id) }}
-            className={cn('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5',
+            className={cn('rounded-lg font-semibold transition-all flex items-center gap-1',
+              isMobile ? 'px-2 py-1 text-[11px]' : 'px-3 py-1.5 text-xs gap-1.5',
               reorderMode && 'ring-1 ring-zinc-700',
               isActive
                 ? 'bg-gradient-to-br from-violet-600 to-cyan-600 text-white shadow-lg shadow-violet-500/20'
                 : isMobile
                   ? 'text-zinc-400 bg-zinc-900 border border-zinc-800'
                   : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60')}>
-            <span className={isMobile ? '' : 'text-sm'}>{tab.emoji}</span>
-            {tab.label}
+            <span className={isMobile ? 'text-xs' : 'text-sm'}>{tab.emoji}</span>
+            <span className={isMobile ? 'hidden sm:inline' : ''}>{tab.label}</span>
           </button>
         )}
-        {reorderMode && (
+        {reorderMode && !isMobile && (
           <button onClick={(e) => { e.stopPropagation(); moveTab(tab.id, 1) }}
             className="p-0.5 text-zinc-500 hover:text-zinc-200 transition-all">
             <ChevronRight size={12} />
@@ -104,8 +105,9 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
         )}
         {reorderMode && tab.removable && (
           <button onClick={(e) => { e.stopPropagation(); deleteTab(tab.id) }}
-            className="absolute -top-1.5 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-lg z-10">
-            <X size={8} strokeWidth={3} />
+            className={cn('absolute -top-1 -right-1 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-lg z-10',
+              isMobile ? 'w-3.5 h-3.5' : 'w-4 h-4')}>
+            <X size={isMobile ? 7 : 8} strokeWidth={3} />
           </button>
         )}
       </div>
@@ -114,15 +116,13 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
 
   return (
     <header className="sticky top-0 z-20 border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-md pt-[env(safe-area-inset-top)]">
-      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 flex items-center gap-3">
-        {/* Brand */}
-        <div className="flex items-center gap-3 min-w-0 shrink-0">
+      {/* Desktop: brand + tabs */}
+      <div className="hidden md:flex max-w-screen-2xl mx-auto px-6 py-3 items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center text-base">📊</div>
-          <h1 className="text-sm font-semibold tracking-tight hidden sm:block">Tracking</h1>
+          <h1 className="text-sm font-semibold tracking-tight">Tracking</h1>
         </div>
-
-        {/* Tabs (desktop) */}
-        <nav className="hidden md:flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-xl flex-1 justify-center">
+        <nav className="flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-xl flex-1 justify-center">
           {tabs.map(t => renderTab(t, false))}
           {reorderMode && (
             <>
@@ -139,36 +139,33 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
             </>
           )}
         </nav>
-
-        {/* Customize button (desktop) */}
         {!reorderMode && (
           <button onClick={() => setReorderMode(true)} title="Personnaliser les onglets"
-            className="hidden md:flex p-2 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700 transition-all shrink-0">
+            className="p-2 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700 transition-all shrink-0">
             <Pencil size={14} />
           </button>
         )}
       </div>
 
-      {/* Tabs (mobile) */}
-      <nav className="md:hidden flex items-center gap-1 px-3 pb-2 overflow-x-auto">
+      {/* Mobile: tabs only, no logo, compact */}
+      <nav className="md:hidden flex items-center gap-1 px-2 py-1.5 overflow-x-auto">
         {tabs.map(t => renderTab(t, true))}
-        {/* Customize button (mobile) — always visible */}
         {!reorderMode && (
           <button onClick={() => setReorderMode(true)}
-            className="shrink-0 w-8 h-8 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-500 flex items-center justify-center">
-            <Pencil size={12} />
+            className="shrink-0 w-7 h-7 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-500 flex items-center justify-center">
+            <Pencil size={11} />
           </button>
         )}
         {reorderMode && (
           <>
             {todoTabCount < 3 && (
               <button onClick={() => setAddOpen(true)}
-                className="shrink-0 w-8 h-8 rounded-lg border border-dashed border-zinc-700 text-zinc-500 hover:text-emerald-400 flex items-center justify-center">
-                <Plus size={14} />
+                className="shrink-0 w-7 h-7 rounded-lg border border-dashed border-zinc-700 text-zinc-500 hover:text-emerald-400 flex items-center justify-center">
+                <Plus size={12} />
               </button>
             )}
             <button onClick={() => setReorderMode(false)}
-              className="shrink-0 px-2 py-1.5 rounded-lg bg-emerald-600 text-white text-[10px] font-bold">
+              className="shrink-0 px-2 py-1 rounded-lg bg-emerald-600 text-white text-[9px] font-bold">
               OK
             </button>
           </>
