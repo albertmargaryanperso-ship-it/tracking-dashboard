@@ -150,14 +150,7 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, customCategorie
   )
 }
 
-// ─── Add tab modal (scrollable) ─────────────────────────────────────────────
-const TAB_TYPES: Array<{ type: TabType; label: string; emoji: string; desc: string }> = [
-  { type: 'todos', label: 'Vue Todo', emoji: '✅', desc: 'Kanban filtré par catégories' },
-  { type: 'charts', label: 'Camemberts', emoji: '🥧', desc: 'Graphiques et statistiques' },
-  { type: 'historique', label: 'Historique', emoji: '📜', desc: 'Archive des mois passés' },
-  { type: 'dashboard', label: 'Dashboard', emoji: '📊', desc: 'Vue d\'ensemble' },
-]
-
+// ─── Add tab modal — Todo only ──────────────────────────────────────────────
 const EMOJIS = ['📋', '🎯', '🔥', '💡', '🚀', '📈', '🏠', '💰', '🎨', '📦', '🔧', '🌟']
 
 const AddTabModal = ({ onAdd, onClose, customCategories }: {
@@ -165,7 +158,6 @@ const AddTabModal = ({ onAdd, onClose, customCategories }: {
 }) => {
   const [label, setLabel] = useState('')
   const [emoji, setEmoji] = useState('📋')
-  const [tabType, setTabType] = useState<TabType>('todos')
   const [selectedCats, setSelectedCats] = useState<string[]>([])
 
   const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(customCategories)
@@ -176,29 +168,27 @@ const AddTabModal = ({ onAdd, onClose, customCategories }: {
 
   const submit = () => {
     if (!label.trim()) return
-    const id = `tab_${Date.now()}`
     onAdd({
-      id, label: label.trim(), emoji, type: tabType, removable: true,
-      ...(tabType === 'todos' && selectedCats.length > 0 ? { categoryFilter: selectedCats } : {}),
+      id: `tab_${Date.now()}`, label: label.trim(), emoji, type: 'todos', removable: true,
+      ...(selectedCats.length > 0 ? { categoryFilter: selectedCats } : {}),
     })
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-      <div className="w-full max-w-md max-h-[80vh] rounded-3xl border border-zinc-800 bg-zinc-950 shadow-2xl animate-slide-in flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-sm rounded-3xl border border-zinc-800 bg-zinc-950 shadow-2xl animate-slide-in" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 pb-0">
-          <h2 className="text-sm font-bold">Nouvel onglet</h2>
+          <h2 className="text-sm font-bold">Nouvelle vue Todo</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300"><X size={14} /></button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 pt-3 space-y-3">
-          {/* Name */}
+        <div className="p-5 pt-3 space-y-3">
           <input autoFocus value={label} onChange={e => setLabel(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') submit() }}
             placeholder="Nom de l'onglet…"
             className="w-full px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-emerald-500" />
 
-          {/* Emoji picker */}
+          {/* Emoji */}
           <div className="flex flex-wrap gap-1.5">
             {EMOJIS.map(e => (
               <button key={e} onClick={() => setEmoji(e)}
@@ -209,42 +199,24 @@ const AddTabModal = ({ onAdd, onClose, customCategories }: {
             ))}
           </div>
 
-          {/* Type */}
-          <div className="grid grid-cols-2 gap-1.5">
-            {TAB_TYPES.map(t => (
-              <button key={t.type} onClick={() => setTabType(t.type)}
-                className={cn('p-2.5 rounded-xl border text-left transition-all',
-                  tabType === t.type ? 'border-emerald-500 bg-emerald-500/10' : 'border-zinc-800 hover:border-zinc-700')}>
-                <span className="text-sm">{t.emoji}</span>
-                <p className="text-[11px] font-semibold mt-0.5">{t.label}</p>
-                <p className="text-[9px] text-zinc-500">{t.desc}</p>
-              </button>
-            ))}
+          {/* Category filter */}
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">Catégories à afficher</p>
+            <div className="flex flex-wrap gap-1.5">
+              {CATEGORY_LIST.map(c => {
+                const cat = CATEGORY_CONFIG[c]; const selected = selectedCats.includes(c)
+                return (
+                  <button key={c} onClick={() => toggleCat(c)}
+                    className={cn('px-2 py-1.5 rounded-lg text-[10px] font-semibold border transition-all flex items-center gap-1',
+                      selected ? cat.bg + ' ' + cat.color : 'border-zinc-800 text-zinc-500')}>
+                    {cat.emoji} {cat.label}
+                  </button>
+                )
+              })}
+            </div>
+            {selectedCats.length === 0 && <p className="text-[9px] text-zinc-600 mt-1">Aucun filtre = toutes les catégories</p>}
           </div>
 
-          {/* Category filter (for todos type) */}
-          {tabType === 'todos' && (
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1.5">Catégories à afficher</p>
-              <div className="flex flex-wrap gap-1.5">
-                {CATEGORY_LIST.map(c => {
-                  const cat = CATEGORY_CONFIG[c]; const selected = selectedCats.includes(c)
-                  return (
-                    <button key={c} onClick={() => toggleCat(c)}
-                      className={cn('px-2 py-1.5 rounded-lg text-[10px] font-semibold border transition-all flex items-center gap-1',
-                        selected ? cat.bg + ' ' + cat.color : 'border-zinc-800 text-zinc-500')}>
-                      {cat.emoji} {cat.label}
-                    </button>
-                  )
-                })}
-              </div>
-              {selectedCats.length === 0 && <p className="text-[9px] text-zinc-600 mt-1">Aucun filtre = toutes les catégories</p>}
-            </div>
-          )}
-        </div>
-
-        {/* Fixed bottom button */}
-        <div className="p-5 pt-2 border-t border-zinc-800/50">
           <button onClick={submit} disabled={!label.trim()}
             className="w-full py-3 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 disabled:opacity-40 text-xs font-bold flex items-center justify-center gap-1.5">
             <Plus size={14} /> Créer l'onglet
