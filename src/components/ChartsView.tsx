@@ -86,19 +86,19 @@ export const ChartsView = ({ state, stats }: ChartsViewProps) => {
 
   return (
     <div className="space-y-5">
-      {/* Stats per tab */}
-      <div className={cn('grid gap-3', `grid-cols-${Math.min(todoTabs.length * 2, 6)}`)}>
+      {/* Stats per tab — compact */}
+      <div className={cn('grid gap-2', todoTabs.length <= 2 ? 'grid-cols-4' : `grid-cols-${Math.min(todoTabs.length * 2, 6)}`)}>
         {todoTabs.map((tab, i) => {
           const grp = stats.tracking.by_group[tab.id]
           const hex = TAB_COLORS[i % TAB_COLORS.length]
           return [
-            <div key={`${tab.id}-total`} className="rounded-xl p-3 border bg-zinc-900/50" style={{ borderColor: hex + '30' }}>
-              <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">{tab.emoji} {tab.label} total</p>
-              <p className="text-xl font-extrabold mt-0.5" style={{ color: hex }}>{formatMinutes(grp?.minutes ?? 0) || '0'}</p>
+            <div key={`${tab.id}-total`} className="rounded-xl p-2.5 border bg-zinc-900/50" style={{ borderColor: hex + '30' }}>
+              <p className="text-[9px] uppercase tracking-wider text-zinc-500 font-semibold">{tab.emoji} Total</p>
+              <p className="text-lg font-extrabold" style={{ color: hex }}>{formatMinutes(grp?.minutes ?? 0) || '0'}</p>
             </div>,
-            <div key={`${tab.id}-streak`} className="rounded-xl p-3 border bg-zinc-900/50" style={{ borderColor: hex + '30' }}>
-              <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">🔥 Streak {tab.label}</p>
-              <p className="text-xl font-extrabold mt-0.5" style={{ color: hex }}>{stats.tracking.streaks_by_tab?.[tab.id] ?? 0}j</p>
+            <div key={`${tab.id}-streak`} className="rounded-xl p-2.5 border bg-zinc-900/50" style={{ borderColor: hex + '30' }}>
+              <p className="text-[9px] uppercase tracking-wider text-zinc-500 font-semibold">🔥 Streak</p>
+              <p className="text-lg font-extrabold" style={{ color: hex }}>{stats.tracking.streaks_by_tab?.[tab.id] ?? 0}j</p>
             </div>,
           ]
         })}
