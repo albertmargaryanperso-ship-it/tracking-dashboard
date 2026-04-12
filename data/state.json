@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 439,
-    "updated_at": "2026-04-12T20:51:02.640Z",
+    "updated_at": "2026-04-12T20:51:03.589Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -115,6 +115,16 @@
         "removable": true
       },
       {
+        "id": "tab_1776024372196",
+        "label": "ok",
+        "emoji": "🌟",
+        "type": "todos",
+        "removable": true,
+        "categoryFilter": [
+          "cat_1776020403131"
+        ]
+      },
+      {
         "id": "todo-personnel",
         "label": "Personnel",
         "emoji": "🧘",
@@ -126,16 +136,6 @@
           "bien-etre"
         ],
         "removable": true
-      },
-      {
-        "id": "tab_1776024372196",
-        "label": "ok",
-        "emoji": "🌟",
-        "type": "todos",
-        "removable": true,
-        "categoryFilter": [
-          "cat_1776020403131"
-        ]
       },
       {
         "id": "charts",
