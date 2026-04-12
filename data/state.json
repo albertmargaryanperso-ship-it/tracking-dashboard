@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 313,
-    "updated_at": "2026-04-12T00:21:59.131Z",
+    "version": 314,
+    "updated_at": "2026-04-12T00:22:31.848Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -800,8 +800,22 @@
       "id": 10039,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:21:58.775Z"
+    },
+    {
+      "text": "Voir vidéos de création agent ia onoff téléphone",
+      "category": "lecture",
+      "priority": "normal",
+      "status": "waiting",
+      "delegated_to": null,
+      "due": null,
+      "completed_at": null,
+      "duration_min": 30,
+      "completed_min": null,
+      "id": 10040,
+      "created": "2026-04-12",
+      "updated_at": "2026-04-12T00:22:31.494Z"
     }
   ],
-  "todos_next_id": 10040,
+  "todos_next_id": 10041,
   "archive": []
 }
