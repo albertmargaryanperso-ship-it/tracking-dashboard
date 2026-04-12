@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Plus, X, ChevronLeft, ChevronRight, Check, Pencil } from 'lucide-react'
 import type { View, TabConfig, TabType } from '@/types'
 import { cn, getActiveCategories, getActiveTabs, DEFAULT_TABS } from '@/lib/utils'
@@ -140,8 +141,11 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, customCategorie
         )}
       </nav>
 
-      {/* Add tab modal */}
-      {addOpen && <AddTabModal onAdd={addTab} onClose={() => setAddOpen(false)} customCategories={customCategories} />}
+      {/* Add tab modal — portaled to body to escape header stacking context */}
+      {addOpen && createPortal(
+        <AddTabModal onAdd={addTab} onClose={() => setAddOpen(false)} customCategories={customCategories} />,
+        document.body
+      )}
     </header>
   )
 }
