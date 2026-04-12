@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 398,
-    "updated_at": "2026-04-12T18:19:13.343Z",
+    "updated_at": "2026-04-12T18:19:53.422Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -604,15 +604,16 @@
       "text": "Factures Omar",
       "category": "admin",
       "priority": "normal",
-      "status": "waiting",
+      "status": "done",
       "delegated_to": null,
       "due": null,
-      "completed_at": null,
+      "completed_at": "2026-04-12",
       "duration_min": 15,
-      "completed_min": null,
+      "completed_min": 15,
       "id": 10006,
       "created": "2026-04-10",
-      "updated_at": "2026-04-10"
+      "updated_at": "2026-04-12T18:19:53.069Z",
+      "done": true
     },
     {
       "text": "Recap sogetrel février",
