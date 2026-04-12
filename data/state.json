@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 309,
-    "updated_at": "2026-04-12T00:15:22.520Z",
+    "updated_at": "2026-04-12T00:15:38.405Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -716,8 +716,22 @@
       "id": 10032,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:15:22.165Z"
+    },
+    {
+      "text": "Virement Youssef",
+      "category": "finance",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": "2026-04-12",
+      "completed_at": null,
+      "duration_min": 30,
+      "completed_min": null,
+      "id": 10033,
+      "created": "2026-04-12",
+      "updated_at": "2026-04-12T00:15:38.050Z"
     }
   ],
-  "todos_next_id": 10033,
+  "todos_next_id": 10034,
   "archive": []
 }
