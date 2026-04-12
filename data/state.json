@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 301,
-    "updated_at": "2026-04-12T00:08:23.703Z",
+    "updated_at": "2026-04-12T00:08:25.331Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -644,20 +644,6 @@
       "status": "done",
       "done": true,
       "updated_at": "2026-04-11T22:51:17.679Z"
-    },
-    {
-      "text": "Tu j",
-      "category": "pro",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-12",
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10020,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-11T23:15:03.172Z"
     },
     {
       "text": "Amélioration de l’application",
