@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 439,
-    "updated_at": "2026-04-12T20:51:06.811Z",
+    "updated_at": "2026-04-12T20:51:08.345Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -112,19 +112,6 @@
         ]
       },
       {
-        "id": "todo-travail",
-        "label": "Travail",
-        "emoji": "💼",
-        "type": "todos",
-        "categoryFilter": [
-          "pro",
-          "finance",
-          "admin",
-          "automatisation"
-        ],
-        "removable": true
-      },
-      {
         "id": "todo-personnel",
         "label": "Personnel",
         "emoji": "🧘",
@@ -134,6 +121,19 @@
           "cardio",
           "lecture",
           "bien-etre"
+        ],
+        "removable": true
+      },
+      {
+        "id": "todo-travail",
+        "label": "Travail",
+        "emoji": "💼",
+        "type": "todos",
+        "categoryFilter": [
+          "pro",
+          "finance",
+          "admin",
+          "automatisation"
         ],
         "removable": true
       },
