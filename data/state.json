@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 347,
-    "updated_at": "2026-04-12T16:05:22.870Z",
+    "version": 348,
+    "updated_at": "2026-04-12T16:06:20.455Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -813,7 +813,14 @@
       "completed_min": null,
       "id": 10041,
       "created": "2026-04-12",
-      "updated_at": "2026-04-12T05:13:53.324Z"
+      "updated_at": "2026-04-12T16:06:20.101Z",
+      "subtasks": [
+        {
+          "id": "st_1776009980100_gwh3j",
+          "text": "gu",
+          "done": false
+        }
+      ]
     },
     {
       "text": "Sabri demander où en est le virement",
