@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 449,
-    "updated_at": "2026-04-12T21:33:55.040Z",
+    "updated_at": "2026-04-12T21:33:57.937Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -137,13 +137,6 @@
         "removable": false
       },
       {
-        "id": "historique",
-        "label": "Historique",
-        "emoji": "📜",
-        "type": "historique",
-        "removable": false
-      },
-      {
         "id": "tab_1776029634677",
         "label": "Définir",
         "emoji": "🌟",
@@ -152,6 +145,13 @@
         "categoryFilter": [
           "cat_1776020403131"
         ]
+      },
+      {
+        "id": "historique",
+        "label": "Historique",
+        "emoji": "📜",
+        "type": "historique",
+        "removable": false
       },
       {
         "id": "settings",
