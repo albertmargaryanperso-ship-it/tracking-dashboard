@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 307,
-    "updated_at": "2026-04-12T00:14:06.437Z",
+    "version": 308,
+    "updated_at": "2026-04-12T00:15:01.515Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -688,8 +688,22 @@
       "id": 10030,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:14:06.080Z"
+    },
+    {
+      "text": "Envoyer recap février Kader Youssef Nikola Adem",
+      "category": "finance",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": "2026-04-12",
+      "completed_at": null,
+      "duration_min": 30,
+      "completed_min": null,
+      "id": 10031,
+      "created": "2026-04-12",
+      "updated_at": "2026-04-12T00:15:01.160Z"
     }
   ],
-  "todos_next_id": 10031,
+  "todos_next_id": 10032,
   "archive": []
 }
