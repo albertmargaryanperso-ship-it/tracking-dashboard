@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import type { Stats, AppState } from '@/types'
-import { formatMinutes, cn, getActiveCategories } from '@/lib/utils'
+import { formatMinutes, cn, getActiveCategories, getTodoTabs } from '@/lib/utils'
 
 interface ChartsViewProps { state: AppState; stats: Stats }
+
+const TAB_COLORS = ['#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#f472b6', '#fb923c']
 
 interface Slice { label: string; value: number; color: string; icon?: string }
 const TAU = Math.PI * 2
@@ -42,7 +44,7 @@ const Legend = ({ slices }: { slices: Slice[] }) => {
 }
 
 const ChartCard = ({ title, subtitle, borderColor, slices }: { title: string; subtitle?: string; borderColor: string; slices: Slice[] }) => (
-  <div className={cn('rounded-2xl border bg-zinc-900/50 p-5', borderColor)}>
+  <div className="rounded-2xl border bg-zinc-900/50 p-5" style={{ borderColor }}>
     <div className="mb-3"><h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300">{title}</h3>{subtitle && <p className="text-[10px] text-zinc-500 mt-0.5">{subtitle}</p>}</div>
     <div className="flex flex-col lg:flex-row items-center gap-5">
       <div className="shrink-0"><PieChart slices={slices} label={title} /></div>
@@ -54,33 +56,67 @@ const ChartCard = ({ title, subtitle, borderColor, slices }: { title: string; su
 export const ChartsView = ({ state, stats }: ChartsViewProps) => {
   const [combinedMode, setCombinedMode] = useState<'macro' | 'detailed'>('macro')
   const bc = stats.tracking.by_category
-  const { CATEGORY_CONFIG, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES } = getActiveCategories(state.meta.custom_categories)
+  const { CATEGORY_CONFIG } = getActiveCategories(state.meta.custom_categories)
+  const todoTabs = getTodoTabs(state.meta.custom_tabs)
 
-  const travailSlices: Slice[] = useMemo(() => TRAVAIL_CATEGORIES.map(c => ({ label: CATEGORY_CONFIG[c]?.label || c, value: (bc[c]?.minutes || 0) / 60, color: CATEGORY_CONFIG[c]?.hex || '#000', icon: CATEGORY_CONFIG[c]?.emoji })).filter(s => s.value > 0), [bc, TRAVAIL_CATEGORIES, CATEGORY_CONFIG])
-  const personnelSlices: Slice[] = useMemo(() => PERSONNEL_CATEGORIES.map(c => ({ label: CATEGORY_CONFIG[c]?.label || c, value: (bc[c]?.minutes || 0) / 60, color: CATEGORY_CONFIG[c]?.hex || '#000', icon: CATEGORY_CONFIG[c]?.emoji })).filter(s => s.value > 0), [bc, PERSONNEL_CATEGORIES, CATEGORY_CONFIG])
+  // Per-tab slices
+  const tabSlices = useMemo(() => {
+    return todoTabs.map((tab, i) => {
+      const cats = tab.categoryFilter?.length ? tab.categoryFilter : Object.keys(CATEGORY_CONFIG)
+      const slices: Slice[] = cats.map(c => ({
+        label: CATEGORY_CONFIG[c]?.label || c,
+        value: (bc[c]?.minutes || 0) / 60,
+        color: CATEGORY_CONFIG[c]?.hex || '#666',
+        icon: CATEGORY_CONFIG[c]?.emoji,
+      })).filter(s => s.value > 0)
+      return { tab, slices, color: TAB_COLORS[i % TAB_COLORS.length] }
+    })
+  }, [bc, todoTabs, CATEGORY_CONFIG])
 
-  const combinedMacro: Slice[] = useMemo(() => [
-    { label: 'Travail', value: stats.tracking.by_group.travail.minutes / 60, color: '#a78bfa' },
-    { label: 'Personnel', value: stats.tracking.by_group.personnel.minutes / 60, color: '#22d3ee' },
-  ].filter(s => s.value > 0), [stats.tracking.by_group])
+  // Combined macro = per tab group
+  const combinedMacro: Slice[] = useMemo(() =>
+    todoTabs.map((tab, i) => {
+      const grp = stats.tracking.by_group[tab.id]
+      return { label: tab.label, value: (grp?.minutes ?? 0) / 60, color: TAB_COLORS[i % TAB_COLORS.length], icon: tab.emoji }
+    }).filter(s => s.value > 0),
+  [todoTabs, stats.tracking.by_group])
 
-  const combinedDetailed: Slice[] = useMemo(() => [...travailSlices, ...personnelSlices], [travailSlices, personnelSlices])
+  // Combined detailed = all categories flat
+  const combinedDetailed: Slice[] = useMemo(() => tabSlices.flatMap(t => t.slices), [tabSlices])
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Stat label="Travail total" value={formatMinutes(stats.tracking.by_group.travail.minutes) || '0'} accent="violet" />
-        <Stat label="Personnel total" value={formatMinutes(stats.tracking.by_group.personnel.minutes) || '0'} accent="cyan" />
-        <Stat label="Streak travail" value={`${stats.tracking.streak_travail}j`} accent="violet" />
-        <Stat label="Streak personnel" value={`${stats.tracking.streak_personnel}j`} accent="cyan" />
+      {/* Stats per tab */}
+      <div className={cn('grid gap-3', `grid-cols-${Math.min(todoTabs.length * 2, 6)}`)}>
+        {todoTabs.map((tab, i) => {
+          const grp = stats.tracking.by_group[tab.id]
+          const hex = TAB_COLORS[i % TAB_COLORS.length]
+          return [
+            <div key={`${tab.id}-total`} className="rounded-xl p-3 border bg-zinc-900/50" style={{ borderColor: hex + '30' }}>
+              <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">{tab.emoji} {tab.label} total</p>
+              <p className="text-xl font-extrabold mt-0.5" style={{ color: hex }}>{formatMinutes(grp?.minutes ?? 0) || '0'}</p>
+            </div>,
+            <div key={`${tab.id}-streak`} className="rounded-xl p-3 border bg-zinc-900/50" style={{ borderColor: hex + '30' }}>
+              <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">🔥 Streak {tab.label}</p>
+              <p className="text-xl font-extrabold mt-0.5" style={{ color: hex }}>{stats.tracking.streaks_by_tab?.[tab.id] ?? 0}j</p>
+            </div>,
+          ]
+        })}
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <ChartCard title="Travail — par catégorie" subtitle="Pro · Finance · Admin · Automatisation" borderColor="border-violet-500/20" slices={travailSlices} />
-        <ChartCard title="Personnel — par catégorie" subtitle="Sport · Cardio · Lecture · Bien-être" borderColor="border-cyan-500/20" slices={personnelSlices} />
+
+      {/* Per-tab pie charts */}
+      <div className={cn('grid gap-5', todoTabs.length <= 2 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1')}>
+        {tabSlices.map(({ tab, slices, color }) => (
+          <ChartCard key={tab.id} title={`${tab.emoji} ${tab.label} — par catégorie`}
+            subtitle={tab.categoryFilter?.map(c => CATEGORY_CONFIG[c]?.label).filter(Boolean).join(' · ')}
+            borderColor={color + '30'} slices={slices} />
+        ))}
       </div>
+
+      {/* Combined */}
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
         <div className="flex items-center justify-between mb-3">
-          <div><h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300">Combiné — Travail × Personnel</h3></div>
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300">Combiné — tous les onglets</h3>
           <div className="flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-lg">
             <button onClick={() => setCombinedMode('macro')} className={cn('px-3 py-1 rounded text-[10px] font-semibold transition-all', combinedMode === 'macro' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-500')}>Macro</button>
             <button onClick={() => setCombinedMode('detailed')} className={cn('px-3 py-1 rounded text-[10px] font-semibold transition-all', combinedMode === 'detailed' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-500')}>Détaillé</button>
@@ -94,10 +130,3 @@ export const ChartsView = ({ state, stats }: ChartsViewProps) => {
     </div>
   )
 }
-
-const Stat = ({ label, value, accent }: { label: string; value: string; accent: 'violet' | 'cyan' }) => (
-  <div className={cn('rounded-xl p-3 border bg-zinc-900/50', accent === 'violet' ? 'border-violet-500/20' : 'border-cyan-500/20')}>
-    <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">{label}</p>
-    <p className={cn('text-xl font-extrabold mt-0.5', accent === 'violet' ? 'text-violet-300' : 'text-cyan-300')}>{value}</p>
-  </div>
-)
