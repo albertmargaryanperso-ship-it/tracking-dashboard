@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 367,
-    "updated_at": "2026-04-12T17:33:36.374Z",
+    "version": 368,
+    "updated_at": "2026-04-12T17:33:51.013Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -56,6 +56,17 @@
         "emoji": "📜",
         "type": "historique",
         "removable": true
+      },
+      {
+        "id": "tab_1776015230654",
+        "label": "finance",
+        "emoji": "📈",
+        "type": "todos",
+        "removable": true,
+        "categoryFilter": [
+          "finance",
+          "admin"
+        ]
       },
       {
         "id": "settings",
