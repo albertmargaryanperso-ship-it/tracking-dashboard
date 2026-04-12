@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 309,
-    "updated_at": "2026-04-12T00:16:05.259Z",
+    "version": 310,
+    "updated_at": "2026-04-12T00:16:48.878Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -744,8 +744,22 @@
       "id": 10034,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:16:04.903Z"
+    },
+    {
+      "text": "Recap sogetrel février",
+      "category": "admin",
+      "priority": "normal",
+      "status": "delegated",
+      "delegated_to": "Loelia",
+      "due": "2026-04-13",
+      "completed_at": null,
+      "duration_min": 30,
+      "completed_min": null,
+      "id": 10035,
+      "created": "2026-04-12",
+      "updated_at": "2026-04-12T00:16:48.522Z"
     }
   ],
-  "todos_next_id": 10035,
+  "todos_next_id": 10036,
   "archive": []
 }
