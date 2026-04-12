@@ -180,8 +180,8 @@ const AddTabModal = ({ onAdd, onClose, customCategories }: {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-      <div className="w-full max-w-md max-h-[85vh] rounded-t-3xl sm:rounded-3xl border border-zinc-800 bg-zinc-950 shadow-2xl animate-slide-in flex flex-col" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+      <div className="w-full max-w-md max-h-[80vh] rounded-3xl border border-zinc-800 bg-zinc-950 shadow-2xl animate-slide-in flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between p-5 pb-0">
           <h2 className="text-sm font-bold">Nouvel onglet</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300"><X size={14} /></button>

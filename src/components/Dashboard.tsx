@@ -27,16 +27,6 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
                 personnel <span className="text-cyan-400 font-semibold">{formatMinutes(t.personnel_today_min) || '0'}</span>
               </span>
             </div>
-            {t.today_minutes > 0 && (
-              <div className="flex items-center gap-3 mt-2">
-                <div className="flex-1 h-2 rounded-full bg-zinc-800 overflow-hidden flex">
-                  <div className="h-full bg-violet-500 transition-all duration-500" style={{ width: `${t.today_minutes > 0 ? Math.round((t.travail_today_min / t.today_minutes) * 100) : 0}%` }} />
-                  <div className="h-full bg-cyan-500 transition-all duration-500" style={{ width: `${t.today_minutes > 0 ? Math.round((t.personnel_today_min / t.today_minutes) * 100) : 0}%` }} />
-                </div>
-                <span className="text-[10px] font-mono text-violet-300 shrink-0">{t.today_minutes > 0 ? Math.round((t.travail_today_min / t.today_minutes) * 100) : 0}%</span>
-                <span className="text-[10px] font-mono text-cyan-300 shrink-0">{t.today_minutes > 0 ? Math.round((t.personnel_today_min / t.today_minutes) * 100) : 0}%</span>
-              </div>
-            )}
           </div>
           <div className="flex gap-3">
             <StreakFlame streak={t.streak_travail} label="Streak Travail" color="violet" />
@@ -80,13 +70,19 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
       {/* Categories with % */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {[
-          { cats: TRAVAIL_CATEGORIES, label: 'Travail — catégories', totalMin: t.by_group.travail.minutes, borderColor: 'border-zinc-800' },
-          { cats: PERSONNEL_CATEGORIES, label: 'Personnel — catégories', totalMin: t.by_group.personnel.minutes, borderColor: 'border-zinc-800' },
-        ].map(group => (
-          <div key={group.label} className={cn('rounded-2xl border bg-zinc-900/50 p-5', group.borderColor)}>
+          { cats: TRAVAIL_CATEGORIES, label: 'Travail', totalMin: t.by_group.travail.minutes, hex: '#8b5cf6', border: 'border-violet-500/20' },
+          { cats: PERSONNEL_CATEGORIES, label: 'Personnel', totalMin: t.by_group.personnel.minutes, hex: '#06b6d4', border: 'border-cyan-500/20' },
+        ].map(group => {
+          const globalTotal = t.by_group.travail.minutes + t.by_group.personnel.minutes
+          const groupPct = globalTotal > 0 ? Math.round((group.totalMin / globalTotal) * 100) : 0
+          return (
+          <div key={group.label} className={cn('rounded-2xl border bg-zinc-900/50 p-5', group.border)}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">{group.label}</h3>
-              <span className="text-[10px] text-zinc-500 font-mono">{formatMinutes(group.totalMin) || '0'} total</span>
+              <div className="flex items-center gap-2">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">{group.label}</h3>
+                {groupPct > 0 && <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold border" style={{ color: group.hex, borderColor: group.hex + '40', backgroundColor: group.hex + '15' }}>{groupPct}%</span>}
+              </div>
+              <span className="text-[10px] text-zinc-500 font-mono">{formatMinutes(group.totalMin) || '0'}</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               {group.cats.map(cat => {
@@ -117,36 +113,55 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
               })}
             </div>
           </div>
-        ))}
+        )})}
       </div>
     </div>
   )
 }
 
-// ─── Streak flame component (emoji + glow) ─────────────────────────────────
+// ─── Streak flame component (animated SVG) ─────────────────────────────────
 const StreakFlame = ({ streak, label, color }: { streak: number; label: string; color: 'violet' | 'cyan' }) => {
   const intensity = streak === 0 ? 0 : streak <= 2 ? 1 : streak <= 6 ? 2 : streak <= 13 ? 3 : 4
-  const glowSize = [0, 8, 15, 25, 40][intensity]
-  const pulseSpeed = [0, 4, 2.5, 1.5, 0.8][intensity]
-  const emojiSize = ['text-xl', 'text-2xl', 'text-3xl', 'text-4xl', 'text-5xl'][intensity]
+  const glow = [0, 6, 12, 22, 38][intensity]
+  const speed = [0, 3.5, 2.2, 1.4, 0.7][intensity]
 
-  const c = color === 'violet'
-    ? { hex: '#8b5cf6', glow: 'rgba(139,92,246,', grad: 'from-violet-500/10 to-violet-500/5', border: 'border-violet-500/20', text: 'text-violet-300', sub: 'text-violet-400/80' }
-    : { hex: '#06b6d4', glow: 'rgba(6,182,212,', grad: 'from-cyan-500/10 to-cyan-500/5', border: 'border-cyan-500/20', text: 'text-cyan-300', sub: 'text-cyan-400/80' }
+  const v = color === 'violet'
+  const colors = v
+    ? { a: '#7c3aed', b: '#a78bfa', c: '#ddd6fe', glow: 'rgba(139,92,246,', grad: 'from-violet-500/10 to-violet-500/5', border: 'border-violet-500/20', text: 'text-violet-300', sub: 'text-violet-400/80' }
+    : { a: '#0891b2', b: '#22d3ee', c: '#cffafe', glow: 'rgba(6,182,212,', grad: 'from-cyan-500/10 to-cyan-500/5', border: 'border-cyan-500/20', text: 'text-cyan-300', sub: 'text-cyan-400/80' }
+  const id = `flame-${color}`
 
   return (
-    <div className={cn('flex items-center gap-2.5 px-4 py-3 rounded-2xl border transition-all bg-gradient-to-br', c.grad, c.border)}
-      style={{ boxShadow: glowSize > 0 ? `0 0 ${glowSize}px ${c.glow}0.4)` : undefined }}>
-      <span className={cn(emojiSize, 'transition-all')}
-        style={pulseSpeed > 0 ? {
-          animation: `flicker ${pulseSpeed}s ease-in-out infinite`,
-          filter: glowSize > 10 ? `drop-shadow(0 0 ${glowSize / 2}px ${c.hex})` : undefined,
-        } : { opacity: 0.3 }}>
-        🔥
-      </span>
+    <div className={cn('flex items-center gap-2 px-3 py-2.5 rounded-2xl border transition-all bg-gradient-to-br', colors.grad, colors.border)}
+      style={{ boxShadow: glow > 0 ? `0 0 ${glow}px ${colors.glow}0.35)` : undefined }}>
+      <svg width={26} height={30} viewBox="0 0 32 40" className="shrink-0"
+        style={{ filter: glow > 10 ? `drop-shadow(0 0 ${glow / 3}px ${colors.a})` : undefined }}>
+        <defs>
+          <linearGradient id={id} x1="0.5" y1="1" x2="0.5" y2="0">
+            <stop offset="0%" stopColor={colors.a} />
+            <stop offset="50%" stopColor={colors.b} />
+            <stop offset="100%" stopColor={colors.c} />
+          </linearGradient>
+        </defs>
+        {/* Main flame body */}
+        <path d="M16 3C16 3 6 16 6 25C6 30 10.5 34 16 34C21.5 34 26 30 26 25C26 16 16 3 16 3Z"
+          fill={`url(#${id})`} opacity={streak === 0 ? 0.2 : 1}
+          style={speed > 0 ? { animation: `flameWave ${speed}s ease-in-out infinite`, transformOrigin: '16px 34px' } : undefined} />
+        {/* Inner bright core */}
+        {intensity >= 1 && (
+          <path d="M16 16C16 16 11 24 11 28C11 30.8 13.2 33 16 33C18.8 33 21 30.8 21 28C21 24 16 16 16 16Z"
+            fill={colors.c} opacity={[0, 0.3, 0.4, 0.55, 0.7][intensity]}
+            style={speed > 0 ? { animation: `flameWave ${speed * 0.7}s ease-in-out infinite`, animationDelay: '0.15s', transformOrigin: '16px 33px' } : undefined} />
+        )}
+        {/* Hot center for high streaks */}
+        {intensity >= 3 && (
+          <ellipse cx="16" cy="29" rx="3.5" ry="2.5" fill="white" opacity={0.35}
+            style={{ animation: `flameWave ${speed * 0.5}s ease-in-out infinite`, animationDelay: '0.1s', transformOrigin: '16px 29px' }} />
+        )}
+      </svg>
       <div>
-        <p className={cn('text-2xl font-extrabold', c.text)}>{streak}</p>
-        <p className={cn('text-[9px] uppercase tracking-wider font-semibold', c.sub)}>
+        <p className={cn('text-2xl font-extrabold', colors.text)}>{streak}</p>
+        <p className={cn('text-[9px] uppercase tracking-wider font-semibold', colors.sub)}>
           {streak === 0 ? 'pas de streak' : 'streak'}
         </p>
       </div>
