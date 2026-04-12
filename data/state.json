@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 477,
-    "updated_at": "2026-04-12T22:36:16.086Z",
+    "version": 478,
+    "updated_at": "2026-04-12T22:37:11.484Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -591,9 +591,23 @@
       "id": 10035,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:16:48.522Z"
+    },
+    {
+      "text": "Acheter chaussures blanches beiges dans la liste d’achats",
+      "category": "cat_1776033265240",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "completed_at": null,
+      "duration_min": 60,
+      "completed_min": null,
+      "id": 10057,
+      "created": "2026-04-13",
+      "updated_at": "2026-04-12T22:37:11.129Z"
     }
   ],
-  "todos_next_id": 10057,
+  "todos_next_id": 10058,
   "archive": [
     {
       "month": "2026-03",
