@@ -1,9 +1,13 @@
 import { useState, useMemo } from 'react'
-import { ChevronDown, ChevronRight, Calendar, Clock, TrendingUp, Award } from 'lucide-react'
+import { ChevronDown, ChevronRight, Calendar, Clock, TrendingUp, Award, Pencil, Trash2, Check, X } from 'lucide-react'
 import type { AppState, ArchiveMonth, Todo, TodoCategory, CategoryConfig, CategoryGroup } from '@/types'
 import { cn, formatMinutes, categoryGroup, todayISO, getActiveCategories } from '@/lib/utils'
 
-interface HistoryViewProps { state: AppState }
+interface HistoryViewProps {
+  state: AppState
+  onEditArchived?: (month: string, todoId: number, patch: Partial<Todo>) => void
+  onDeleteArchived?: (month: string, todoId: number) => void
+}
 
 const MONTH_NAMES = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
 const fmtMonth = (m: string): string => { const [y, mm] = m.split('-'); return `${MONTH_NAMES[parseInt(mm, 10)] ?? mm} ${y}` }
@@ -13,7 +17,7 @@ const GROUP_META: Record<CategoryGroup, { label: string; emoji: string; color: s
   personnel: { label: 'Personnel', emoji: '🧘', color: 'text-cyan-400', border: 'border-cyan-500/30', bg: 'bg-cyan-500/5', hex: '#06b6d4' },
 }
 
-export const HistoryView = ({ state }: HistoryViewProps) => {
+export const HistoryView = ({ state, onEditArchived, onDeleteArchived }: HistoryViewProps) => {
   const [openMonth, setOpenMonth] = useState<string | null>(null)
   const [currentMonthOpen, setCurrentMonthOpen] = useState(false)
   const archive = useMemo(() => [...(state.archive ?? [])].sort((a, b) => b.month.localeCompare(a.month)), [state.archive])
@@ -180,7 +184,8 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
           <ArchivedMonthCard key={entry.month} entry={entry} prev={prev}
             isOpen={openMonth === entry.month}
             onToggle={() => setOpenMonth(openMonth === entry.month ? null : entry.month)}
-            customCategories={state.meta.custom_categories} />
+            customCategories={state.meta.custom_categories}
+            onEditTodo={onEditArchived} onDeleteTodo={onDeleteArchived} />
         )
       })}
     </div>
@@ -188,11 +193,12 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
 }
 
 // ─── Group accordion (Travail / Personnel) ─────────────────────────────────
-const GroupAccordion = ({ group, groupMin, groupPct, totalMin, categories, catData, config, showOpen, currentMonthCats }: {
+const GroupAccordion = ({ group, groupMin, groupPct, totalMin, categories, catData, config, showOpen, currentMonthCats, month, onEdit, onDelete }: {
   group: CategoryGroup; groupMin: number; groupPct: number; totalMin: number
   categories: string[]; catData: Record<string, { minutes: number; count: number; todos: Todo[] }>
   config: Record<string, CategoryConfig>; showOpen?: boolean
   currentMonthCats?: Record<string, { open: number }>
+  month?: string; onEdit?: (month: string, todoId: number, patch: Partial<Todo>) => void; onDelete?: (month: string, todoId: number) => void
 }) => {
   const [expanded, setExpanded] = useState(false)
   const meta = GROUP_META[group]
@@ -226,7 +232,8 @@ const GroupAccordion = ({ group, groupMin, groupPct, totalMin, categories, catDa
             const openCount = showOpen ? (currentMonthCats?.[cat]?.open ?? 0) : 0
             return (
               <CategoryAccordion key={cat} cfg={cfg} pct={catPct} minutes={data?.minutes ?? 0}
-                count={data?.count ?? 0} open={openCount} todos={data?.todos ?? []} />
+                count={data?.count ?? 0} open={openCount} todos={data?.todos ?? []}
+                month={month} onEdit={onEdit} onDelete={onDelete} />
             )
           })}
         </div>
@@ -236,11 +243,28 @@ const GroupAccordion = ({ group, groupMin, groupPct, totalMin, categories, catDa
 }
 
 // ─── Category accordion ────────────────────────────────────────────────────
-const CategoryAccordion = ({ cfg, pct, minutes, count, open, todos }: {
+const CategoryAccordion = ({ cfg, pct, minutes, count, open, todos, month, onEdit, onDelete }: {
   cfg: CategoryConfig; pct: number; minutes: number; count: number; open: number; todos: Todo[]
+  month?: string; onEdit?: (month: string, todoId: number, patch: Partial<Todo>) => void; onDelete?: (month: string, todoId: number) => void
 }) => {
   const [expanded, setExpanded] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editText, setEditText] = useState('')
   const hasTodos = todos.length > 0
+  const editable = !!month && !!onEdit && !!onDelete
+
+  const startEdit = (t: Todo) => { setEditingId(t.id); setEditText(t.text) }
+  const saveEdit = () => {
+    if (editingId !== null && month && onEdit && editText.trim()) {
+      onEdit(month, editingId, { text: editText.trim() })
+    }
+    setEditingId(null)
+  }
+  const handleDelete = (todoId: number) => {
+    if (month && onDelete && window.confirm('Supprimer cette tâche de l\'historique ?')) {
+      onDelete(month, todoId)
+    }
+  }
 
   return (
     <div className={cn('rounded-lg border overflow-hidden', minutes > 0 ? 'bg-zinc-900/70' : 'bg-zinc-900/30')}
@@ -265,10 +289,28 @@ const CategoryAccordion = ({ cfg, pct, minutes, count, open, todos }: {
       {expanded && (
         <div className="px-2.5 pb-2 pt-1 space-y-0.5">
           {todos.sort((a, b) => (a.completed_at ?? '').localeCompare(b.completed_at ?? '')).map(t => (
-            <div key={t.id} className="flex items-center gap-2 px-2 py-1 rounded bg-zinc-900/50 text-[10px]">
+            <div key={t.id} className="flex items-center gap-1.5 px-2 py-1 rounded bg-zinc-900/50 text-[10px] group">
               <span className="text-zinc-500 w-14 shrink-0 font-mono">{t.completed_at?.split('-').reverse().join('/') ?? ''}</span>
-              <span className="flex-1 text-zinc-300 truncate">{t.text}</span>
-              {t.completed_min ? <span className="text-emerald-400 font-mono shrink-0">{formatMinutes(t.completed_min)}</span> : null}
+              {editingId === t.id ? (
+                <>
+                  <input value={editText} onChange={e => setEditText(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') setEditingId(null) }}
+                    autoFocus className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-1.5 py-0.5 text-[10px] focus:outline-none focus:border-emerald-500" />
+                  <button onClick={saveEdit} className="p-0.5 text-emerald-400 hover:bg-emerald-500/10 rounded"><Check size={10} /></button>
+                  <button onClick={() => setEditingId(null)} className="p-0.5 text-zinc-500 hover:bg-zinc-800 rounded"><X size={10} /></button>
+                </>
+              ) : (
+                <>
+                  <span className="flex-1 text-zinc-300 truncate">{t.text}</span>
+                  {t.completed_min ? <span className="text-emerald-400 font-mono shrink-0">{formatMinutes(t.completed_min)}</span> : null}
+                  {editable && (
+                    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                      <button onClick={(e) => { e.stopPropagation(); startEdit(t) }} className="p-0.5 text-zinc-500 hover:text-zinc-300 rounded"><Pencil size={9} /></button>
+                      <button onClick={(e) => { e.stopPropagation(); handleDelete(t.id) }} className="p-0.5 text-zinc-500 hover:text-rose-400 rounded"><Trash2 size={9} /></button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           ))}
         </div>
@@ -278,8 +320,9 @@ const CategoryAccordion = ({ cfg, pct, minutes, count, open, todos }: {
 }
 
 // ─── Archived month card ───────────────────────────────────────────────────
-const ArchivedMonthCard = ({ entry, prev, isOpen, onToggle, customCategories }: {
+const ArchivedMonthCard = ({ entry, prev, isOpen, onToggle, customCategories, onEditTodo, onDeleteTodo }: {
   entry: ArchiveMonth; prev: ArchiveMonth | null; isOpen: boolean; onToggle: () => void; customCategories?: CategoryConfig[]
+  onEditTodo?: (month: string, todoId: number, patch: Partial<Todo>) => void; onDeleteTodo?: (month: string, todoId: number) => void
 }) => {
   const { CATEGORY_CONFIG, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES } = getActiveCategories(customCategories)
   const s = entry.stats
@@ -328,7 +371,8 @@ const ArchivedMonthCard = ({ entry, prev, isOpen, onToggle, customCategories }: 
           )}
           {groups.map(g => (
             <GroupAccordion key={g.group} group={g.group} groupMin={g.minutes} groupPct={g.pct} totalMin={s.total_minutes}
-              categories={g.categories} catData={g.catData} config={CATEGORY_CONFIG} />
+              categories={g.categories} catData={g.catData} config={CATEGORY_CONFIG}
+              month={entry.month} onEdit={onEditTodo} onDelete={onDeleteTodo} />
           ))}
         </div>
       )}

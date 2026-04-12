@@ -100,6 +100,29 @@ const buildArchiveForMonth = (todos: Todo[], month: string, custom?: CategoryCon
   }
 }
 
+// Recalc stats for an archive entry after edit/delete
+const recalcArchiveStats = (todos: Todo[], month: string, custom?: CategoryConfig[]) => {
+  const { CATEGORY_LIST } = getActiveCategories(custom)
+  const by_category: Record<string, { count: number; minutes: number }> = {}
+  for (const cat of CATEGORY_LIST) by_category[cat] = { count: 0, minutes: 0 }
+  let travail_minutes = 0, personnel_minutes = 0
+  const dayMinutes: Record<string, number> = {}
+  for (const t of todos) {
+    const min = t.completed_min ?? 0
+    const cat = by_category[t.category] ?? (by_category[t.category] = { count: 0, minutes: 0 })
+    cat.count += 1; cat.minutes += min
+    if (categoryGroup(t.category, custom) === 'travail') travail_minutes += min; else personnel_minutes += min
+    if (t.completed_at) dayMinutes[t.completed_at] = (dayMinutes[t.completed_at] ?? 0) + min
+  }
+  const dayEntries = Object.entries(dayMinutes).sort((a, b) => b[1] - a[1])
+  return {
+    total_minutes: travail_minutes + personnel_minutes, travail_minutes, personnel_minutes,
+    by_category: by_category as any,
+    days_active: Object.keys(dayMinutes).length,
+    best_day: dayEntries[0] ? { date: dayEntries[0][0], minutes: dayEntries[0][1] } : null,
+  }
+}
+
 // ─── Reducer ────────────────────────────────────────────────────────────────
 type Action =
   | { type: 'HYDRATE'; state: AppState }
@@ -112,8 +135,11 @@ type Action =
   | { type: 'SWAP_TODO_ORDER'; id1: number; id2: number }
   | { type: 'UPDATE_CATEGORIES'; categories: CategoryConfig[] }
   | { type: 'UPDATE_TABS'; tabs: TabConfig[] }
+  | { type: 'DELETE_TAB_TODOS'; categoryFilter: string[] }
   // Archive
   | { type: 'ARCHIVE_MONTH'; month: string }
+  | { type: 'EDIT_ARCHIVED_TODO'; month: string; todoId: number; patch: Partial<Todo> }
+  | { type: 'DELETE_ARCHIVED_TODO'; month: string; todoId: number }
 
 const reducer = (state: AppState, action: Action): AppState => {
   const now = new Date().toISOString()
@@ -222,6 +248,17 @@ const reducer = (state: AppState, action: Action): AppState => {
         meta: { ...state.meta, updated_at: now, updated_by: 'web', custom_tabs: action.tabs },
       }
 
+    case 'DELETE_TAB_TODOS': {
+      // Delete open todos that belong exclusively to this tab's categories
+      // Archive is NEVER touched — only active non-done todos are removed
+      const cats = new Set(action.categoryFilter)
+      return {
+        ...state,
+        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
+        todos: state.todos.filter(t => t.status === 'done' || !cats.has(t.category)),
+      }
+    }
+
     case 'ARCHIVE_MONTH': {
       const existing = (state.archive ?? []).find(a => a.month === action.month)
       if (existing) return state // already archived
@@ -237,6 +274,30 @@ const reducer = (state: AppState, action: Action): AppState => {
         meta: { ...state.meta, updated_at: now, updated_by: 'web' },
         todos: remainingTodos,
         archive: [...(state.archive ?? []), archiveEntry],
+      }
+    }
+
+    case 'EDIT_ARCHIVED_TODO': {
+      return {
+        ...state,
+        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
+        archive: (state.archive ?? []).map(a => {
+          if (a.month !== action.month) return a
+          const updatedTodos = a.todos.map(t => t.id === action.todoId ? { ...t, ...action.patch } : t)
+          return { ...a, todos: updatedTodos, stats: recalcArchiveStats(updatedTodos, a.month, state.meta.custom_categories) }
+        }),
+      }
+    }
+
+    case 'DELETE_ARCHIVED_TODO': {
+      return {
+        ...state,
+        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
+        archive: (state.archive ?? []).map(a => {
+          if (a.month !== action.month) return a
+          const updatedTodos = a.todos.filter(t => t.id !== action.todoId)
+          return { ...a, todos: updatedTodos, stats: recalcArchiveStats(updatedTodos, a.month, state.meta.custom_categories) }
+        }),
       }
     }
 
@@ -400,7 +461,10 @@ export const useAppState = () => {
     swapTodoOrder: (id1: number, id2: number) => userDispatch({ type: 'SWAP_TODO_ORDER', id1, id2 }),
     updateCategories: (categories: CategoryConfig[]) => userDispatch({ type: 'UPDATE_CATEGORIES', categories }),
     updateTabs: (tabs: TabConfig[]) => userDispatch({ type: 'UPDATE_TABS', tabs }),
+    deleteTabTodos: (categoryFilter: string[]) => userDispatch({ type: 'DELETE_TAB_TODOS', categoryFilter }),
     archiveMonth: (month: string) => userDispatch({ type: 'ARCHIVE_MONTH', month }),
+    editArchivedTodo: (month: string, todoId: number, patch: Partial<Todo>) => userDispatch({ type: 'EDIT_ARCHIVED_TODO', month, todoId, patch }),
+    deleteArchivedTodo: (month: string, todoId: number) => userDispatch({ type: 'DELETE_ARCHIVED_TODO', month, todoId }),
   }), [userDispatch])
 
   const stats = useMemo(() => computeStats(state), [state])

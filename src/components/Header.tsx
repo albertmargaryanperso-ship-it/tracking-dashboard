@@ -9,10 +9,11 @@ interface HeaderProps {
   onViewChange: (v: View) => void
   tabs: TabConfig[]
   onUpdateTabs: (tabs: TabConfig[]) => void
+  onDeleteTabWithTodos: (tab: TabConfig) => void
   customCategories?: import('@/types').CategoryConfig[]
 }
 
-export const Header = ({ view, onViewChange, tabs, onUpdateTabs, customCategories }: HeaderProps) => {
+export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWithTodos, customCategories }: HeaderProps) => {
   const [reorderMode, setReorderMode] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
 
@@ -28,7 +29,12 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, customCategorie
   const deleteTab = (id: string) => {
     const tab = tabs.find(t => t.id === id)
     if (!tab?.removable) return
-    if (!window.confirm(`Supprimer l'onglet "${tab.label}" ?`)) return
+    const hasCatFilter = tab.type === 'todos' && tab.categoryFilter && tab.categoryFilter.length > 0
+    const msg = hasCatFilter
+      ? `Supprimer l'onglet "${tab.label}" et ses tâches ouvertes ?\n(L'historique archivé est conservé)`
+      : `Supprimer l'onglet "${tab.label}" ?`
+    if (!window.confirm(msg)) return
+    onDeleteTabWithTodos(tab)
     const updated = tabs.filter(t => t.id !== id)
     onUpdateTabs(updated)
     if (view === id) onViewChange(updated[0]?.id ?? 'dashboard')

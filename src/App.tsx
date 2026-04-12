@@ -83,7 +83,7 @@ import type { SyncStatus } from '@/lib/github'
       case 'charts':
         return <ChartsView state={state} stats={stats} />
       case 'historique':
-        return <HistoryView state={state} />
+        return <HistoryView state={state} onEditArchived={actions.editArchivedTodo} onDeleteArchived={actions.deleteArchivedTodo} />
       case 'settings':
         return <SettingsView state={state} onUpdateCategories={actions.updateCategories} />
       default:
@@ -99,6 +99,7 @@ import type { SyncStatus } from '@/lib/github'
       </div>
 
       <Header view={view} onViewChange={setView} tabs={tabs} onUpdateTabs={actions.updateTabs}
+        onDeleteTabWithTodos={(tab) => { if (tab.categoryFilter?.length) actions.deleteTabTodos(tab.categoryFilter) }}
         customCategories={state.meta.custom_categories} />
 
       {syncStatus === 'no-token' && (
