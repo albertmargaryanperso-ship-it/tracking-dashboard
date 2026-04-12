@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 423,
-    "updated_at": "2026-04-12T20:08:20.982Z",
+    "updated_at": "2026-04-12T20:08:22.199Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -128,13 +128,6 @@
         "removable": true
       },
       {
-        "id": "historique",
-        "label": "Historique",
-        "emoji": "📜",
-        "type": "historique",
-        "removable": false
-      },
-      {
         "id": "tab_1776024372196",
         "label": "ok",
         "emoji": "🌟",
@@ -143,6 +136,13 @@
         "categoryFilter": [
           "cat_1776020403131"
         ]
+      },
+      {
+        "id": "historique",
+        "label": "Historique",
+        "emoji": "📜",
+        "type": "historique",
+        "removable": false
       },
       {
         "id": "charts",
