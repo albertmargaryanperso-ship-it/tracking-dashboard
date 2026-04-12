@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 367,
-    "updated_at": "2026-04-12T17:33:03.225Z",
+    "updated_at": "2026-04-12T17:33:16.879Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -55,13 +55,6 @@
         "label": "Historique",
         "emoji": "📜",
         "type": "historique",
-        "removable": true
-      },
-      {
-        "id": "tab_1776015182871",
-        "label": "eé",
-        "emoji": "📦",
-        "type": "charts",
         "removable": true
       },
       {
