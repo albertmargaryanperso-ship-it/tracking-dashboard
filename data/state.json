@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 361,
-    "updated_at": "2026-04-12T16:25:24.461Z",
+    "updated_at": "2026-04-12T16:25:33.560Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -81,16 +81,6 @@
         "bg": "bg-teal-500/10 border-teal-500/30",
         "hex": "#2dd4bf",
         "group": "personnel"
-      },
-      {
-        "id": "cat_1776011119091",
-        "label": "Nouvelle",
-        "emoji": "🌟",
-        "group": "personnel",
-        "name": "blue",
-        "color": "text-blue-400",
-        "bg": "bg-blue-500/10 border-blue-500/30",
-        "hex": "#60a5fa"
       }
     ]
   },
