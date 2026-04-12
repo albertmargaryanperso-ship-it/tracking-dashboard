@@ -16,6 +16,34 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
   const [openMonth, setOpenMonth] = useState<string | null>(null)
   const archive = useMemo(() => [...(state.archive ?? [])].sort((a, b) => b.month.localeCompare(a.month)), [state.archive])
 
+  // ── Current month progress ──────────────────────────────────────────────
+  const monthProgress = useMemo(() => {
+    const today = new Date()
+    const dayOfMonth = today.getDate()
+    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate()
+    const daysLeft = daysInMonth - dayOfMonth
+    const pct = Math.round((dayOfMonth / daysInMonth) * 100)
+    const monthStr = `${MONTH_NAMES[today.getMonth() + 1]} ${today.getFullYear()}`
+    return { dayOfMonth, daysInMonth, daysLeft, pct, monthStr }
+  }, [])
+
+  // ── Current month category breakdown (same visual as old mini bar) ──────
+  const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(state.meta.custom_categories)
+  const currentMonthCats = useMemo(() => {
+    const currentMonth = todayISO().slice(0, 7)
+    const doneTodos = state.todos.filter(t => t.status === 'done' && t.completed_at?.startsWith(currentMonth))
+    const byCategory: Record<string, { minutes: number; open: number }> = {}
+    for (const cat of CATEGORY_LIST) byCategory[cat] = { minutes: 0, open: 0 }
+    for (const t of doneTodos) {
+      if (!byCategory[t.category]) byCategory[t.category] = { minutes: 0, open: 0 }
+      byCategory[t.category].minutes += t.completed_min ?? 0
+    }
+    for (const t of state.todos) {
+      if (t.status !== 'done' && byCategory[t.category]) byCategory[t.category].open += 1
+    }
+    return byCategory
+  }, [state.todos, CATEGORY_LIST])
+
   const last30Days = useMemo(() => {
     const todayStr = todayISO()
     const todayDate = new Date(todayStr + 'T12:00:00')
@@ -50,6 +78,36 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
 
   return (
     <div className="space-y-4">
+      {/* Month progress bar */}
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div>
+            <h3 className="text-sm font-bold text-zinc-200">{monthProgress.monthStr}</h3>
+            <p className="text-[10px] text-zinc-500">Jour {monthProgress.dayOfMonth}/{monthProgress.daysInMonth} — {monthProgress.daysLeft}j restants avant archivage</p>
+          </div>
+          <span className="text-xl font-extrabold text-zinc-200">{monthProgress.pct}%</span>
+        </div>
+        <div className="h-2.5 rounded-full bg-zinc-800 overflow-hidden">
+          <div className="h-full rounded-full bg-gradient-to-r from-violet-500 via-cyan-500 to-emerald-500 transition-all duration-500"
+            style={{ width: `${monthProgress.pct}%` }} />
+        </div>
+        <p className="text-[9px] text-zinc-600 mt-1.5">Les tâches terminées seront archivées au 1er du mois suivant. Les tâches ouvertes restent.</p>
+      </div>
+
+      {/* Current month — category breakdown */}
+      <div className="grid grid-cols-4 gap-1.5">
+        {CATEGORY_LIST.map(c => {
+          const cat = CATEGORY_CONFIG[c]; const bucket = currentMonthCats[c]
+          return (
+            <div key={c} className={cn('rounded-xl border bg-zinc-900/50 p-2 text-center', cat.bg)}>
+              <span className="text-sm">{cat.emoji}</span>
+              <p className={cn('text-xs font-bold mt-0.5', cat.color)}>{formatMinutes(bucket?.minutes ?? 0) || '—'}</p>
+              <p className="text-[8px] text-zinc-500">{bucket?.open ?? 0} ouv.</p>
+            </div>
+          )
+        })}
+      </div>
+
       {/* Summary stats across all archived months */}
       {archive.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
