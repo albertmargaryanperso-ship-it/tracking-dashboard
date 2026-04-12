@@ -139,6 +139,7 @@ type Action =
   | { type: 'DELETE_TAB_TODOS'; categoryFilter: string[] }
   // Archive
   | { type: 'ARCHIVE_MONTH'; month: string }
+  | { type: 'DELETE_ARCHIVE_MONTH'; month: string }
   | { type: 'EDIT_ARCHIVED_TODO'; month: string; todoId: number; patch: Partial<Todo> }
   | { type: 'DELETE_ARCHIVED_TODO'; month: string; todoId: number }
 
@@ -263,6 +264,14 @@ const reducer = (state: AppState, action: Action): AppState => {
         ...state,
         meta: { ...state.meta, updated_at: now, updated_by: 'web' },
         todos: state.todos.filter(t => t.status === 'done' || !cats.has(t.category)),
+      }
+    }
+
+    case 'DELETE_ARCHIVE_MONTH': {
+      return {
+        ...state,
+        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
+        archive: (state.archive ?? []).filter(a => a.month !== action.month),
       }
     }
 
@@ -473,6 +482,7 @@ export const useAppState = () => {
     archiveMonth: (month: string) => userDispatch({ type: 'ARCHIVE_MONTH', month }),
     editArchivedTodo: (month: string, todoId: number, patch: Partial<Todo>) => userDispatch({ type: 'EDIT_ARCHIVED_TODO', month, todoId, patch }),
     deleteArchivedTodo: (month: string, todoId: number) => userDispatch({ type: 'DELETE_ARCHIVED_TODO', month, todoId }),
+    deleteArchiveMonth: (month: string) => userDispatch({ type: 'DELETE_ARCHIVE_MONTH', month }),
   }), [userDispatch])
 
   const stats = useMemo(() => computeStats(state), [state])

@@ -7,6 +7,7 @@ interface HistoryViewProps {
   state: AppState
   onEditArchived?: (month: string, todoId: number, patch: Partial<Todo>) => void
   onDeleteArchived?: (month: string, todoId: number) => void
+  onDeleteMonth?: (month: string) => void
 }
 
 const MONTH_NAMES = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
@@ -14,7 +15,7 @@ const fmtMonth = (m: string): string => { const [y, mm] = m.split('-'); return `
 
 const TAB_COLORS = ['#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#f472b6', '#fb923c']
 
-export const HistoryView = ({ state, onEditArchived, onDeleteArchived }: HistoryViewProps) => {
+export const HistoryView = ({ state, onEditArchived, onDeleteArchived, onDeleteMonth }: HistoryViewProps) => {
   const [openMonth, setOpenMonth] = useState<string | null>(null)
   const [currentMonthOpen, setCurrentMonthOpen] = useState(false)
   const archive = useMemo(() => [...(state.archive ?? [])].sort((a, b) => b.month.localeCompare(a.month)), [state.archive])
@@ -191,7 +192,8 @@ export const HistoryView = ({ state, onEditArchived, onDeleteArchived }: History
             isOpen={openMonth === entry.month}
             onToggle={() => setOpenMonth(openMonth === entry.month ? null : entry.month)}
             customCategories={state.meta.custom_categories} customTabs={state.meta.custom_tabs}
-            onEditTodo={onEditArchived} onDeleteTodo={onDeleteArchived} />
+            onEditTodo={onEditArchived} onDeleteTodo={onDeleteArchived}
+            onDeleteMonth={onDeleteMonth} />
         )
       })}
     </div>
@@ -323,10 +325,11 @@ const CategoryAccordion = ({ cfg, pct, minutes, count, open, todos, month, onEdi
 }
 
 // ─── Archived month card ───────────────────────────────────────────────────
-const ArchivedMonthCard = ({ entry, prev, isOpen, onToggle, customCategories, customTabs, onEditTodo, onDeleteTodo }: {
+const ArchivedMonthCard = ({ entry, prev, isOpen, onToggle, customCategories, customTabs, onEditTodo, onDeleteTodo, onDeleteMonth }: {
   entry: ArchiveMonth; prev: ArchiveMonth | null; isOpen: boolean; onToggle: () => void
   customCategories?: CategoryConfig[]; customTabs?: TabConfig[]
   onEditTodo?: (month: string, todoId: number, patch: Partial<Todo>) => void; onDeleteTodo?: (month: string, todoId: number) => void
+  onDeleteMonth?: (month: string) => void
 }) => {
   const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(customCategories)
   const archiveTabs = getTodoTabs(customTabs)
@@ -367,6 +370,15 @@ const ArchivedMonthCard = ({ entry, prev, isOpen, onToggle, customCategories, cu
 
       {isOpen && (
         <div className="px-4 pb-4 border-t border-zinc-800 pt-3 space-y-2">
+          {/* Delete month */}
+          {onDeleteMonth && (
+            <div className="flex justify-end">
+              <button onClick={() => { if (window.confirm(`Supprimer tout l'historique de ${fmtMonth(entry.month)} ? Cette action est irréversible.`)) onDeleteMonth(entry.month) }}
+                className="px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 text-rose-400 text-[10px] font-semibold hover:bg-rose-500/20 transition-all flex items-center gap-1">
+                <Trash2 size={10} /> Supprimer ce mois
+              </button>
+            </div>
+          )}
           {prev && (
             <div className="grid grid-cols-2 gap-2 mb-2">
               <MiniStat label="Jour top" value={s.best_day ? `${s.best_day.date.split('-').reverse().join('/')} (${formatMinutes(s.best_day.minutes)})` : '—'} />
