@@ -145,38 +145,10 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
             </>
           )}
         </nav>
-        {!reorderMode && (
-          <button onClick={() => setReorderMode(true)} title="Personnaliser les onglets"
-            className="p-2 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700 transition-all shrink-0">
-            <Pencil size={14} />
-          </button>
-        )}
       </div>
 
-      {/* Mobile: tabs only, no logo, compact */}
-      <nav className="md:hidden flex items-center gap-1 px-2 py-1.5 overflow-x-auto">
-        {tabs.map(t => renderTab(t, true))}
-        {!reorderMode && (
-          <button onClick={() => setReorderMode(true)}
-            className="shrink-0 w-7 h-7 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-500 flex items-center justify-center">
-            <Pencil size={11} />
-          </button>
-        )}
-        {reorderMode && (
-          <>
-            {todoTabCount < 3 && (
-              <button onClick={() => setAddOpen(true)}
-                className="shrink-0 w-7 h-7 rounded-lg border border-dashed border-zinc-700 text-zinc-500 hover:text-emerald-400 flex items-center justify-center">
-                <Plus size={12} />
-              </button>
-            )}
-            <button onClick={() => setReorderMode(false)}
-              className="shrink-0 px-2 py-1 rounded-lg bg-emerald-600 text-white text-[9px] font-bold">
-              OK
-            </button>
-          </>
-        )}
-      </nav>
+      {/* Mobile: hidden — MobileNav handles navigation */}
+      <nav className="md:hidden hidden" />
 
       {/* Add tab modal — portaled to body to escape header stacking context */}
       {addOpen && createPortal(

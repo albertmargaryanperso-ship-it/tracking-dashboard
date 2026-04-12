@@ -23,15 +23,62 @@ export const MobileNav = ({
   syncStatus,
   tokenPresent
 }: MobileNavProps) => {
+  const activeIndex = tabs.findIndex(t => t.id === view)
+  
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-50">
-      {/* Action Bar - Just above the main nav */}
-      <div className="flex justify-end px-4 mb-3 pointer-events-none">
-        <div className="flex items-center gap-2 pointer-events-auto">
+    <nav className="fixed bottom-6 inset-x-4 z-50 flex justify-center pointer-events-none">
+      <div className="flex items-center gap-1 p-2 rounded-[32px] pointer-events-auto relative max-w-fit mx-auto glass-premium inner-shadow">
+        
+        {/* Sliding Indicator Background */}
+        <div 
+          className="absolute h-12 rounded-2xl bg-white/5 border border-white/5 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]"
+          style={{ 
+            width: '64px',
+            transform: `translateX(${activeIndex * 68}px)`,
+            left: '8px', 
+            opacity: activeIndex === -1 ? 0 : 1
+          }}
+        />
+
+        {/* Tab Items */}
+        <div className="flex items-center gap-1 relative z-10">
+          {tabs.map((tab) => {
+            const isActive = view === tab.id
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onViewChange(tab.id as View)}
+                className={cn(
+                  "flex flex-col items-center justify-center w-[64px] h-12 transition-all duration-300",
+                  isActive ? "text-white scale-105" : "text-zinc-500 hover:text-zinc-300"
+                )}
+              >
+                <span className={cn(
+                  "text-2xl transition-all duration-300",
+                  isActive ? "drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" : "grayscale opacity-70"
+                )}>
+                  {tab.emoji}
+                </span>
+                <span className={cn(
+                  "text-[8px] font-black uppercase tracking-widest transition-all duration-300 mt-0.5",
+                  isActive ? "opacity-100" : "opacity-0 scale-75"
+                )}>
+                  {tab.label}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Separator */}
+        <div className="w-[1px] h-8 bg-white/10 mx-1" />
+
+        {/* Actions Section */}
+        <div className="flex items-center gap-1.5 px-1 relative z-10">
           <button 
             onClick={onSync}
             className={cn(
-              "p-3 rounded-2xl border border-white/10 bg-zinc-900/80 backdrop-blur-xl text-zinc-400 shadow-2xl transition-all active:scale-95",
+              "p-2.5 rounded-2xl text-zinc-400 hover:text-cyan-400 transition-all active:scale-90",
               syncStatus === 'syncing' && "animate-spin text-cyan-400"
             )}
           >
@@ -40,58 +87,9 @@ export const MobileNav = ({
           
           <button 
             onClick={onAdd}
-            className="p-4 rounded-2xl bg-gradient-to-br from-violet-600 to-cyan-600 text-white shadow-2xl shadow-violet-500/40 active:scale-95 transition-all"
+            className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-cyan-600 text-white shadow-lg shadow-violet-500/25 flex items-center justify-center active:scale-90 transition-all hover:brightness-110"
           >
-            <Plus size={24} strokeWidth={3} />
-          </button>
-        </div>
-      </div>
-
-      {/* Main Tab Bar */}
-      <div className="bg-zinc-950/80 backdrop-blur-2xl border-t border-white/5 pt-3 pb-[env(safe-area-inset-bottom,24px)] px-2">
-        <div className="flex items-center justify-around gap-1 overflow-x-auto no-scrollbar">
-          {tabs.map((tab) => {
-            const isActive = view === tab.id
-            return (
-              <button
-                key={tab.id}
-                onClick={() => onViewChange(tab.id as View)}
-                className={cn(
-                  "flex flex-col items-center gap-1 min-w-[64px] py-1 transition-all relative",
-                  isActive ? "text-white" : "text-zinc-500"
-                )}
-              >
-                <span className={cn(
-                  "text-2xl transition-transform duration-300",
-                  isActive ? "scale-110 -translate-y-0.5" : "scale-100 opacity-70 grayscale"
-                )}>
-                  {tab.emoji}
-                </span>
-                <span className={cn(
-                  "text-[10px] font-bold uppercase tracking-wider transition-all",
-                  isActive ? "opacity-100" : "opacity-0 translate-y-2"
-                )}>
-                  {tab.label}
-                </span>
-                {isActive && (
-                  <div className="absolute -bottom-1 w-1 h-1 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
-                )}
-              </button>
-            )
-          })}
-          
-          {/* Sync status / Token Indicator at the end or as a special item */}
-          <button 
-            onClick={onOpenToken}
-            className={cn(
-              "flex flex-col items-center gap-1 min-w-[64px] py-1",
-              tokenPresent ? "text-zinc-500" : "text-amber-500 animate-pulse"
-            )}
-          >
-            <span className="text-xl">
-              {!tokenPresent ? <KeyRound size={20} /> : syncStatus === 'error' ? <CloudOff size={20} /> : <Cloud size={20} />}
-            </span>
-            <span className="text-[10px] font-bold uppercase tracking-wider">Cloud</span>
+            <Plus size={24} strokeWidth={2.5} />
           </button>
         </div>
       </div>
