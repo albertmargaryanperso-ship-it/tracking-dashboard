@@ -64,7 +64,7 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
       </div>
 
       {/* Stats grid — tab semaine only, colored per tab */}
-      <div className={cn('grid gap-3', `grid-cols-${Math.min(todoTabs.length, 3)}`)}>
+      <div className={cn('grid gap-3', todoTabs.length >= 3 ? 'grid-cols-3' : todoTabs.length === 2 ? 'grid-cols-2' : 'grid-cols-1')}>
         {todoTabs.slice(0, 3).map((tab, i) => {
           const tabStats = t.by_tab[tab.id]
           const hex = TAB_COLORS[i % TAB_COLORS.length]

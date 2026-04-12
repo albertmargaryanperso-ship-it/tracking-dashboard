@@ -87,8 +87,8 @@ export const ChartsView = ({ state, stats }: ChartsViewProps) => {
   return (
     <div className="space-y-5">
       {/* Stats per tab — compact */}
-      <div className={cn('grid gap-2', todoTabs.length <= 2 ? 'grid-cols-4' : `grid-cols-${Math.min(todoTabs.length * 2, 6)}`)}>
-        {todoTabs.map((tab, i) => {
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+        {todoTabs.slice(0, 3).map((tab, i) => {
           const grp = stats.tracking.by_group[tab.id]
           const hex = TAB_COLORS[i % TAB_COLORS.length]
           return [
