@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 439,
-    "updated_at": "2026-04-12T20:51:09.845Z",
+    "updated_at": "2026-04-12T20:51:11.579Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -102,16 +102,6 @@
         "removable": false
       },
       {
-        "id": "tab_1776024372196",
-        "label": "ok",
-        "emoji": "🌟",
-        "type": "todos",
-        "removable": true,
-        "categoryFilter": [
-          "cat_1776020403131"
-        ]
-      },
-      {
         "id": "todo-travail",
         "label": "Travail",
         "emoji": "💼",
@@ -123,6 +113,16 @@
           "automatisation"
         ],
         "removable": true
+      },
+      {
+        "id": "tab_1776024372196",
+        "label": "ok",
+        "emoji": "🌟",
+        "type": "todos",
+        "removable": true,
+        "categoryFilter": [
+          "cat_1776020403131"
+        ]
       },
       {
         "id": "todo-personnel",
