@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 483,
-    "updated_at": "2026-04-12T23:14:39.441Z",
+    "version": 484,
+    "updated_at": "2026-04-12T23:14:59.142Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -83,10 +83,20 @@
         "group": "personnel"
       },
       {
-        "id": "cat_1776020403131",
-        "label": "Nouvelle",
-        "emoji": "🌟",
-        "group": "travail",
+        "id": "cat_1776032171060",
+        "label": "Culture",
+        "emoji": "🧠",
+        "group": "personnel",
+        "name": "blue",
+        "color": "text-rose-400",
+        "bg": "bg-rose-500/10 border-rose-500/30",
+        "hex": "#fb7185"
+      },
+      {
+        "id": "cat_1776033265240",
+        "label": "Soin",
+        "emoji": "💅",
+        "group": "personnel",
         "name": "blue",
         "color": "text-blue-400",
         "bg": "bg-blue-500/10 border-blue-500/30",
@@ -116,14 +126,16 @@
       },
       {
         "id": "todo-personnel",
-        "label": "Perso",
+        "label": "Personnel",
         "emoji": "🧘",
         "type": "todos",
         "categoryFilter": [
           "sport",
           "cardio",
           "lecture",
-          "bien-etre"
+          "bien-etre",
+          "cat_1776032171060",
+          "cat_1776033265240"
         ],
         "removable": true
       },
@@ -153,6 +165,21 @@
     "app_emoji": "💎"
   },
   "todos": [
+    {
+      "id": 2,
+      "text": "Trier emails albertmargaryan.perso",
+      "priority": "normal",
+      "category": "admin",
+      "due": null,
+      "status": "open",
+      "done": false,
+      "delegated_to": null,
+      "created": "2026-04-09",
+      "completed_at": null,
+      "duration_min": 45,
+      "completed_min": null,
+      "updated_at": "2026-04-09"
+    },
     {
       "text": "S’inscrire à pole emploi",
       "category": "pro",
@@ -194,6 +221,20 @@
       "id": 10005,
       "created": "2026-04-09",
       "updated_at": "2026-04-09"
+    },
+    {
+      "text": "Factures Omar",
+      "category": "admin",
+      "priority": "normal",
+      "status": "waiting",
+      "delegated_to": null,
+      "due": null,
+      "completed_at": null,
+      "duration_min": 15,
+      "completed_min": null,
+      "id": 10006,
+      "created": "2026-04-10",
+      "updated_at": "2026-04-10"
     },
     {
       "text": "Attestation vigilance Christopher",
@@ -453,6 +494,20 @@
       "updated_at": "2026-04-12T00:16:04.903Z"
     },
     {
+      "text": "Faire un email à constructel facturation avec Claudio en copie pour le recap de février et mars",
+      "category": "admin",
+      "priority": "normal",
+      "status": "delegated",
+      "delegated_to": "Loelia",
+      "due": "2026-04-13",
+      "completed_at": null,
+      "duration_min": 60,
+      "completed_min": null,
+      "id": 10037,
+      "created": "2026-04-12",
+      "updated_at": "2026-04-12T00:18:14.915Z"
+    },
+    {
       "text": "Réclamer le bon de commande et paiement sogetrel",
       "category": "finance",
       "priority": "urgent",
@@ -524,35 +579,6 @@
       "updated_at": "2026-04-12T05:15:10.126Z"
     },
     {
-      "text": "Acheter chaussures blanches beige dans la liste d’achat",
-      "category": "bien-etre",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": 45,
-      "completed_min": null,
-      "id": 10044,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T15:26:58.323Z"
-    },
-    {
-      "id": 2,
-      "text": "Trier emails albertmargaryan.perso",
-      "priority": "normal",
-      "category": "admin",
-      "due": null,
-      "status": "open",
-      "done": false,
-      "delegated_to": null,
-      "created": "2026-04-09",
-      "completed_at": null,
-      "duration_min": 45,
-      "completed_min": null,
-      "updated_at": "2026-04-09"
-    },
-    {
       "text": "Recap sogetrel février",
       "category": "admin",
       "priority": "normal",
@@ -567,50 +593,8 @@
       "updated_at": "2026-04-12T00:16:48.522Z"
     },
     {
-      "text": "Faire un email à constructel facturation avec Claudio en copie pour le recap de février et mars",
-      "category": "admin",
-      "priority": "normal",
-      "status": "delegated",
-      "delegated_to": "Loelia",
-      "due": "2026-04-13",
-      "completed_at": null,
-      "duration_min": 60,
-      "completed_min": null,
-      "id": 10037,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T00:18:14.915Z"
-    },
-    {
-      "text": "Factures Omar",
-      "category": "admin",
-      "priority": "normal",
-      "status": "waiting",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": 15,
-      "completed_min": null,
-      "id": 10006,
-      "created": "2026-04-10",
-      "updated_at": "2026-04-10"
-    },
-    {
-      "text": "Acheter chaussures blanches style airmax",
-      "category": "bien-etre",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-12",
-      "completed_at": null,
-      "duration_min": 120,
-      "completed_min": null,
-      "id": 10043,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T05:52:59.325Z"
-    },
-    {
       "text": "Acheter chaussures blanches beiges dans la liste d’achats",
-      "category": "pro",
+      "category": "cat_1776033265240",
       "priority": "normal",
       "status": "open",
       "delegated_to": null,
@@ -624,7 +608,7 @@
     },
     {
       "text": "Acheter chaussures blanches style Airmax",
-      "category": "pro",
+      "category": "cat_1776033265240",
       "priority": "normal",
       "status": "open",
       "delegated_to": null,
@@ -638,7 +622,7 @@
     },
     {
       "text": "Apprentissage utilisation Vibe Coding",
-      "category": "pro",
+      "category": "cat_1776032171060",
       "priority": "normal",
       "delegated_to": null,
       "due": null,
@@ -650,6 +634,74 @@
       "status": "done",
       "done": true,
       "updated_at": "2026-04-12T22:38:29.216Z"
+    },
+    {
+      "text": "Acheter chaussures blanches beige dans la liste d’achat",
+      "category": "bien-etre",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "completed_at": null,
+      "duration_min": 45,
+      "completed_min": null,
+      "id": 10044,
+      "created": "2026-04-12",
+      "updated_at": "2026-04-12T15:26:58.323Z"
+    },
+    {
+      "text": "jojio",
+      "category": "bien-etre",
+      "priority": "urgent",
+      "status": "done",
+      "delegated_to": null,
+      "due": "2026-05-09",
+      "completed_at": "2026-04-12",
+      "duration_min": 30,
+      "completed_min": 1,
+      "id": 10054,
+      "created": "2026-04-12",
+      "updated_at": "2026-04-12T16:10:40.254Z",
+      "subtasks": [
+        {
+          "id": "st_1776010016418_89hjm",
+          "text": "kojih",
+          "done": false
+        }
+      ],
+      "done": true
+    },
+    {
+      "text": "Tâche",
+      "category": "sport",
+      "priority": "urgent",
+      "status": "done",
+      "delegated_to": null,
+      "due": "2026-04-13",
+      "completed_at": "2026-04-12",
+      "duration_min": 30,
+      "completed_min": 1,
+      "id": 10048,
+      "created": "2026-04-12",
+      "updated_at": "2026-04-12T15:44:32.951Z",
+      "subtasks": [
+        {
+          "id": "st_1776008643473_jby7c",
+          "text": "Test",
+          "done": true
+        },
+        {
+          "id": "st_1776008649251_u1klt",
+          "text": "Test",
+          "done": true
+        },
+        {
+          "id": "st_1776008650861_83cir",
+          "text": "Test",
+          "done": false
+        }
+      ],
+      "done": true
     }
   ],
   "todos_next_id": 10060,
