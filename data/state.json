@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 384,
-    "updated_at": "2026-04-12T17:57:42.701Z",
+    "updated_at": "2026-04-12T17:57:46.199Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -44,17 +44,17 @@
         "removable": true
       },
       {
-        "id": "historique",
-        "label": "Historique",
-        "emoji": "📜",
-        "type": "historique",
-        "removable": true
-      },
-      {
         "id": "charts",
         "label": "Camemberts",
         "emoji": "🥧",
         "type": "charts",
+        "removable": true
+      },
+      {
+        "id": "historique",
+        "label": "Historique",
+        "emoji": "📜",
+        "type": "historique",
         "removable": true
       },
       {
