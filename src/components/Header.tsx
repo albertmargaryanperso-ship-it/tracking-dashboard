@@ -71,10 +71,10 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
     const isEditing = editingTabId === tab.id
     return (
       <div key={tab.id} className="relative flex items-center shrink-0">
-        {reorderMode && !isMobile && (
+        {reorderMode && (
           <button onClick={(e) => { e.stopPropagation(); moveTab(tab.id, -1) }}
-            className="p-0.5 text-zinc-500 hover:text-zinc-200 transition-all">
-            <ChevronLeft size={12} />
+            className={cn('text-zinc-500 hover:text-zinc-200 transition-all', isMobile ? 'p-0' : 'p-0.5')}>
+            <ChevronLeft size={isMobile ? 10 : 12} />
           </button>
         )}
         {isEditing ? (
@@ -97,10 +97,10 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
             <span className={isMobile ? 'hidden sm:inline' : ''}>{tab.label}</span>
           </button>
         )}
-        {reorderMode && !isMobile && (
+        {reorderMode && (
           <button onClick={(e) => { e.stopPropagation(); moveTab(tab.id, 1) }}
-            className="p-0.5 text-zinc-500 hover:text-zinc-200 transition-all">
-            <ChevronRight size={12} />
+            className={cn('text-zinc-500 hover:text-zinc-200 transition-all', isMobile ? 'p-0' : 'p-0.5')}>
+            <ChevronRight size={isMobile ? 10 : 12} />
           </button>
         )}
         {reorderMode && tab.removable && (
