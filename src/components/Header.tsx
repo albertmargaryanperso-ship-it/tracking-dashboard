@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback } from 'react'
-import { Plus, X, ChevronLeft, ChevronRight, Check } from 'lucide-react'
+import { useState } from 'react'
+import { Plus, X, ChevronLeft, ChevronRight, Check, Pencil } from 'lucide-react'
 import type { View, TabConfig, TabType } from '@/types'
 import { cn, getActiveCategories, getActiveTabs, DEFAULT_TABS } from '@/lib/utils'
 
@@ -14,25 +14,6 @@ interface HeaderProps {
 export const Header = ({ view, onViewChange, tabs, onUpdateTabs, customCategories }: HeaderProps) => {
   const [reorderMode, setReorderMode] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
-  const longPressRef = useRef<number | null>(null)
-  const movedRef = useRef(false)
-
-  const handlePointerDown = useCallback(() => {
-    movedRef.current = false
-    longPressRef.current = window.setTimeout(() => {
-      setReorderMode(true)
-      navigator.vibrate?.(50)
-    }, 500)
-  }, [])
-
-  const handlePointerMove = useCallback(() => {
-    movedRef.current = true
-    if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null }
-  }, [])
-
-  const handlePointerUp = useCallback(() => {
-    if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null }
-  }, [])
 
   const moveTab = (id: string, dir: -1 | 1) => {
     const idx = tabs.findIndex(t => t.id === id)
@@ -53,7 +34,6 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, customCategorie
   }
 
   const addTab = (tab: TabConfig) => {
-    // Insert before settings (last non-removable)
     const settingsIdx = tabs.findIndex(t => t.type === 'settings')
     const updated = [...tabs]
     if (settingsIdx >= 0) updated.splice(settingsIdx, 0, tab)
@@ -74,9 +54,6 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, customCategorie
           </button>
         )}
         <button
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
           onClick={() => { if (!reorderMode) onViewChange(tab.id) }}
           className={cn('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5',
             reorderMode && 'animate-pulse ring-1 ring-zinc-700',
@@ -129,11 +106,26 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, customCategorie
             </>
           )}
         </nav>
+
+        {/* Customize button (desktop) */}
+        {!reorderMode && (
+          <button onClick={() => setReorderMode(true)} title="Personnaliser les onglets"
+            className="hidden md:flex p-2 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700 transition-all shrink-0">
+            <Pencil size={14} />
+          </button>
+        )}
       </div>
 
       {/* Tabs (mobile) */}
-      <nav className="md:hidden flex items-center gap-1 px-3 pb-2 overflow-x-auto" style={{ touchAction: reorderMode ? 'none' : 'pan-x' }}>
+      <nav className="md:hidden flex items-center gap-1 px-3 pb-2 overflow-x-auto">
         {tabs.map(t => renderTab(t, true))}
+        {/* Customize button (mobile) — always visible */}
+        {!reorderMode && (
+          <button onClick={() => setReorderMode(true)}
+            className="shrink-0 w-8 h-8 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-500 flex items-center justify-center">
+            <Pencil size={12} />
+          </button>
+        )}
         {reorderMode && (
           <>
             <button onClick={() => setAddOpen(true)}
@@ -154,7 +146,7 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, customCategorie
   )
 }
 
-// ─── Add tab modal ──────────────────────────────────────────────────────────
+// ─── Add tab modal (scrollable) ─────────────────────────────────────────────
 const TAB_TYPES: Array<{ type: TabType; label: string; emoji: string; desc: string }> = [
   { type: 'todos', label: 'Vue Todo', emoji: '✅', desc: 'Kanban filtré par catégories' },
   { type: 'charts', label: 'Camemberts', emoji: '🥧', desc: 'Graphiques et statistiques' },
@@ -188,14 +180,14 @@ const AddTabModal = ({ onAdd, onClose, customCategories }: {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm animate-fade-in" onClick={onClose}>
-      <div className="w-full max-w-md rounded-t-3xl sm:rounded-3xl border border-zinc-800 bg-zinc-950 p-5 shadow-2xl animate-slide-in" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between mb-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+      <div className="w-full max-w-md max-h-[85vh] rounded-t-3xl sm:rounded-3xl border border-zinc-800 bg-zinc-950 shadow-2xl animate-slide-in flex flex-col" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between p-5 pb-0">
           <h2 className="text-sm font-bold">Nouvel onglet</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300"><X size={14} /></button>
         </div>
 
-        <div className="space-y-3">
+        <div className="flex-1 overflow-y-auto p-5 pt-3 space-y-3">
           {/* Name */}
           <input autoFocus value={label} onChange={e => setLabel(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') submit() }}
@@ -245,7 +237,10 @@ const AddTabModal = ({ onAdd, onClose, customCategories }: {
               {selectedCats.length === 0 && <p className="text-[9px] text-zinc-600 mt-1">Aucun filtre = toutes les catégories</p>}
             </div>
           )}
+        </div>
 
+        {/* Fixed bottom button */}
+        <div className="p-5 pt-2 border-t border-zinc-800/50">
           <button onClick={submit} disabled={!label.trim()}
             className="w-full py-3 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 disabled:opacity-40 text-xs font-bold flex items-center justify-center gap-1.5">
             <Plus size={14} /> Créer l'onglet
