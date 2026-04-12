@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { RefreshCw, Cloud, CloudOff, KeyRound, Plus, ClipboardCopy, Settings } from 'lucide-react'
 import { Header } from '@/components/Header'
 import { Dashboard } from '@/components/Dashboard'
+import { LiveTracker } from '@/components/LiveTracker'
 import { TodosView } from '@/components/TodosView'
 import { ChartsView } from '@/components/ChartsView'
 import { HistoryView } from '@/components/HistoryView'
@@ -12,11 +13,14 @@ import { TokenModal } from '@/components/TokenModal'
 import { useAppState } from '@/hooks/useAppState'
 import { hasToken } from '@/lib/github'
 import { cn, todayISO, isoToFr, formatMinutes, getActiveTabs } from '@/lib/utils'
+import { MobileNav } from '@/components/MobileNav'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import type { View } from '@/types'
 import type { SyncStatus } from '@/lib/github'
 
   export default function App() {
     const { state, stats, actions, syncStatus, lastSync, pull } = useAppState()
+    const isMobile = useIsMobile()
     const tabs = getActiveTabs(state.meta.custom_tabs)
     const [view, setView] = useState<View>(tabs[0]?.id ?? 'dashboard')
   const [quickAddOpen, setQuickAddOpen] = useState(false)
@@ -107,10 +111,12 @@ import type { SyncStatus } from '@/lib/github'
         <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] rounded-full bg-cyan-500/5 blur-3xl" />
       </div>
 
-      <Header view={view} onViewChange={setView} tabs={tabs} onUpdateTabs={actions.updateTabs}
-        onDeleteTabWithTodos={(tab) => { if (tab.categoryFilter?.length) actions.deleteTabTodos(tab.categoryFilter) }}
-        customCategories={state.meta.custom_categories}
-        appName={state.meta.app_name} appEmoji={state.meta.app_emoji} />
+      {!isMobile && (
+        <Header view={view} onViewChange={setView} tabs={tabs} onUpdateTabs={actions.updateTabs}
+          onDeleteTabWithTodos={(tab) => { if (tab.categoryFilter?.length) actions.deleteTabTodos(tab.categoryFilter) }}
+          customCategories={state.meta.custom_categories}
+          appName={state.meta.app_name} appEmoji={state.meta.app_emoji} />
+      )}
 
       {syncStatus === 'no-token' && (
         <div className="relative bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-[11px] text-amber-300 flex items-center justify-center gap-2">
@@ -124,41 +130,59 @@ import type { SyncStatus } from '@/lib/github'
         </div>
       )}
 
-      <main className="relative max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 pb-24">
+      <main className={cn("relative max-w-screen-2xl mx-auto px-4 sm:px-6 py-6", isMobile ? "pb-40" : "pb-24")}>
         {renderView()}
       </main>
 
       {/* Footer — actions bar */}
-      <footer className="fixed bottom-0 inset-x-0 z-20 border-t border-zinc-800 bg-zinc-950/90 backdrop-blur-md">
-        <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <SyncIndicator syncStatus={syncStatus} lastSync={lastSync} />
-          <div className="flex items-center gap-1.5">
-            <button onClick={() => setTokenOpen(true)} title={tokenPresent ? 'Token configuré' : 'Configurer token'}
-              className={cn('p-2 rounded-xl border transition-all',
-                tokenPresent ? 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300'
-                  : 'border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 animate-pulse')}>
-              {!tokenPresent ? <KeyRound size={14} /> : syncStatus === 'error' ? <CloudOff size={14} /> : <Cloud size={14} />}
-            </button>
-            <button onClick={() => void pull()} title="Sync maintenant"
-              className="p-2 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-all">
-              <RefreshCw size={14} className={cn(syncStatus === 'syncing' && 'animate-spin')} />
-            </button>
-            <button onClick={handleCopyBilan} title="Copier le bilan du jour"
-              className="p-2 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-all hidden sm:block">
-              <ClipboardCopy size={14} />
-            </button>
-            <button onClick={() => setView('settings')} title="Paramètres"
-              className={cn('p-2 rounded-xl border transition-all',
-                view === 'settings' ? 'border-zinc-700 bg-zinc-800 text-zinc-300' : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300')}>
-              <Settings size={14} className={cn(view === 'settings' && 'animate-spin-slow')} />
-            </button>
-            <button onClick={() => setQuickAddOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-br from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 text-xs font-semibold text-white transition-all shadow-lg shadow-violet-500/20">
-              <Plus size={14} /> <span>Ajouter</span>
-            </button>
+      {/* Footer — actions bar — Hidden on mobile as integrated in MobileNav */}
+      {!isMobile && (
+        <footer className="fixed bottom-0 inset-x-0 z-20 border-t border-zinc-800 bg-zinc-950/90 backdrop-blur-md">
+          <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+            <SyncIndicator syncStatus={syncStatus} lastSync={lastSync} />
+            <div className="flex items-center gap-1.5">
+              <button onClick={() => setTokenOpen(true)} title={tokenPresent ? 'Token configuré' : 'Configurer token'}
+                className={cn('p-2 rounded-xl border transition-all',
+                  tokenPresent ? 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300'
+                    : 'border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 animate-pulse')}>
+                {!tokenPresent ? <KeyRound size={14} /> : syncStatus === 'error' ? <CloudOff size={14} /> : <Cloud size={14} />}
+              </button>
+              <button onClick={() => void pull()} title="Sync maintenant"
+                className="p-2 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-all">
+                <RefreshCw size={14} className={cn(syncStatus === 'syncing' && 'animate-spin')} />
+              </button>
+              <button onClick={handleCopyBilan} title="Copier le bilan du jour"
+                className="p-2 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-all hidden sm:block">
+                <ClipboardCopy size={14} />
+              </button>
+              <button onClick={() => setView('settings')} title="Paramètres"
+                className={cn('p-2 rounded-xl border transition-all',
+                  view === 'settings' ? 'border-zinc-700 bg-zinc-800 text-zinc-300' : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300')}>
+                <Settings size={14} className={cn(view === 'settings' && 'animate-spin-slow')} />
+              </button>
+              <button onClick={() => setQuickAddOpen(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-br from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 text-xs font-semibold text-white transition-all shadow-lg shadow-violet-500/20">
+                <Plus size={14} /> <span>Ajouter</span>
+              </button>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+      )}
+
+      {isMobile && <LiveTracker state={state} onStop={actions.toggleTodo} />}
+
+      {isMobile && (
+        <MobileNav 
+          view={view} 
+          onViewChange={setView} 
+          tabs={tabs} 
+          onSync={() => void pull()} 
+          onAdd={() => setQuickAddOpen(true)}
+          onOpenToken={() => setTokenOpen(true)}
+          syncStatus={syncStatus}
+          tokenPresent={tokenPresent}
+        />
+      )}
 
       {/* Mobile FAB (hidden since we have footer) */}
 

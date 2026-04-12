@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Plus, Check, Trash2, Clock, ChevronDown, ChevronRight, CalendarDays, Hourglass, Play, Square } from 'lucide-react'
 import type { AppState, Stats, Todo, TodoCategory, TodoPriority, TodoStatus, CategoryConfig } from '@/types'
 import { cn, formatMinutes, todayISO, isoToFr, getActiveCategories } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { useActiveTimer } from '@/hooks/useActiveTimer'
 import { SubtaskSheet } from './SubtaskSheet'
 
@@ -37,6 +38,7 @@ const COLUMNS: ColumnDef[] = [
 ]
 
 export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, onDelete, onSwapOrder, categoryFilter }: TodosViewProps) => {
+  const isMobile = useIsMobile()
   const [quickCol, setQuickCol] = useState<ColumnId | null>(null)
   const [doneOpen, setDoneOpen] = useState(false)
   const [logMode, setLogMode] = useState(false)
@@ -108,7 +110,8 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
   return (
     <div className="space-y-5">
       {/* Fixed panel: stats + subtask progress + nav buttons */}
-      <div className="fixed left-0 right-0 z-10 px-3 sm:px-6 pt-1 pb-2 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/50 space-y-1.5" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 40px)' }}>
+      <div className="fixed left-0 right-0 z-10 px-3 sm:px-6 pt-1 pb-2 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/50 space-y-1.5"
+        style={{ top: isMobile ? 'env(safe-area-inset-top, 0px)' : '60px' }}>
         {/* Stats */}
         <div className="grid grid-cols-2 gap-2">
           <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5">
@@ -286,6 +289,7 @@ const TodoCard = ({ todo, dragging, isDragOver, isActive, elapsedMinutes, config
   onDragOver?: React.DragEventHandler; onDrop?: React.DragEventHandler;
   onToggle: (id: number, completed_min?: number | null) => void; onDelete: (id: number) => void; onEditSubtasks: () => void
 }) => {
+  const isMobile = useIsMobile()
   const cat = config[todo.category] ?? config.admin
   const isDone = todo.status === 'done'
   const subtasks = todo.subtasks ?? []
@@ -312,10 +316,11 @@ const TodoCard = ({ todo, dragging, isDragOver, isActive, elapsedMinutes, config
         dragging && 'opacity-40 ring-2 ring-emerald-500/50',
         isDragOver && 'ring-2 ring-emerald-500/80 bg-zinc-800/50',
         isActive && 'border-cyan-500/50 bg-cyan-900/20 shadow-[0_0_15px_rgba(6,182,212,0.15)] ring-1 ring-cyan-500/30')}>
-      <div className="flex items-start gap-2">
-        <button onClick={handleToggle} className={cn('shrink-0 mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
-          isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-zinc-600 hover:border-emerald-400')}>
-          {isDone && <Check size={9} strokeWidth={3.5} />}
+      <div className="flex items-start gap-3">
+        <button onClick={handleToggle} className={cn('shrink-0 mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all',
+          isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-zinc-600 hover:border-emerald-400',
+          isMobile && "w-7 h-7")}>
+          {isDone && <Check size={isMobile ? 12 : 9} strokeWidth={3.5} />}
         </button>
         <div className="flex-1 min-w-0">
           <p className={cn('text-sm leading-snug font-medium', isDone ? 'line-through text-zinc-500' : (isActive ? 'text-cyan-300' : 'text-zinc-100'))}>{todo.text}</p>
@@ -344,21 +349,21 @@ const TodoCard = ({ todo, dragging, isDragOver, isActive, elapsedMinutes, config
             )}
           </div>
         </div>
-        <div className={cn("flex items-center gap-1 shrink-0 transition-all", !isActive && "opacity-0 group-hover:opacity-100")}>
+        <div className={cn("flex items-center gap-1 shrink-0 transition-all", !isActive && !isMobile && "opacity-0 group-hover:opacity-100")}>
           {!isDone && (
             isActive ? (
-              <button onClick={(e) => { e.stopPropagation(); onStopTimer() }} className="p-1.5 rounded-md text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 transition-all" title="Arrêter et valider le temps">
-                <Square size={10} fill="currentColor" />
+              <button onClick={(e) => { e.stopPropagation(); onStopTimer() }} className="p-2.5 rounded-xl text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 transition-all" title="Arrêter et valider le temps">
+                <Square size={12} fill="currentColor" />
               </button>
             ) : (
-              <button onClick={(e) => { e.stopPropagation(); onStartTimer() }} className="p-1.5 rounded-md text-zinc-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all" title="Démarrer le chrono">
-                <Play size={10} fill="currentColor" />
+              <button onClick={(e) => { e.stopPropagation(); onStartTimer() }} className="p-2.5 rounded-xl text-zinc-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all" title="Démarrer le chrono">
+                <Play size={12} fill="currentColor" />
               </button>
             )
           )}
           <button onClick={(e) => { e.stopPropagation(); onDelete(todo.id) }}
-            className="p-1.5 rounded-md text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all">
-            <Trash2 size={10} />
+            className="p-2.5 rounded-xl text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all">
+            <Trash2 size={12} />
           </button>
         </div>
       </div>

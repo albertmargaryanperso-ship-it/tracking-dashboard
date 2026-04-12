@@ -3,6 +3,7 @@ import type { AppState, Stats } from '@/types'
 import { StatCard } from './StatCard'
 import { Heatmap } from './Heatmap'
 import { formatMinutes, cn, getActiveCategories, getTodoTabs, todayISO } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 const TAB_COLORS = ['#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#f472b6', '#fb923c']
 
@@ -10,6 +11,7 @@ interface DashboardProps { state: AppState; stats: Stats }
 
 export const Dashboard = ({ state, stats }: DashboardProps) => {
   const t = stats.tracking
+  const isMobile = useIsMobile()
   const { CATEGORY_CONFIG } = getActiveCategories(state.meta.custom_categories)
   const todoTabs = getTodoTabs(state.meta.custom_tabs)
 
@@ -60,7 +62,7 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
       </div>
 
       {/* Stats grid — moyenne/jour per tab */}
-      <div className={cn('grid gap-3', todoTabs.length >= 3 ? 'grid-cols-3' : todoTabs.length === 2 ? 'grid-cols-2' : 'grid-cols-1')}>
+      <div className={cn('grid gap-3', isMobile ? 'grid-cols-2' : (todoTabs.length >= 3 ? 'grid-cols-3' : todoTabs.length === 2 ? 'grid-cols-2' : 'grid-cols-1'))}>
         {todoTabs.slice(0, 3).map((tab, i) => {
           const hex = TAB_COLORS[i % TAB_COLORS.length]
           const cats = tab.categoryFilter?.length ? tab.categoryFilter : undefined
@@ -96,7 +98,7 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
                 <span className="text-[10px] text-zinc-500 font-mono">{formatMinutes(tabGroup?.minutes ?? 0) || '0'} total</span>
               </div>
               <Heatmap todos={state.todos} archive={state.archive} customCategories={state.meta.custom_categories}
-                mode="combined" categoryFilter={tab.categoryFilter} colorHex={hex} days={182} />
+                mode="combined" categoryFilter={tab.categoryFilter} colorHex={hex} days={isMobile ? 90 : 182} />
             </div>
           )
         })}
