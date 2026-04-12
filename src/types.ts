@@ -2,7 +2,18 @@
 // 📊 Tracking Dashboard — Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type View = 'dashboard' | 'todo-travail' | 'todo-personnel' | 'charts' | 'historique' | 'settings'
+export type View = string
+
+export type TabType = 'dashboard' | 'todos' | 'charts' | 'historique' | 'settings'
+
+export interface TabConfig {
+  id: string
+  label: string
+  emoji: string
+  type: TabType
+  categoryFilter?: string[]
+  removable?: boolean
+}
 
 // ─── Categories ─────────────────────────────────────────────────────────────
 export type TodoCategory = string // previously a union of literals
@@ -92,6 +103,7 @@ export interface AppState {
     updated_by: 'obsidian' | 'web' | 'mobile'
     habitudes?: string[]           // legacy
     custom_categories?: CategoryConfig[]
+    custom_tabs?: TabConfig[]
   }
   // Active data
   todos: Todo[]

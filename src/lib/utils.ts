@@ -157,6 +157,24 @@ export const categoryGroup = (cat: string, custom?: CategoryConfig[]): CategoryG
   return CATEGORY_CONFIG[cat]?.group ?? 'travail'
 }
 
+// ─── Default tabs ─────────────────────────────────────────────────────────
+
+import type { TabConfig } from '@/types'
+
+export const DEFAULT_TABS: TabConfig[] = [
+  { id: 'dashboard', label: 'Dashboard', emoji: '📊', type: 'dashboard', removable: false },
+  { id: 'todo-travail', label: 'Travail', emoji: '💼', type: 'todos', categoryFilter: DEFAULT_TRAVAIL_CATEGORIES, removable: true },
+  { id: 'todo-personnel', label: 'Personnel', emoji: '🧘', type: 'todos', categoryFilter: DEFAULT_PERSONNEL_CATEGORIES, removable: true },
+  { id: 'charts', label: 'Camemberts', emoji: '🥧', type: 'charts', removable: true },
+  { id: 'historique', label: 'Historique', emoji: '📜', type: 'historique', removable: true },
+  { id: 'settings', label: 'Paramètres', emoji: '⚙️', type: 'settings', removable: false },
+]
+
+export const getActiveTabs = (custom?: TabConfig[]): TabConfig[] => {
+  if (custom && custom.length > 0) return custom
+  return DEFAULT_TABS
+}
+
 // ─── Habit config — kept for backward compat with routine entries ─────────
 
 export const HABIT_ICONS: Record<string, string> = {

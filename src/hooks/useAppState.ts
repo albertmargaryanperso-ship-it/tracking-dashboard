@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import type { AppState, Todo, TodoCategory, ArchiveMonth, CategoryConfig } from '@/types'
+import type { AppState, Todo, TodoCategory, ArchiveMonth, CategoryConfig, TabConfig } from '@/types'
 import { INITIAL_STATE } from '@/lib/initialState'
 import { computeStats } from '@/lib/stats'
 import { readState, writeState, hasToken, mergeStates, type SyncStatus } from '@/lib/github'
@@ -111,6 +111,7 @@ type Action =
   | { type: 'DELETE_TODO'; id: number }
   | { type: 'SWAP_TODO_ORDER'; id1: number; id2: number }
   | { type: 'UPDATE_CATEGORIES'; categories: CategoryConfig[] }
+  | { type: 'UPDATE_TABS'; tabs: TabConfig[] }
   // Archive
   | { type: 'ARCHIVE_MONTH'; month: string }
 
@@ -213,6 +214,12 @@ const reducer = (state: AppState, action: Action): AppState => {
       return {
         ...state,
         meta: { ...state.meta, updated_at: now, updated_by: 'web', custom_categories: action.categories },
+      }
+
+    case 'UPDATE_TABS':
+      return {
+        ...state,
+        meta: { ...state.meta, updated_at: now, updated_by: 'web', custom_tabs: action.tabs },
       }
 
     case 'ARCHIVE_MONTH': {
@@ -392,6 +399,7 @@ export const useAppState = () => {
     deleteTodo: (id: number) => userDispatch({ type: 'DELETE_TODO', id }),
     swapTodoOrder: (id1: number, id2: number) => userDispatch({ type: 'SWAP_TODO_ORDER', id1, id2 }),
     updateCategories: (categories: CategoryConfig[]) => userDispatch({ type: 'UPDATE_CATEGORIES', categories }),
+    updateTabs: (tabs: TabConfig[]) => userDispatch({ type: 'UPDATE_TABS', tabs }),
     archiveMonth: (month: string) => userDispatch({ type: 'ARCHIVE_MONTH', month }),
   }), [userDispatch])
 

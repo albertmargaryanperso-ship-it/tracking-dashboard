@@ -11,17 +11,22 @@ import { QuickAddModal } from '@/components/QuickAddModal'
 import { TokenModal } from '@/components/TokenModal'
 import { useAppState } from '@/hooks/useAppState'
 import { hasToken } from '@/lib/github'
-import { cn, todayISO, isoToFr, categoryGroup, formatMinutes, getActiveCategories } from '@/lib/utils'
+import { cn, todayISO, isoToFr, formatMinutes, getActiveTabs } from '@/lib/utils'
 import type { View } from '@/types'
 import type { SyncStatus } from '@/lib/github'
 
   export default function App() {
     const { state, stats, actions, syncStatus, lastSync, pull } = useAppState()
-    const { TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES } = getActiveCategories(state.meta.custom_categories)
-    const [view, setView] = useState<View>('dashboard')
+    const tabs = getActiveTabs(state.meta.custom_tabs)
+    const [view, setView] = useState<View>(tabs[0]?.id ?? 'dashboard')
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [tokenOpen, setTokenOpen] = useState(false)
   const [tokenPresent, setTokenPresent] = useState(hasToken())
+
+  // Ensure current view exists in tabs
+  useEffect(() => {
+    if (!tabs.find(t => t.id === view)) setView(tabs[0]?.id ?? 'dashboard')
+  }, [tabs, view])
 
   useEffect(() => {
     if (!tokenPresent) { const t = setTimeout(() => setTokenOpen(true), 1200); return () => clearTimeout(t) }
@@ -33,16 +38,13 @@ import type { SyncStatus } from '@/lib/github'
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return
       if (e.key === 'n' || e.key === '+') { e.preventDefault(); setQuickAddOpen(true) }
       if (e.key === 'r') { e.preventDefault(); void pull() }
-      if (e.key === '1') setView('dashboard')
-      if (e.key === '2') setView('todo-travail')
-      if (e.key === '3') setView('todo-personnel')
-      if (e.key === '4') setView('charts')
-      if (e.key === '5') setView('historique')
-      if (e.key === '6') setView('settings')
+      // Number keys map to tabs by index
+      const num = parseInt(e.key, 10)
+      if (num >= 1 && num <= tabs.length) setView(tabs[num - 1].id)
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [pull])
+  }, [pull, tabs])
 
   const handleCopyBilan = () => {
     const today = todayISO()
@@ -51,28 +53,42 @@ import type { SyncStatus } from '@/lib/github'
       alert("Aucune tâche terminée aujourd'hui.")
       return
     }
-    
-    const travail = doneToday.filter(t => categoryGroup(t.category, state.meta.custom_categories) === 'travail')
-    const perso = doneToday.filter(t => categoryGroup(t.category, state.meta.custom_categories) === 'personnel')
 
     let md = `## 📊 Bilan du ${isoToFr(today)}\n\n`
-    if (travail.length > 0) {
-      md += `### 💼 Travail\n`
-      travail.forEach(t => {
-        md += `- [x] ${t.text} (${t.completed_min ? formatMinutes(t.completed_min) : '?'})\n`
-      })
-      md += `\n`
-    }
-    if (perso.length > 0) {
-      md += `### 🧘 Personnel\n`
-      perso.forEach(t => {
-        md += `- [x] ${t.text} (${t.completed_min ? formatMinutes(t.completed_min) : '?'})\n`
-      })
-    }
-    
+    doneToday.forEach(t => {
+      md += `- [x] ${t.text} (${t.completed_min ? formatMinutes(t.completed_min) : '?'})\n`
+    })
+
     navigator.clipboard.writeText(md.trim())
       .then(() => alert("Bilan copié dans le presse-papier !"))
       .catch(err => console.error("Erreur de copie :", err))
+  }
+
+  // Find active tab config
+  const activeTab = tabs.find(t => t.id === view)
+
+  // Render view based on tab type
+  const renderView = () => {
+    if (!activeTab) return null
+    switch (activeTab.type) {
+      case 'dashboard':
+        return <Dashboard state={state} stats={stats} />
+      case 'todos':
+        return (
+          <TodosView state={state} stats={stats}
+            onAdd={actions.addTodo} onAddDone={actions.addDoneTodo}
+            onUpdate={actions.updateTodo} onToggle={actions.toggleTodo} onDelete={actions.deleteTodo} onSwapOrder={actions.swapTodoOrder}
+            categoryFilter={activeTab.categoryFilter} />
+        )
+      case 'charts':
+        return <ChartsView state={state} stats={stats} />
+      case 'historique':
+        return <HistoryView state={state} />
+      case 'settings':
+        return <SettingsView state={state} onUpdateCategories={actions.updateCategories} />
+      default:
+        return null
+    }
   }
 
   return (
@@ -82,7 +98,8 @@ import type { SyncStatus } from '@/lib/github'
         <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] rounded-full bg-cyan-500/5 blur-3xl" />
       </div>
 
-      <Header view={view} onViewChange={setView} />
+      <Header view={view} onViewChange={setView} tabs={tabs} onUpdateTabs={actions.updateTabs}
+        customCategories={state.meta.custom_categories} />
 
       {syncStatus === 'no-token' && (
         <div className="relative bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-[11px] text-amber-300 flex items-center justify-center gap-2">
@@ -97,22 +114,7 @@ import type { SyncStatus } from '@/lib/github'
       )}
 
       <main className="relative max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 pb-24 overflow-x-hidden">
-        {view === 'dashboard' && <Dashboard state={state} stats={stats} />}
-        {view === 'todo-travail' && (
-          <TodosView state={state} stats={stats}
-            onAdd={actions.addTodo} onAddDone={actions.addDoneTodo}
-            onUpdate={actions.updateTodo} onToggle={actions.toggleTodo} onDelete={actions.deleteTodo} onSwapOrder={actions.swapTodoOrder}
-            categoryFilter={TRAVAIL_CATEGORIES} />
-        )}
-        {view === 'todo-personnel' && (
-          <TodosView state={state} stats={stats}
-            onAdd={actions.addTodo} onAddDone={actions.addDoneTodo}
-            onUpdate={actions.updateTodo} onToggle={actions.toggleTodo} onDelete={actions.deleteTodo} onSwapOrder={actions.swapTodoOrder}
-            categoryFilter={PERSONNEL_CATEGORIES} />
-        )}
-        {view === 'charts' && <ChartsView state={state} stats={stats} />}
-        {view === 'historique' && <HistoryView state={state} />}
-        {view === 'settings' && <SettingsView state={state} onUpdateCategories={actions.updateCategories} />}
+        {renderView()}
       </main>
 
       {/* Footer — actions bar */}
