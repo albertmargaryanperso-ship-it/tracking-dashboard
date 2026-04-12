@@ -122,26 +122,30 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <TodoStat label="Ouverts" value={filteredStats.open} sub={`${filteredStats.urgent} urgent${filteredStats.urgent > 1 ? 's' : ''}`} color="emerald" />
-        <TodoStat label="Temps restant" value={formatMinutes(filteredStats.remainingMin) || '0min'} sub={`${filteredStats.open} tâches`} color="rose" icon={<Hourglass size={14} className="text-rose-400" />} />
+      {/* Stats — 2 cards */}
+      <div className="grid grid-cols-2 gap-3">
+        <TodoStat label="Temps restant" value={formatMinutes(filteredStats.remainingMin) || '0min'} sub={`${filteredStats.open} tâches ouvertes`} color="rose" icon={<Hourglass size={14} className="text-rose-400" />} />
         <TodoStat label="Temps cumulé" value={formatMinutes(filteredStats.minutes) || '0min'} sub={`${filteredStats.done} terminés`} color="blue" icon={<Clock size={14} className="text-blue-400" />} />
-        <TodoStat label="Catégories" value={availableCategories.length} sub={categoryFilter ? (categoryFilter === TRAVAIL_CATEGORIES ? 'Travail' : 'Personnel') : 'Toutes'} color="zinc" />
       </div>
 
-      {/* Category mini bar */}
+      {/* Navigation buttons → scroll to kanban columns */}
       <div className="grid grid-cols-4 gap-1.5">
-        {availableCategories.map(c => {
-          const cat = CATEGORY_CONFIG[c]; const bucket = stats.tracking.by_category[c]
-          return (
-            <div key={c} className={cn('rounded-xl border bg-zinc-900/50 p-2 text-center', cat.bg)}>
-              <span className="text-sm">{cat.emoji}</span>
-              <p className={cn('text-xs font-bold mt-0.5', cat.color)}>{formatMinutes(bucket?.minutes ?? 0) || '—'}</p>
-              <p className="text-[8px] text-zinc-500">{bucket?.open ?? 0} ouv.</p>
-            </div>
-          )
-        })}
+        <button onClick={() => document.getElementById('kanban-board')?.scrollIntoView({ behavior: 'smooth' })}
+          className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-2.5 text-center hover:bg-emerald-500/10 transition-all">
+          <p className="text-lg font-extrabold text-emerald-400">{filteredStats.open}</p>
+          <p className="text-[9px] font-semibold text-emerald-300/70 uppercase tracking-wider">Ouverts</p>
+        </button>
+        {([
+          { id: 'col-todo', label: 'À faire', count: byColumn.todo.length, dot: 'bg-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/5 hover:bg-amber-500/10', text: 'text-amber-400', sub: 'text-amber-300/70' },
+          { id: 'col-delegated', label: 'Délégué', count: byColumn.delegated.length, dot: 'bg-violet-500', border: 'border-violet-500/30', bg: 'bg-violet-500/5 hover:bg-violet-500/10', text: 'text-violet-400', sub: 'text-violet-300/70' },
+          { id: 'col-waiting', label: 'En attente', count: byColumn.waiting.length, dot: 'bg-sky-500', border: 'border-sky-500/30', bg: 'bg-sky-500/5 hover:bg-sky-500/10', text: 'text-sky-400', sub: 'text-sky-300/70' },
+        ] as const).map(btn => (
+          <button key={btn.id} onClick={() => document.getElementById(btn.id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+            className={cn('rounded-xl border p-2.5 text-center transition-all', btn.border, btn.bg)}>
+            <p className={cn('text-lg font-extrabold', btn.text)}>{btn.count}</p>
+            <p className={cn('text-[9px] font-semibold uppercase tracking-wider', btn.sub)}>{btn.label}</p>
+          </button>
+        ))}
       </div>
 
       {/* Log done todo button */}
@@ -155,11 +159,11 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
       {logMode && <LogDoneForm categories={availableCategories} config={CATEGORY_CONFIG} onAdd={(t) => { onAddDone(t); setLogMode(false) }} onCancel={() => setLogMode(false)} />}
 
       {/* Kanban board */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+      <div id="kanban-board" className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
         {COLUMNS.map(col => {
           const items = byColumn[col.id]; const isOver = dragOverCol === col.id
           return (
-            <div key={col.id}
+            <div key={col.id} id={`col-${col.id}`}
               onDragOver={(e) => { e.preventDefault(); setDragOverCol(col.id) }}
               onDragLeave={() => setDragOverCol(prev => prev === col.id ? null : prev)}
               onDrop={() => handleDrop(col.id)}

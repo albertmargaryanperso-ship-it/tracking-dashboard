@@ -293,13 +293,13 @@ export const useAppState = () => {
       const { state: remote, sha } = await readState()
       shaRef.current = sha
 
+      // Always merge — prevents data loss from GitHub eventual consistency
+      const merged = mergeStates(stateRef.current, remote)
+      dispatch({ type: 'HYDRATE', state: merged })
+
       if (dirtyRef.current) {
-        const merged = mergeStates(stateRef.current, remote)
-        dispatch({ type: 'HYDRATE', state: merged })
         setPendingFlag(true)
         void pushNow(merged)
-      } else {
-        dispatch({ type: 'HYDRATE', state: remote })
       }
 
       initialPullDoneRef.current = true
