@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react'
-import { Plus, Check, Trash2, Clock, ChevronDown, ChevronRight, CalendarDays, Hourglass } from 'lucide-react'
-import type { AppState, Stats, Todo, TodoCategory, TodoPriority, TodoStatus } from '@/types'
-import { CATEGORY_CONFIG, CATEGORY_LIST, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES, cn, formatMinutes, todayISO, isoToFr } from '@/lib/utils'
+import { Plus, Check, Trash2, Clock, ChevronDown, ChevronRight, CalendarDays, Hourglass, Play, Square } from 'lucide-react'
+import type { AppState, Stats, Todo, TodoCategory, TodoPriority, TodoStatus, CategoryConfig } from '@/types'
+import { cn, formatMinutes, todayISO, isoToFr, getActiveCategories } from '@/lib/utils'
+import { useActiveTimer } from '@/hooks/useActiveTimer'
 
 interface TodosViewProps {
   state: AppState
@@ -11,6 +12,7 @@ interface TodosViewProps {
   onUpdate: (id: number, patch: Partial<Todo>) => void
   onToggle: (id: number, completed_min?: number | null) => void
   onDelete: (id: number) => void
+  onSwapOrder: (id1: number, id2: number) => void
   categoryFilter?: TodoCategory[]
 }
 
@@ -33,19 +35,23 @@ const COLUMNS: ColumnDef[] = [
     match: (t) => t.status === 'waiting', toPatch: () => ({ status: 'waiting' }) },
 ]
 
-export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, onDelete, categoryFilter }: TodosViewProps) => {
+export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, onDelete, onSwapOrder, categoryFilter }: TodosViewProps) => {
   const [quickCol, setQuickCol] = useState<ColumnId | null>(null)
   const [doneOpen, setDoneOpen] = useState(false)
   const [logMode, setLogMode] = useState(false)
   const [dragId, setDragId] = useState<number | null>(null)
   const [dragOverCol, setDragOverCol] = useState<ColumnId | null>(null)
+  const [dragOverId, setDragOverId] = useState<number | null>(null)
+  
+  const { CATEGORY_CONFIG, CATEGORY_LIST, TRAVAIL_CATEGORIES } = getActiveCategories(state.meta.custom_categories)
+  const availableCategories = categoryFilter ?? CATEGORY_LIST
+  
+  const { activeTodoId, elapsedMinutes, startTimer, stopTimer } = useActiveTimer()
 
   const filteredTodos = useMemo(() =>
     categoryFilter ? state.todos.filter(t => categoryFilter.includes(t.category)) : state.todos,
     [state.todos, categoryFilter]
   )
-
-  const availableCategories = categoryFilter ?? CATEGORY_LIST
 
   const { byColumn, done } = useMemo(() => {
     const byCol: Record<ColumnId, Todo[]> = { urgent: [], todo: [], delegated: [], waiting: [] }
@@ -54,7 +60,9 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
       if (t.status === 'done') { doneList.push(t); continue }
       for (const col of COLUMNS) { if (col.match(t)) { byCol[col.id].push(t); break } }
     }
-    for (const k of Object.keys(byCol) as ColumnId[]) byCol[k].sort((a, b) => b.id - a.id)
+    for (const k of Object.keys(byCol) as ColumnId[]) {
+      byCol[k].sort((a, b) => (b.orderIndex ?? b.id) - (a.orderIndex ?? a.id))
+    }
     doneList.sort((a, b) => (b.completed_at ?? '').localeCompare(a.completed_at ?? ''))
     return { byColumn: byCol, done: doneList }
   }, [filteredTodos])
@@ -77,9 +85,10 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
     const todo = filteredTodos.find(t => t.id === dragId)
     if (!todo) return
     const col = COLUMNS.find(c => c.id === colId)!
-    if (col.match(todo)) { setDragId(null); setDragOverCol(null); return }
-    onUpdate(todo.id, col.toPatch(todo))
-    setDragId(null); setDragOverCol(null)
+    if (!col.match(todo)) {
+       onUpdate(todo.id, col.toPatch(todo))
+    }
+    setDragId(null); setDragOverCol(null); setDragOverId(null)
   }
 
   return (
@@ -114,7 +123,7 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
           <Clock size={11} /> Loguer une activité faite
         </button>
       </div>
-      {logMode && <LogDoneForm categories={availableCategories} onAdd={(t) => { onAddDone(t); setLogMode(false) }} onCancel={() => setLogMode(false)} />}
+      {logMode && <LogDoneForm categories={availableCategories} config={CATEGORY_CONFIG} onAdd={(t) => { onAddDone(t); setLogMode(false) }} onCancel={() => setLogMode(false)} />}
 
       {/* Kanban board */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
@@ -138,13 +147,45 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
                   <Plus size={12} />
                 </button>
               </div>
-              {quickCol === col.id && <QuickTodoForm column={col.id} categories={availableCategories} onAdd={(t) => { onAdd(t); setQuickCol(null) }} onCancel={() => setQuickCol(null)} />}
+              {quickCol === col.id && <QuickTodoForm column={col.id} categories={availableCategories} config={CATEGORY_CONFIG} onAdd={(t) => { onAdd(t); setQuickCol(null) }} onCancel={() => setQuickCol(null)} />}
               <div className="flex-1 flex flex-col gap-1.5">
                 {items.length === 0 ? (
                   <div className="flex-1 flex items-center justify-center text-[10px] text-zinc-600 italic py-6">{quickCol === col.id ? '' : 'Aucune tâche'}</div>
                 ) : items.map(t => (
                   <TodoCard key={t.id} todo={t} dragging={dragId === t.id}
-                    onDragStart={() => setDragId(t.id)} onDragEnd={() => { setDragId(null); setDragOverCol(null) }}
+                    isActive={activeTodoId === t.id}
+                    elapsedMinutes={activeTodoId === t.id ? elapsedMinutes : 0}
+                    isDragOver={dragOverId === t.id}
+                    config={CATEGORY_CONFIG}
+                    onStartTimer={() => startTimer(t.id)}
+                    onStopTimer={() => {
+                      const min = stopTimer()
+                      const raw = window.prompt(`Temps écoulé pour "${t.text}" : ${min} min. Ajuster si besoin ?`, String(min))
+                      if (raw !== null) {
+                        const parsed = parseInt(raw.trim(), 10)
+                        const finalMin = isNaN(parsed) ? min : Math.max(0, parsed)
+                        onToggle(t.id, finalMin)
+                      }
+                    }}
+                    onDragStart={() => setDragId(t.id)} 
+                    onDragEnd={() => { setDragId(null); setDragOverCol(null); setDragOverId(null) }}
+                    onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverId(t.id) }}
+                    onDrop={(e) => {
+                      e.preventDefault(); e.stopPropagation()
+                      if (dragId && dragId !== t.id) {
+                        // Move to destination column if it differs
+                        const dragged = state.todos.find(td => td.id === dragId)
+                        if (dragged) {
+                          const colDragged = COLUMNS.find(c => c.match(dragged))
+                          const colTarget = COLUMNS.find(c => c.match(t))
+                          if (colDragged && colTarget && colDragged !== colTarget) {
+                            onUpdate(dragId, colTarget.toPatch(dragged))
+                          }
+                        }
+                        onSwapOrder(dragId, t.id)
+                      }
+                      setDragId(null); setDragOverId(null); setDragOverCol(null)
+                    }}
                     onToggle={onToggle} onDelete={onDelete} />
                 ))}
               </div>
@@ -167,7 +208,7 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-1.5">
             {done.length === 0 ? (
               <div className="col-span-full text-center text-[10px] text-zinc-600 italic py-4">Rien de terminé pour le moment.</div>
-            ) : done.map(t => <TodoCard key={t.id} todo={t} dragging={false} onDragStart={() => {}} onDragEnd={() => {}} onToggle={onToggle} onDelete={onDelete} />)}
+            ) : done.map(t => <TodoCard key={t.id} todo={t} dragging={false} isActive={false} elapsedMinutes={0} config={CATEGORY_CONFIG} onStartTimer={() => {}} onStopTimer={() => {}} onDragStart={() => {}} onDragEnd={() => {}} onToggle={onToggle} onDelete={onDelete} />)}
           </div>
         )}
       </div>
@@ -176,11 +217,14 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
 }
 
 // ─── Card ──────────────────────────────────────────────────────────────────
-const TodoCard = ({ todo, dragging, onDragStart, onDragEnd, onToggle, onDelete }: {
-  todo: Todo; dragging: boolean; onDragStart: () => void; onDragEnd: () => void
+const TodoCard = ({ todo, dragging, isDragOver, isActive, elapsedMinutes, config, onStartTimer, onStopTimer, onDragStart, onDragEnd, onDragOver, onDrop, onToggle, onDelete }: {
+  todo: Todo; dragging: boolean; isDragOver?: boolean; isActive: boolean; elapsedMinutes: number; config: Record<string, CategoryConfig>;
+  onStartTimer: () => void; onStopTimer: () => void;
+  onDragStart: () => void; onDragEnd: () => void;
+  onDragOver?: React.DragEventHandler; onDrop?: React.DragEventHandler;
   onToggle: (id: number, completed_min?: number | null) => void; onDelete: (id: number) => void
 }) => {
-  const cat = CATEGORY_CONFIG[todo.category] ?? CATEGORY_CONFIG.admin
+  const cat = config[todo.category] ?? config.admin
   const isDone = todo.status === 'done'
 
   const handleToggle = (e: React.MouseEvent) => {
@@ -197,17 +241,20 @@ const TodoCard = ({ todo, dragging, onDragStart, onDragEnd, onToggle, onDelete }
   }
 
   return (
-    <div draggable={!isDone} onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart() }} onDragEnd={onDragEnd}
+    <div draggable={!isDone} onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart() }} 
+      onDragEnd={onDragEnd} onDragOver={onDragOver} onDrop={onDrop}
       className={cn('group relative rounded-xl border bg-zinc-900/70 hover:bg-zinc-900 p-2.5 transition-all',
         isDone ? 'border-zinc-800/60 opacity-60' : 'border-zinc-800 hover:border-emerald-500/30 cursor-grab active:cursor-grabbing',
-        dragging && 'opacity-40 ring-2 ring-emerald-500/50')}>
+        dragging && 'opacity-40 ring-2 ring-emerald-500/50',
+        isDragOver && 'ring-2 ring-emerald-500/80 bg-zinc-800/50',
+        isActive && 'border-cyan-500/50 bg-cyan-900/20 shadow-[0_0_15px_rgba(6,182,212,0.15)] ring-1 ring-cyan-500/30')}>
       <div className="flex items-start gap-2">
         <button onClick={handleToggle} className={cn('shrink-0 mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all',
           isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-zinc-600 hover:border-emerald-400')}>
           {isDone && <Check size={9} strokeWidth={3.5} />}
         </button>
         <div className="flex-1 min-w-0">
-          <p className={cn('text-[12px] leading-snug font-medium', isDone ? 'line-through text-zinc-500' : 'text-zinc-100')}>{todo.text}</p>
+          <p className={cn('text-[12px] leading-snug font-medium', isDone ? 'line-through text-zinc-500' : (isActive ? 'text-cyan-300' : 'text-zinc-100'))}>{todo.text}</p>
           <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
             <span className={cn('px-1.5 py-0.5 rounded text-[9px] font-semibold border', cat.bg, cat.color)}>{cat.emoji} {cat.label}</span>
             {todo.status === 'delegated' && todo.delegated_to && <span className="text-[9px] text-violet-300 font-semibold">→ {todo.delegated_to}</span>}
@@ -219,20 +266,38 @@ const TodoCard = ({ todo, dragging, onDragStart, onDragEnd, onToggle, onDelete }
             )}
             {todo.duration_min ? <span className="flex items-center gap-0.5 text-[9px] text-cyan-400"><Clock size={8} /> {formatMinutes(todo.duration_min)}</span> : null}
             {isDone && todo.completed_min ? <span className="text-[9px] text-emerald-400">⏱ {formatMinutes(todo.completed_min)}</span> : null}
+            {isActive && !isDone && (
+               <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 animate-pulse">
+                 ⏱ {elapsedMinutes}m en cours
+               </span>
+            )}
           </div>
         </div>
-        <button onClick={() => onDelete(todo.id)}
-          className="shrink-0 opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all">
-          <Trash2 size={10} />
-        </button>
+        <div className={cn("flex items-center gap-1 shrink-0 transition-all", !isActive && "opacity-0 group-hover:opacity-100")}>
+          {!isDone && (
+            isActive ? (
+              <button onClick={(e) => { e.stopPropagation(); onStopTimer() }} className="p-1.5 rounded-md text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 transition-all" title="Arrêter et valider le temps">
+                <Square size={10} fill="currentColor" />
+              </button>
+            ) : (
+              <button onClick={(e) => { e.stopPropagation(); onStartTimer() }} className="p-1.5 rounded-md text-zinc-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition-all" title="Démarrer le chrono">
+                <Play size={10} fill="currentColor" />
+              </button>
+            )
+          )}
+          <button onClick={(e) => { e.stopPropagation(); onDelete(todo.id) }}
+            className="p-1.5 rounded-md text-zinc-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all">
+            <Trash2 size={10} />
+          </button>
+        </div>
       </div>
     </div>
   )
 }
 
 // ─── Quick add form ──────────────────────────────────────────────────────
-const QuickTodoForm = ({ column, categories, onAdd, onCancel }: {
-  column: ColumnId; categories: TodoCategory[]
+const QuickTodoForm = ({ column, categories, config, onAdd, onCancel }: {
+  column: ColumnId; categories: TodoCategory[]; config: Record<string, CategoryConfig>;
   onAdd: (t: Omit<Todo, 'id' | 'created'>) => void; onCancel: () => void
 }) => {
   const [text, setText] = useState('')
@@ -265,8 +330,8 @@ const QuickTodoForm = ({ column, categories, onAdd, onCancel }: {
         {categories.map(c => (
           <button key={c} onClick={() => setCategory(c)}
             className={cn('px-1.5 py-0.5 rounded text-[9px] font-semibold border transition-all',
-              category === c ? CATEGORY_CONFIG[c].bg + ' ' + CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500')}
-            title={CATEGORY_CONFIG[c].label}>{CATEGORY_CONFIG[c].emoji}</button>
+              category === c ? config[c].bg + ' ' + config[c].color : 'border-zinc-800 text-zinc-500')}
+            title={config[c].label}>{config[c].emoji}</button>
         ))}
       </div>
       {column === 'delegated' && (
@@ -294,8 +359,8 @@ const QuickTodoForm = ({ column, categories, onAdd, onCancel }: {
 }
 
 // ─── Log done form ──────────────────────────────────────────────────────
-const LogDoneForm = ({ categories, onAdd, onCancel }: {
-  categories: TodoCategory[]
+const LogDoneForm = ({ categories, config, onAdd, onCancel }: {
+  categories: TodoCategory[]; config: Record<string, CategoryConfig>;
   onAdd: (t: Omit<Todo, 'id' | 'created' | 'status' | 'completed_at'> & { completed_min: number; completed_at?: string }) => void
   onCancel: () => void
 }) => {
@@ -326,8 +391,8 @@ const LogDoneForm = ({ categories, onAdd, onCancel }: {
         {categories.map(c => (
           <button key={c} onClick={() => setCategory(c)}
             className={cn('px-1.5 py-0.5 rounded text-[9px] font-semibold border transition-all',
-              category === c ? CATEGORY_CONFIG[c].bg + ' ' + CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500')}>
-            {CATEGORY_CONFIG[c].emoji} {CATEGORY_CONFIG[c].label}</button>
+              category === c ? config[c].bg + ' ' + config[c].color : 'border-zinc-800 text-zinc-500')}>
+            {config[c].emoji} {config[c].label}</button>
         ))}
       </div>
       <div className="flex gap-2">

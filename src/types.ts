@@ -2,13 +2,23 @@
 // 📊 Tracking Dashboard — Types
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type View = 'dashboard' | 'todo-travail' | 'todo-personnel' | 'charts' | 'historique'
+export type View = 'dashboard' | 'todo-travail' | 'todo-personnel' | 'charts' | 'historique' | 'settings'
 
 // ─── Categories ─────────────────────────────────────────────────────────────
-export type TodoCategory = 'pro' | 'finance' | 'admin' | 'automatisation' | 'sport' | 'cardio' | 'lecture' | 'bien-etre'
+export type TodoCategory = string // previously a union of literals
 export type CategoryGroup = 'travail' | 'personnel'
 export type TodoPriority = 'urgent' | 'normal' | 'faible'
 export type TodoStatus = 'open' | 'done' | 'waiting' | 'delegated'
+
+export interface CategoryConfig {
+  id: string
+  label: string
+  emoji: string
+  color: string
+  bg: string
+  hex: string
+  group: CategoryGroup
+}
 
 // ─── Todos ───────────────────────────────────────────────────────────────────
 export interface Todo {
@@ -25,6 +35,7 @@ export interface Todo {
   duration_min?: number | null   // durée estimée (minutes)
   completed_min?: number | null  // temps effectif à la complétion (minutes)
   updated_at?: string            // ISO datetime — for conflict resolution
+  orderIndex?: number            // Index au sein de la colonne Kanban
 }
 
 // ─── Archive mensuelle ──────────────────────────────────────────────────────
@@ -73,6 +84,7 @@ export interface AppState {
     updated_at: string
     updated_by: 'obsidian' | 'web' | 'mobile'
     habitudes?: string[]           // legacy
+    custom_categories?: CategoryConfig[]
   }
   // Active data
   todos: Todo[]
@@ -99,8 +111,8 @@ export interface Stats {
     personnel_month_min: number
     streak_travail: number
     streak_personnel: number
-    by_category: Record<TodoCategory, { total: number; open: number; done: number; minutes: number }>
-    by_group: Record<CategoryGroup, { total: number; open: number; done: number; minutes: number }>
+    by_category: Record<string, { total: number; open: number; done: number; minutes: number }>
+    by_group: Record<string, { total: number; open: number; done: number; minutes: number }>
   }
   todos: {
     total: number

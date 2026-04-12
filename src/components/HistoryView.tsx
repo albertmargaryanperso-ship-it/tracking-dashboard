@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { ChevronDown, ChevronRight, Calendar, Clock, TrendingUp, Award } from 'lucide-react'
-import type { AppState, ArchiveMonth, TodoCategory } from '@/types'
-import { CATEGORY_CONFIG, CATEGORY_LIST, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES, cn, formatMinutes, categoryGroup } from '@/lib/utils'
+import type { AppState, ArchiveMonth, TodoCategory, CategoryConfig } from '@/types'
+import { cn, formatMinutes, categoryGroup, todayISO, getActiveCategories } from '@/lib/utils'
 
 interface HistoryViewProps { state: AppState }
 
@@ -15,6 +15,38 @@ const fmtMonth = (m: string): string => {
 export const HistoryView = ({ state }: HistoryViewProps) => {
   const [openMonth, setOpenMonth] = useState<string | null>(null)
   const archive = useMemo(() => [...(state.archive ?? [])].sort((a, b) => b.month.localeCompare(a.month)), [state.archive])
+
+  const last30Days = useMemo(() => {
+    const todayStr = todayISO()
+    const todayDate = new Date(todayStr + 'T12:00:00')
+    const days: { date: string; travail: number; personnel: number }[] = []
+    
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(todayDate)
+      d.setDate(d.getDate() - i)
+      const iso = d.toISOString().split('T')[0]
+      days.push({ date: iso, travail: 0, personnel: 0 })
+    }
+    
+    const map = new Map(days.map(d => [d.date, d]))
+    
+    const processTodo = (t: any) => {
+      if (!t.completed_at || !t.completed_min) return
+      const iso = t.completed_at.slice(0, 10)
+      const day = map.get(iso)
+      if (day) {
+        if (categoryGroup(t.category, state.meta.custom_categories) === 'travail') day.travail += t.completed_min
+        else day.personnel += t.completed_min
+      }
+    }
+    
+    state.todos.forEach(t => { if (t.status === 'done') processTodo(t) })
+    state.archive?.forEach(a => { a.todos.forEach(processTodo) })
+
+    return days
+  }, [state.todos, state.archive])
+
+  const maxDayMin = Math.max(1, ...last30Days.map(d => d.travail + d.personnel))
 
   if (archive.length === 0) {
     return (
@@ -39,13 +71,49 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
         <HistStat label="Travail / Personnel" value={`${formatMinutes(archive.reduce((s, a) => s + (a.stats?.travail_minutes ?? 0), 0)) || '0'} / ${formatMinutes(archive.reduce((s, a) => s + (a.stats?.personnel_minutes ?? 0), 0)) || '0'}`} icon={<Award size={14} />} />
       </div>
 
+      {/* 30-Day Activity Chart */}
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-[12px] font-bold uppercase tracking-wider text-zinc-400">Activité des 30 derniers jours</h3>
+          <div className="flex gap-3 text-[10px] font-semibold">
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-violet-500"></span> Travail</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-cyan-500"></span> Personnel</span>
+          </div>
+        </div>
+        
+        <div className="flex items-end gap-1 h-32 pt-2">
+          {last30Days.map((day, i) => {
+            const hT = (day.travail / maxDayMin) * 100
+            const hP = (day.personnel / maxDayMin) * 100
+            const isToday = i === last30Days.length - 1
+            return (
+              <div key={day.date} className="flex-1 flex flex-col justify-end gap-0.5 group relative" title={`${day.date}: ${day.travail}m travail / ${day.personnel}m perso`}>
+                <div className="w-full bg-cyan-500/80 rounded-t-sm transition-all group-hover:bg-cyan-400" style={{ height: `${hP}%` }} />
+                <div className={cn("w-full bg-violet-500/80 rounded-b-sm transition-all group-hover:bg-violet-400", isToday && 'ring-1 ring-emerald-500 ring-offset-1 ring-offset-zinc-900')} style={{ height: `${hT}%` }} />
+                
+                {/* Tooltip */}
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max bg-zinc-800 border border-zinc-700 text-[10px] p-2 rounded shadow-xl whitespace-nowrap">
+                  <p className="font-bold text-zinc-300 mb-1">{day.date.split('-').reverse().join('/')}</p>
+                  <p className="text-violet-300 font-mono">Travail: {formatMinutes(day.travail) || '0'}</p>
+                  <p className="text-cyan-300 font-mono">Perso:   {formatMinutes(day.personnel) || '0'}</p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        <div className="flex justify-between mt-2 text-[9px] text-zinc-500 font-mono">
+          <span>{last30Days[0].date.split('-').reverse().slice(0, 2).join('/')}</span>
+          <span>Aujourd'hui</span>
+        </div>
+      </div>
+
       {/* Monthly cards */}
       {archive.map((entry, idx) => {
         const isOpen = openMonth === entry.month
         const prev = idx + 1 < archive.length ? archive[idx + 1] : null
         return (
           <MonthCard key={entry.month} entry={entry} prev={prev} isOpen={isOpen}
-            onToggle={() => setOpenMonth(isOpen ? null : entry.month)} />
+            onToggle={() => setOpenMonth(isOpen ? null : entry.month)} customCategories={state.meta.custom_categories} />
         )
       })}
     </div>
@@ -53,9 +121,10 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
 }
 
 // ─── Month card ─────────────────────────────────────────────────────────────
-const MonthCard = ({ entry, prev, isOpen, onToggle }: {
-  entry: ArchiveMonth; prev: ArchiveMonth | null; isOpen: boolean; onToggle: () => void
+const MonthCard = ({ entry, prev, isOpen, onToggle, customCategories }: {
+  entry: ArchiveMonth; prev: ArchiveMonth | null; isOpen: boolean; onToggle: () => void; customCategories?: CategoryConfig[]
 }) => {
+  const { CATEGORY_CONFIG, CATEGORY_LIST, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES } = getActiveCategories(customCategories)
   const s = entry.stats
   const ratio = s.total_minutes > 0 ? Math.round((s.travail_minutes / s.total_minutes) * 100) : 0
 

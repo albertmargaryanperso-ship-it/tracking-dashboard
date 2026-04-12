@@ -2,12 +2,13 @@ import { Flame, Clock, Activity, CheckCheck } from 'lucide-react'
 import type { AppState, Stats } from '@/types'
 import { StatCard } from './StatCard'
 import { Heatmap } from './Heatmap'
-import { formatMinutes, CATEGORY_CONFIG, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES, cn } from '@/lib/utils'
+import { formatMinutes, cn, getActiveCategories } from '@/lib/utils'
 
 interface DashboardProps { state: AppState; stats: Stats }
 
 export const Dashboard = ({ state, stats }: DashboardProps) => {
   const t = stats.tracking
+  const { CATEGORY_CONFIG, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES } = getActiveCategories(state.meta.custom_categories)
 
   return (
     <div className="space-y-6">
@@ -84,7 +85,8 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
           <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-4">Travail — catégories</h3>
           <div className="grid grid-cols-2 gap-2">
             {TRAVAIL_CATEGORIES.map(cat => {
-              const cfg = CATEGORY_CONFIG[cat]; const b = t.by_category[cat]
+              const cfg = CATEGORY_CONFIG[cat]; const b = t.by_category[cat] || { minutes: 0 }
+              if (!cfg) return null
               return (
                 <div key={cat} className={cn('px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-2',
                   b.minutes > 0 ? 'bg-zinc-900/70' : 'bg-zinc-900/30 text-zinc-500')}
@@ -102,7 +104,8 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
           <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-4">Personnel — catégories</h3>
           <div className="grid grid-cols-2 gap-2">
             {PERSONNEL_CATEGORIES.map(cat => {
-              const cfg = CATEGORY_CONFIG[cat]; const b = t.by_category[cat]
+              const cfg = CATEGORY_CONFIG[cat]; const b = t.by_category[cat] || { minutes: 0 }
+              if (!cfg) return null
               return (
                 <div key={cat} className={cn('px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-2',
                   b.minutes > 0 ? 'bg-zinc-900/70' : 'bg-zinc-900/30 text-zinc-500')}

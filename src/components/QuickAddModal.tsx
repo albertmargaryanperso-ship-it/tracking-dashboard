@@ -1,17 +1,19 @@
 import { useState } from 'react'
 import { X, Plus, Clock } from 'lucide-react'
 import type { Todo, TodoCategory, TodoStatus } from '@/types'
-import { cn, CATEGORY_CONFIG, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES } from '@/lib/utils'
+import { cn, getActiveCategories } from '@/lib/utils'
 
 interface QuickAddModalProps {
   open: boolean
   onClose: () => void
   onAddTodo: (t: Omit<Todo, 'id' | 'created'>) => void
   onAddDoneTodo: (t: Omit<Todo, 'id' | 'created' | 'status' | 'completed_at'> & { completed_min: number; completed_at?: string }) => void
+  customCategories?: import('@/types').CategoryConfig[]
 }
 
-export const QuickAddModal = ({ open, onClose, onAddTodo, onAddDoneTodo }: QuickAddModalProps) => {
+export const QuickAddModal = ({ open, onClose, onAddTodo, onAddDoneTodo, customCategories }: QuickAddModalProps) => {
   const [mode, setMode] = useState<'todo' | 'done'>('todo')
+  const cats = getActiveCategories(customCategories)
 
   if (!open) return null
 
@@ -36,8 +38,8 @@ export const QuickAddModal = ({ open, onClose, onAddTodo, onAddDoneTodo }: Quick
           </button>
         </div>
 
-        {mode === 'todo' && <TodoForm onAdd={onAddTodo} onClose={onClose} />}
-        {mode === 'done' && <DoneForm onAdd={onAddDoneTodo} onClose={onClose} />}
+        {mode === 'todo' && <TodoForm onAdd={onAddTodo} onClose={onClose} cats={cats} />}
+        {mode === 'done' && <DoneForm onAdd={onAddDoneTodo} onClose={onClose} cats={cats} />}
       </div>
     </div>
   )
@@ -51,7 +53,7 @@ const STATUS_CHOICES: Array<{ id: StatusChoice; label: string; emoji: string; bo
   { id: 'waiting', label: 'En attente', emoji: '⏳', border: 'border-sky-500', active: 'bg-sky-500/10 text-sky-300' },
 ]
 
-const TodoForm = ({ onAdd, onClose }: { onAdd: (t: Omit<Todo, 'id' | 'created'>) => void; onClose: () => void }) => {
+const TodoForm = ({ onAdd, onClose, cats }: { onAdd: (t: Omit<Todo, 'id' | 'created'>) => void; onClose: () => void; cats: ReturnType<typeof getActiveCategories> }) => {
   const [text, setText] = useState('')
   const [category, setCategory] = useState<TodoCategory>('pro')
   const [statusChoice, setStatusChoice] = useState<StatusChoice>('open')
@@ -81,7 +83,7 @@ const TodoForm = ({ onAdd, onClose }: { onAdd: (t: Omit<Todo, 'id' | 'created'>)
           placeholder="Que faut-il faire ?"
           className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-emerald-500" />
       </div>
-      <CategoryPicker value={category} onChange={setCategory} />
+      <CategoryPicker value={category} onChange={setCategory} cats={cats} />
       {/* Statut — 4 choix */}
       <div>
         <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Statut</label>
@@ -121,9 +123,10 @@ const TodoForm = ({ onAdd, onClose }: { onAdd: (t: Omit<Todo, 'id' | 'created'>)
   )
 }
 
-const DoneForm = ({ onAdd, onClose }: {
+const DoneForm = ({ onAdd, onClose, cats }: {
   onAdd: (t: Omit<Todo, 'id' | 'created' | 'status' | 'completed_at'> & { completed_min: number; completed_at?: string }) => void
   onClose: () => void
+  cats: ReturnType<typeof getActiveCategories>
 }) => {
   const [text, setText] = useState('')
   const [category, setCategory] = useState<TodoCategory>('pro')
@@ -150,7 +153,7 @@ const DoneForm = ({ onAdd, onClose }: {
           placeholder="Description de l'activité…"
           className="w-full mt-1 px-3 py-2.5 bg-zinc-900 border border-zinc-800 rounded-xl text-xs focus:outline-none focus:border-violet-500" />
       </div>
-      <CategoryPicker value={category} onChange={setCategory} />
+      <CategoryPicker value={category} onChange={setCategory} cats={cats} />
       <div>
         <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Temps passé</label>
         <DurationPicker value={minutes} onChange={setMinutes} />
@@ -167,26 +170,26 @@ const DoneForm = ({ onAdd, onClose }: {
   )
 }
 
-const CategoryPicker = ({ value, onChange }: { value: TodoCategory; onChange: (c: TodoCategory) => void }) => (
+const CategoryPicker = ({ value, onChange, cats }: { value: TodoCategory; onChange: (c: TodoCategory) => void; cats: ReturnType<typeof getActiveCategories> }) => (
   <div>
     <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Catégorie</label>
     <p className="text-[9px] text-violet-400 font-semibold mt-1.5 mb-1">Travail</p>
     <div className="grid grid-cols-2 gap-1.5">
-      {TRAVAIL_CATEGORIES.map(c => (
+      {cats.TRAVAIL_CATEGORIES.map(c => (
         <button key={c} onClick={() => onChange(c)}
           className={cn('px-3 py-2 rounded-lg text-[11px] font-semibold border transition-all flex items-center justify-center gap-1',
-            value === c ? CATEGORY_CONFIG[c].bg + ' ' + CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500')}>
-          <span>{CATEGORY_CONFIG[c].emoji}</span> {CATEGORY_CONFIG[c].label}
+            value === c ? cats.CATEGORY_CONFIG[c].bg + ' ' + cats.CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500')}>
+          <span>{cats.CATEGORY_CONFIG[c].emoji}</span> {cats.CATEGORY_CONFIG[c].label}
         </button>
       ))}
     </div>
     <p className="text-[9px] text-cyan-400 font-semibold mt-2 mb-1">Personnel</p>
     <div className="grid grid-cols-2 gap-1.5">
-      {PERSONNEL_CATEGORIES.map(c => (
+      {cats.PERSONNEL_CATEGORIES.map(c => (
         <button key={c} onClick={() => onChange(c)}
           className={cn('px-3 py-2 rounded-lg text-[11px] font-semibold border transition-all flex items-center justify-center gap-1',
-            value === c ? CATEGORY_CONFIG[c].bg + ' ' + CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500')}>
-          <span>{CATEGORY_CONFIG[c].emoji}</span> {CATEGORY_CONFIG[c].label}
+            value === c ? cats.CATEGORY_CONFIG[c].bg + ' ' + cats.CATEGORY_CONFIG[c].color : 'border-zinc-800 text-zinc-500')}>
+          <span>{cats.CATEGORY_CONFIG[c].emoji}</span> {cats.CATEGORY_CONFIG[c].label}
         </button>
       ))}
     </div>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
-import type { AppState, Todo, TodoCategory, ArchiveMonth } from '@/types'
+import type { AppState, Todo, TodoCategory, ArchiveMonth, CategoryConfig } from '@/types'
 import { INITIAL_STATE } from '@/lib/initialState'
 import { computeStats } from '@/lib/stats'
 import { readState, writeState, hasToken, mergeStates, type SyncStatus } from '@/lib/github'
@@ -10,7 +10,7 @@ import {
   PENDING_FLAG_KEY,
   PUSH_DEBOUNCE_MS,
 } from '@/lib/config'
-import { todayISO, CATEGORY_LIST, categoryGroup } from '@/lib/utils'
+import { todayISO, categoryGroup, getActiveCategories } from '@/lib/utils'
 
 // ─── Pending flag ───────────────────────────────────────────────────────────
 const setPendingFlag = (on: boolean): void => {
@@ -35,9 +35,10 @@ const saveCached = (state: AppState): void => {
 }
 
 // ─── Migration ──────────────────────────────────────────────────────────────
-const validCategories = CATEGORY_LIST as string[]
-
 const migrateState = (state: AppState): AppState => {
+  const { CATEGORY_LIST } = getActiveCategories(state.meta?.custom_categories)
+  const validCategories = CATEGORY_LIST as string[]
+
   const migratedTodos = (state.todos ?? []).map((t: any) => ({
     ...t,
     category: validCategories.includes(t.category) ? t.category : 'admin',
@@ -57,7 +58,8 @@ const migrateState = (state: AppState): AppState => {
 }
 
 // ─── Archive helper ─────────────────────────────────────────────────────────
-const buildArchiveForMonth = (todos: Todo[], month: string): ArchiveMonth => {
+const buildArchiveForMonth = (todos: Todo[], month: string, custom?: CategoryConfig[]): ArchiveMonth => {
+  const { CATEGORY_LIST, CATEGORY_CONFIG } = getActiveCategories(custom)
   const monthTodos = todos.filter(t => t.status === 'done' && t.completed_at?.startsWith(month))
 
   const by_category: Record<string, { count: number; minutes: number }> = {}
@@ -69,10 +71,10 @@ const buildArchiveForMonth = (todos: Todo[], month: string): ArchiveMonth => {
 
   for (const t of monthTodos) {
     const min = t.completed_min ?? 0
-    const cat = by_category[t.category] ?? by_category.admin
+    const cat = by_category[t.category] ?? by_category.admin ?? { count: 0, minutes: 0 }
     cat.count += 1
     cat.minutes += min
-    if (categoryGroup(t.category) === 'travail') travail_minutes += min
+    if (categoryGroup(t.category, custom) === 'travail') travail_minutes += min
     else personnel_minutes += min
     if (t.completed_at) {
       dayMinutes[t.completed_at] = (dayMinutes[t.completed_at] ?? 0) + min
@@ -107,6 +109,8 @@ type Action =
   | { type: 'UPDATE_TODO'; id: number; patch: Partial<Todo> }
   | { type: 'TOGGLE_TODO'; id: number; completed_min?: number | null }
   | { type: 'DELETE_TODO'; id: number }
+  | { type: 'SWAP_TODO_ORDER'; id1: number; id2: number }
+  | { type: 'UPDATE_CATEGORIES'; categories: CategoryConfig[] }
   // Archive
   | { type: 'ARCHIVE_MONTH'; month: string }
 
@@ -187,11 +191,35 @@ const reducer = (state: AppState, action: Action): AppState => {
         todos: state.todos.filter(t => t.id !== action.id),
       }
 
+    case 'SWAP_TODO_ORDER': {
+      const t1 = state.todos.find(t => t.id === action.id1)
+      const t2 = state.todos.find(t => t.id === action.id2)
+      if (!t1 || !t2) return state
+      const t1Order = t1.orderIndex ?? t1.id
+      const t2Order = t2.orderIndex ?? t2.id
+      
+      return {
+        ...state,
+        meta: { ...state.meta, updated_at: now, updated_by: 'web' },
+        todos: state.todos.map(t => {
+          if (t.id === action.id1) return { ...t, orderIndex: t2Order, updated_at: now }
+          if (t.id === action.id2) return { ...t, orderIndex: t1Order, updated_at: now }
+          return t
+        }),
+      }
+    }
+
+    case 'UPDATE_CATEGORIES':
+      return {
+        ...state,
+        meta: { ...state.meta, updated_at: now, updated_by: 'web', custom_categories: action.categories },
+      }
+
     case 'ARCHIVE_MONTH': {
       const existing = (state.archive ?? []).find(a => a.month === action.month)
       if (existing) return state // already archived
 
-      const archiveEntry = buildArchiveForMonth(state.todos, action.month)
+      const archiveEntry = buildArchiveForMonth(state.todos, action.month, state.meta.custom_categories)
       if (archiveEntry.todos.length === 0) return state // nothing to archive
 
       const remainingTodos = state.todos.filter(
@@ -362,6 +390,8 @@ export const useAppState = () => {
     updateTodo: (id: number, patch: Partial<Todo>) => userDispatch({ type: 'UPDATE_TODO', id, patch }),
     toggleTodo: (id: number, completed_min?: number | null) => userDispatch({ type: 'TOGGLE_TODO', id, completed_min }),
     deleteTodo: (id: number) => userDispatch({ type: 'DELETE_TODO', id }),
+    swapTodoOrder: (id1: number, id2: number) => userDispatch({ type: 'SWAP_TODO_ORDER', id1, id2 }),
+    updateCategories: (categories: CategoryConfig[]) => userDispatch({ type: 'UPDATE_CATEGORIES', categories }),
     archiveMonth: (month: string) => userDispatch({ type: 'ARCHIVE_MONTH', month }),
   }), [userDispatch])
 

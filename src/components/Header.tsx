@@ -12,6 +12,7 @@ const VIEWS: Array<{ id: View; label: string; emoji: string }> = [
   { id: 'todo-personnel',  label: 'Todo Personnel',  emoji: '🧘' },
   { id: 'charts',          label: 'Camemberts',      emoji: '🥧' },
   { id: 'historique',      label: 'Historique',       emoji: '📜' },
+  { id: 'settings',        label: 'Paramètres',      emoji: '⚙️' },
 ]
 
 export const Header = ({ view, onViewChange }: HeaderProps) => {

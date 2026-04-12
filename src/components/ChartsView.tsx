@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { Stats, AppState } from '@/types'
-import { formatMinutes, cn, CATEGORY_CONFIG, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES } from '@/lib/utils'
+import { formatMinutes, cn, getActiveCategories } from '@/lib/utils'
 
 interface ChartsViewProps { state: AppState; stats: Stats }
 
@@ -54,9 +54,10 @@ const ChartCard = ({ title, subtitle, borderColor, slices }: { title: string; su
 export const ChartsView = ({ state, stats }: ChartsViewProps) => {
   const [combinedMode, setCombinedMode] = useState<'macro' | 'detailed'>('macro')
   const bc = stats.tracking.by_category
+  const { CATEGORY_CONFIG, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES } = getActiveCategories(state.meta.custom_categories)
 
-  const travailSlices: Slice[] = useMemo(() => TRAVAIL_CATEGORIES.map(c => ({ label: CATEGORY_CONFIG[c].label, value: bc[c].minutes / 60, color: CATEGORY_CONFIG[c].hex, icon: CATEGORY_CONFIG[c].emoji })).filter(s => s.value > 0), [bc])
-  const personnelSlices: Slice[] = useMemo(() => PERSONNEL_CATEGORIES.map(c => ({ label: CATEGORY_CONFIG[c].label, value: bc[c].minutes / 60, color: CATEGORY_CONFIG[c].hex, icon: CATEGORY_CONFIG[c].emoji })).filter(s => s.value > 0), [bc])
+  const travailSlices: Slice[] = useMemo(() => TRAVAIL_CATEGORIES.map(c => ({ label: CATEGORY_CONFIG[c]?.label || c, value: (bc[c]?.minutes || 0) / 60, color: CATEGORY_CONFIG[c]?.hex || '#000', icon: CATEGORY_CONFIG[c]?.emoji })).filter(s => s.value > 0), [bc, TRAVAIL_CATEGORIES, CATEGORY_CONFIG])
+  const personnelSlices: Slice[] = useMemo(() => PERSONNEL_CATEGORIES.map(c => ({ label: CATEGORY_CONFIG[c]?.label || c, value: (bc[c]?.minutes || 0) / 60, color: CATEGORY_CONFIG[c]?.hex || '#000', icon: CATEGORY_CONFIG[c]?.emoji })).filter(s => s.value > 0), [bc, PERSONNEL_CATEGORIES, CATEGORY_CONFIG])
 
   const combinedMacro: Slice[] = useMemo(() => [
     { label: 'Travail', value: stats.tracking.by_group.travail.minutes / 60, color: '#a78bfa' },

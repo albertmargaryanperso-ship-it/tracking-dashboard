@@ -1,5 +1,5 @@
 import type { AppState, Stats, TodoCategory, CategoryGroup } from '@/types'
-import { todayISO, startOfWeekISO, startOfMonthISO, addDays, CATEGORY_LIST, categoryGroup } from './utils'
+import { todayISO, startOfWeekISO, startOfMonthISO, addDays, categoryGroup, getActiveCategories } from './utils'
 
 export const computeStats = (state: AppState): Stats => {
   const today = todayISO()
@@ -20,7 +20,7 @@ export const computeStats = (state: AppState): Stats => {
 
   const sumMin = (list: typeof doneTodos, dateFilter?: (d: string) => boolean, groupFilter?: CategoryGroup) =>
     list
-      .filter(t => (!dateFilter || dateFilter(t.completed_at!)) && (!groupFilter || categoryGroup(t.category) === groupFilter))
+      .filter(t => (!dateFilter || dateFilter(t.completed_at!)) && (!groupFilter || categoryGroup(t.category, state.meta?.custom_categories) === groupFilter))
       .reduce((sum, t) => sum + (t.completed_min ?? 0), 0)
 
   const isToday = (d: string) => d === today
@@ -46,7 +46,7 @@ export const computeStats = (state: AppState): Stats => {
   // ─── Streaks ──────────────────────────────────────────────────────────────
   const computeStreak = (group: CategoryGroup): number => {
     const dates = new Set(
-      doneTodos.filter(t => categoryGroup(t.category) === group).map(t => t.completed_at!)
+      doneTodos.filter(t => categoryGroup(t.category, state.meta?.custom_categories) === group).map(t => t.completed_at!)
     )
     let streak = 0
     let cursor = today
@@ -58,9 +58,11 @@ export const computeStats = (state: AppState): Stats => {
   }
 
   // ─── By category ──────────────────────────────────────────────────────────
+  const { CATEGORY_LIST } = getActiveCategories(state.meta?.custom_categories)
+
   const by_category = Object.fromEntries(
-    CATEGORY_LIST.map(c => [c, { total: 0, open: 0, done: 0, minutes: 0 }])
-  ) as Record<TodoCategory, { total: number; open: number; done: number; minutes: number }>
+    CATEGORY_LIST.map((c: string) => [c, { total: 0, open: 0, done: 0, minutes: 0 }])
+  ) as Record<string, { total: number; open: number; done: number; minutes: number }>
 
   const by_group: Record<CategoryGroup, { total: number; open: number; done: number; minutes: number }> = {
     travail: { total: 0, open: 0, done: 0, minutes: 0 },
@@ -68,12 +70,16 @@ export const computeStats = (state: AppState): Stats => {
   }
 
   for (const t of todos) {
-    const cat = by_category[t.category] ?? by_category.admin
+    if (!by_category[t.category]) {
+      by_category[t.category] = { total: 0, open: 0, done: 0, minutes: 0 }
+    }
+    const cat = by_category[t.category]
     cat.total += 1
     if (t.status === 'open') cat.open += 1
     if (t.status === 'done') { cat.done += 1; cat.minutes += t.completed_min ?? 0 }
 
-    const grp = by_group[categoryGroup(t.category)]
+    const grpStr = categoryGroup(t.category, state.meta?.custom_categories)
+    const grp = by_group[grpStr as CategoryGroup] || by_group.travail
     grp.total += 1
     if (t.status === 'open') grp.open += 1
     if (t.status === 'done') { grp.done += 1; grp.minutes += t.completed_min ?? 0 }

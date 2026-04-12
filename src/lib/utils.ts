@@ -111,26 +111,51 @@ export const intensityLabel = (hours: number): { label: string; className: strin
 
 // ─── Category config — 8 categories in 2 groups ────────────────────────────
 
-import type { TodoCategory, CategoryGroup } from '@/types'
+import type { TodoCategory, CategoryGroup, CategoryConfig } from '@/types'
 
-export const CATEGORY_CONFIG: Record<TodoCategory, { label: string; emoji: string; color: string; bg: string; hex: string; group: CategoryGroup }> = {
+export const DEFAULT_CATEGORY_CONFIG: Record<string, CategoryConfig> = {
   // Travail
-  pro:            { label: 'Pro',            emoji: '💼', color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/30',       hex: '#60a5fa', group: 'travail' },
-  finance:        { label: 'Finance',        emoji: '💰', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30', hex: '#34d399', group: 'travail' },
-  admin:          { label: 'Admin',          emoji: '📋', color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/30',     hex: '#fbbf24', group: 'travail' },
-  automatisation: { label: 'Automatisation', emoji: '⚙️',  color: 'text-violet-400',  bg: 'bg-violet-500/10 border-violet-500/30',   hex: '#a78bfa', group: 'travail' },
+  pro:            { id: 'pro',            label: 'Pro',            emoji: '💼', color: 'text-blue-400',    bg: 'bg-blue-500/10 border-blue-500/30',       hex: '#60a5fa', group: 'travail' },
+  finance:        { id: 'finance',        label: 'Finance',        emoji: '💰', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/30', hex: '#34d399', group: 'travail' },
+  admin:          { id: 'admin',          label: 'Admin',          emoji: '📋', color: 'text-amber-400',   bg: 'bg-amber-500/10 border-amber-500/30',     hex: '#fbbf24', group: 'travail' },
+  automatisation: { id: 'automatisation', label: 'Automatisation', emoji: '⚙️',  color: 'text-violet-400',  bg: 'bg-violet-500/10 border-violet-500/30',   hex: '#a78bfa', group: 'travail' },
   // Personnel
-  sport:          { label: 'Sport',          emoji: '🏋️', color: 'text-pink-400',    bg: 'bg-pink-500/10 border-pink-500/30',       hex: '#f472b6', group: 'personnel' },
-  cardio:         { label: 'Cardio',         emoji: '🏃', color: 'text-orange-400',  bg: 'bg-orange-500/10 border-orange-500/30',   hex: '#fb923c', group: 'personnel' },
-  lecture:        { label: 'Lecture',         emoji: '📚', color: 'text-sky-400',     bg: 'bg-sky-500/10 border-sky-500/30',         hex: '#38bdf8', group: 'personnel' },
-  'bien-etre':    { label: 'Bien-être',      emoji: '🧘', color: 'text-teal-400',    bg: 'bg-teal-500/10 border-teal-500/30',       hex: '#2dd4bf', group: 'personnel' },
+  sport:          { id: 'sport',          label: 'Sport',          emoji: '🏋️', color: 'text-pink-400',    bg: 'bg-pink-500/10 border-pink-500/30',       hex: '#f472b6', group: 'personnel' },
+  cardio:         { id: 'cardio',         label: 'Cardio',         emoji: '🏃', color: 'text-orange-400',  bg: 'bg-orange-500/10 border-orange-500/30',   hex: '#fb923c', group: 'personnel' },
+  lecture:        { id: 'lecture',        label: 'Lecture',        emoji: '📚', color: 'text-sky-400',     bg: 'bg-sky-500/10 border-sky-500/30',         hex: '#38bdf8', group: 'personnel' },
+  'bien-etre':    { id: 'bien-etre',      label: 'Bien-être',      emoji: '🧘', color: 'text-teal-400',    bg: 'bg-teal-500/10 border-teal-500/30',       hex: '#2dd4bf', group: 'personnel' },
 }
 
-export const CATEGORY_LIST: TodoCategory[] = ['pro', 'finance', 'admin', 'automatisation', 'sport', 'cardio', 'lecture', 'bien-etre']
-export const TRAVAIL_CATEGORIES: TodoCategory[] = ['pro', 'finance', 'admin', 'automatisation']
-export const PERSONNEL_CATEGORIES: TodoCategory[] = ['sport', 'cardio', 'lecture', 'bien-etre']
+export const DEFAULT_CATEGORY_LIST: string[] = ['pro', 'finance', 'admin', 'automatisation', 'sport', 'cardio', 'lecture', 'bien-etre']
+export const DEFAULT_TRAVAIL_CATEGORIES: string[] = ['pro', 'finance', 'admin', 'automatisation']
+export const DEFAULT_PERSONNEL_CATEGORIES: string[] = ['sport', 'cardio', 'lecture', 'bien-etre']
 
-export const categoryGroup = (cat: TodoCategory): CategoryGroup => CATEGORY_CONFIG[cat]?.group ?? 'travail'
+export const getActiveCategories = (custom?: CategoryConfig[]) => {
+  if (custom && custom.length > 0) {
+    const config: Record<string, CategoryConfig> = {}
+    const list: string[] = []
+    const travail: string[] = []
+    const perso: string[] = []
+    for (const c of custom) {
+      config[c.id] = c
+      list.push(c.id)
+      if (c.group === 'travail') travail.push(c.id)
+      else perso.push(c.id)
+    }
+    return { CATEGORY_CONFIG: config, CATEGORY_LIST: list, TRAVAIL_CATEGORIES: travail, PERSONNEL_CATEGORIES: perso }
+  }
+  return { 
+    CATEGORY_CONFIG: DEFAULT_CATEGORY_CONFIG, 
+    CATEGORY_LIST: DEFAULT_CATEGORY_LIST, 
+    TRAVAIL_CATEGORIES: DEFAULT_TRAVAIL_CATEGORIES, 
+    PERSONNEL_CATEGORIES: DEFAULT_PERSONNEL_CATEGORIES 
+  }
+}
+
+export const categoryGroup = (cat: string, custom?: CategoryConfig[]): CategoryGroup => {
+  const { CATEGORY_CONFIG } = getActiveCategories(custom)
+  return CATEGORY_CONFIG[cat]?.group ?? 'travail'
+}
 
 // ─── Habit config — kept for backward compat with routine entries ─────────
 
