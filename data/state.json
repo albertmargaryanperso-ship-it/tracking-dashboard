@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 427,
-    "updated_at": "2026-04-12T20:28:51.701Z",
+    "updated_at": "2026-04-12T20:28:53.750Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -558,21 +558,6 @@
       "id": 10044,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T15:26:58.323Z"
-    },
-    {
-      "text": "Muscu",
-      "category": "sport",
-      "priority": "urgent",
-      "status": "done",
-      "delegated_to": null,
-      "due": "2026-04-12",
-      "completed_at": "2026-04-12",
-      "duration_min": 60,
-      "completed_min": 1,
-      "id": 10046,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T15:37:28.937Z",
-      "done": true
     },
     {
       "text": "Tâche",
