@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 476,
-    "updated_at": "2026-04-12T22:33:59.549Z",
+    "version": 477,
+    "updated_at": "2026-04-12T22:36:07.136Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -84,8 +84,18 @@
       },
       {
         "id": "cat_1776032171060",
-        "label": "Apprentissage",
+        "label": "Culture",
         "emoji": "🧠",
+        "group": "personnel",
+        "name": "blue",
+        "color": "text-rose-400",
+        "bg": "bg-rose-500/10 border-rose-500/30",
+        "hex": "#fb7185"
+      },
+      {
+        "id": "cat_1776033265240",
+        "label": "Soin",
+        "emoji": "💅",
         "group": "personnel",
         "name": "blue",
         "color": "text-blue-400",
@@ -124,7 +134,8 @@
           "cardio",
           "lecture",
           "bien-etre",
-          "cat_1776032171060"
+          "cat_1776032171060",
+          "cat_1776033265240"
         ],
         "removable": true
       },
