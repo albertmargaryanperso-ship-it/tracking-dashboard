@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 319,
-    "updated_at": "2026-04-12T05:53:28.438Z",
+    "version": 320,
+    "updated_at": "2026-04-12T05:53:45.028Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -693,15 +693,16 @@
       "text": "Envoyer recap février Kader Youssef Nikola Adem",
       "category": "finance",
       "priority": "urgent",
-      "status": "open",
+      "status": "done",
       "delegated_to": null,
       "due": "2026-04-12",
-      "completed_at": null,
+      "completed_at": "2026-04-12",
       "duration_min": 30,
-      "completed_min": null,
+      "completed_min": 30,
       "id": 10031,
       "created": "2026-04-12",
-      "updated_at": "2026-04-12T00:15:01.160Z"
+      "updated_at": "2026-04-12T05:53:44.672Z",
+      "done": true
     },
     {
       "text": "Virement Kader",
