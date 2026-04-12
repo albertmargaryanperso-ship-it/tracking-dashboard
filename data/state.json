@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 384,
-    "updated_at": "2026-04-12T17:57:39.183Z",
+    "updated_at": "2026-04-12T17:57:41.699Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -51,18 +51,18 @@
         "removable": true
       },
       {
-        "id": "settings",
-        "label": "Paramètres",
-        "emoji": "⚙️",
-        "type": "settings",
-        "removable": false
-      },
-      {
         "id": "historique",
         "label": "Historique",
         "emoji": "📜",
         "type": "historique",
         "removable": true
+      },
+      {
+        "id": "settings",
+        "label": "Paramètres",
+        "emoji": "⚙️",
+        "type": "settings",
+        "removable": false
       }
     ]
   },
