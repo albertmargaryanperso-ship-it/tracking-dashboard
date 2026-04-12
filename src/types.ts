@@ -20,6 +20,12 @@ export interface CategoryConfig {
   group: CategoryGroup
 }
 
+export interface Subtask {
+  id: string
+  text: string
+  done: boolean
+}
+
 // ─── Todos ───────────────────────────────────────────────────────────────────
 export interface Todo {
   id: number
@@ -36,6 +42,7 @@ export interface Todo {
   completed_min?: number | null  // temps effectif à la complétion (minutes)
   updated_at?: string            // ISO datetime — for conflict resolution
   orderIndex?: number            // Index au sein de la colonne Kanban
+  subtasks?: Subtask[]           // Sous-tâches éventuelles
 }
 
 // ─── Archive mensuelle ──────────────────────────────────────────────────────

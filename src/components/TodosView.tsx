@@ -3,6 +3,7 @@ import { Plus, Check, Trash2, Clock, ChevronDown, ChevronRight, CalendarDays, Ho
 import type { AppState, Stats, Todo, TodoCategory, TodoPriority, TodoStatus, CategoryConfig } from '@/types'
 import { cn, formatMinutes, todayISO, isoToFr, getActiveCategories } from '@/lib/utils'
 import { useActiveTimer } from '@/hooks/useActiveTimer'
+import { SubtaskSheet } from './SubtaskSheet'
 
 interface TodosViewProps {
   state: AppState
@@ -42,6 +43,7 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
   const [dragId, setDragId] = useState<number | null>(null)
   const [dragOverCol, setDragOverCol] = useState<ColumnId | null>(null)
   const [dragOverId, setDragOverId] = useState<number | null>(null)
+  const [subtasksTodoId, setSubtasksTodoId] = useState<number | null>(null)
   
   const { CATEGORY_CONFIG, CATEGORY_LIST, TRAVAIL_CATEGORIES } = getActiveCategories(state.meta.custom_categories)
   const availableCategories = categoryFilter ?? CATEGORY_LIST
@@ -186,7 +188,7 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
                       }
                       setDragId(null); setDragOverId(null); setDragOverCol(null)
                     }}
-                    onToggle={onToggle} onDelete={onDelete} />
+                    onToggle={onToggle} onDelete={onDelete} onEditSubtasks={() => setSubtasksTodoId(t.id)} />
                 ))}
               </div>
             </div>
@@ -208,24 +210,32 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-1.5">
             {done.length === 0 ? (
               <div className="col-span-full text-center text-[10px] text-zinc-600 italic py-4">Rien de terminé pour le moment.</div>
-            ) : done.map(t => <TodoCard key={t.id} todo={t} dragging={false} isActive={false} elapsedMinutes={0} config={CATEGORY_CONFIG} onStartTimer={() => {}} onStopTimer={() => {}} onDragStart={() => {}} onDragEnd={() => {}} onToggle={onToggle} onDelete={onDelete} />)}
+            ) : done.map(t => <TodoCard key={t.id} todo={t} dragging={false} isActive={false} elapsedMinutes={0} config={CATEGORY_CONFIG} onStartTimer={() => {}} onStopTimer={() => {}} onDragStart={() => {}} onDragEnd={() => {}} onToggle={onToggle} onDelete={onDelete} onEditSubtasks={() => setSubtasksTodoId(t.id)} />)}
           </div>
         )}
       </div>
+      
+      <SubtaskSheet 
+        todo={subtasksTodoId ? state.todos.find(t => t.id === subtasksTodoId) ?? null : null} 
+        onClose={() => setSubtasksTodoId(null)} 
+        onUpdate={onUpdate} 
+      />
     </div>
   )
 }
 
 // ─── Card ──────────────────────────────────────────────────────────────────
-const TodoCard = ({ todo, dragging, isDragOver, isActive, elapsedMinutes, config, onStartTimer, onStopTimer, onDragStart, onDragEnd, onDragOver, onDrop, onToggle, onDelete }: {
+const TodoCard = ({ todo, dragging, isDragOver, isActive, elapsedMinutes, config, onStartTimer, onStopTimer, onDragStart, onDragEnd, onDragOver, onDrop, onToggle, onDelete, onEditSubtasks }: {
   todo: Todo; dragging: boolean; isDragOver?: boolean; isActive: boolean; elapsedMinutes: number; config: Record<string, CategoryConfig>;
   onStartTimer: () => void; onStopTimer: () => void;
   onDragStart: () => void; onDragEnd: () => void;
   onDragOver?: React.DragEventHandler; onDrop?: React.DragEventHandler;
-  onToggle: (id: number, completed_min?: number | null) => void; onDelete: (id: number) => void
+  onToggle: (id: number, completed_min?: number | null) => void; onDelete: (id: number) => void; onEditSubtasks: () => void
 }) => {
   const cat = config[todo.category] ?? config.admin
   const isDone = todo.status === 'done'
+  const subtasks = todo.subtasks ?? []
+  const subtasksDoneCount = subtasks.filter(s => s.done).length
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -264,6 +274,13 @@ const TodoCard = ({ todo, dragging, isDragOver, isActive, elapsedMinutes, config
                 <CalendarDays size={8} /> {isoToFr(todo.due)}{todo.due <= todayISO() ? ' !' : ''}
               </span>
             )}
+            
+            <button onClick={(e) => { e.stopPropagation(); onEditSubtasks(); }} 
+              className={cn('flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded transition-all', subtasks.length > 0 ? (subtasksDoneCount === subtasks.length ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20') : 'text-zinc-500 bg-zinc-800/50 hover:bg-zinc-800 border border-transparent hover:border-zinc-700')}>
+              <Check size={8} className={subtasks.length > 0 && subtasksDoneCount === subtasks.length ? 'text-emerald-400' : ''} /> 
+              {subtasks.length > 0 ? `${subtasksDoneCount}/${subtasks.length}` : 'Sous-tâches'}
+            </button>
+
             {todo.duration_min ? <span className="flex items-center gap-0.5 text-[9px] text-cyan-400"><Clock size={8} /> {formatMinutes(todo.duration_min)}</span> : null}
             {isDone && todo.completed_min ? <span className="text-[9px] text-emerald-400">⏱ {formatMinutes(todo.completed_min)}</span> : null}
             {isActive && !isDone && (
