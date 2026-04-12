@@ -77,124 +77,94 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
         </div>
       </div>
 
-      {/* % breakdown — week & month */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <PercentCard label="Semaine" travail={t.travail_week_min} personnel={t.personnel_week_min} />
-        <PercentCard label="Mois" travail={t.travail_month_min} personnel={t.personnel_month_min} />
-      </div>
-
-      {/* Categories */}
+      {/* Categories with % */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-4">Travail — catégories</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {TRAVAIL_CATEGORIES.map(cat => {
-              const cfg = CATEGORY_CONFIG[cat]; const b = t.by_category[cat] || { minutes: 0 }
-              if (!cfg) return null
-              return (
-                <div key={cat} className={cn('px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-2',
-                  b.minutes > 0 ? 'bg-zinc-900/70' : 'bg-zinc-900/30 text-zinc-500')}
-                  style={{ borderColor: b.minutes > 0 ? cfg.hex + '60' : '#27272a' }}>
-                  <span className="flex items-center gap-1.5 truncate"><span>{cfg.emoji}</span><span className="truncate">{cfg.label}</span></span>
-                  <span className="text-xs font-mono font-bold shrink-0" style={{ color: b.minutes > 0 ? cfg.hex : undefined }}>
-                    {formatMinutes(b.minutes) || '—'}
-                  </span>
-                </div>
-              )
-            })}
+        {[
+          { cats: TRAVAIL_CATEGORIES, label: 'Travail — catégories', totalMin: t.by_group.travail.minutes, borderColor: 'border-zinc-800' },
+          { cats: PERSONNEL_CATEGORIES, label: 'Personnel — catégories', totalMin: t.by_group.personnel.minutes, borderColor: 'border-zinc-800' },
+        ].map(group => (
+          <div key={group.label} className={cn('rounded-2xl border bg-zinc-900/50 p-5', group.borderColor)}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">{group.label}</h3>
+              <span className="text-[10px] text-zinc-500 font-mono">{formatMinutes(group.totalMin) || '0'} total</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {group.cats.map(cat => {
+                const cfg = CATEGORY_CONFIG[cat]; const b = t.by_category[cat] || { minutes: 0 }
+                if (!cfg) return null
+                const pct = group.totalMin > 0 ? Math.round((b.minutes / group.totalMin) * 100) : 0
+                return (
+                  <div key={cat} className={cn('rounded-xl border text-xs font-medium overflow-hidden',
+                    b.minutes > 0 ? 'bg-zinc-900/70' : 'bg-zinc-900/30 text-zinc-500')}
+                    style={{ borderColor: b.minutes > 0 ? cfg.hex + '60' : '#27272a' }}>
+                    <div className="px-3 py-2.5 flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-1.5 truncate"><span>{cfg.emoji}</span><span className="truncate">{cfg.label}</span></span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {pct > 0 && <span className="text-[9px] font-mono text-zinc-400">{pct}%</span>}
+                        <span className="text-xs font-mono font-bold" style={{ color: b.minutes > 0 ? cfg.hex : undefined }}>
+                          {formatMinutes(b.minutes) || '—'}
+                        </span>
+                      </div>
+                    </div>
+                    {b.minutes > 0 && (
+                      <div className="h-1 bg-zinc-800">
+                        <div className="h-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: cfg.hex }} />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           </div>
-        </div>
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-4">Personnel — catégories</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {PERSONNEL_CATEGORIES.map(cat => {
-              const cfg = CATEGORY_CONFIG[cat]; const b = t.by_category[cat] || { minutes: 0 }
-              if (!cfg) return null
-              return (
-                <div key={cat} className={cn('px-3 py-2.5 rounded-xl border text-xs font-medium flex items-center justify-between gap-2',
-                  b.minutes > 0 ? 'bg-zinc-900/70' : 'bg-zinc-900/30 text-zinc-500')}
-                  style={{ borderColor: b.minutes > 0 ? cfg.hex + '60' : '#27272a' }}>
-                  <span className="flex items-center gap-1.5 truncate"><span>{cfg.emoji}</span><span className="truncate">{cfg.label}</span></span>
-                  <span className="text-xs font-mono font-bold shrink-0" style={{ color: b.minutes > 0 ? cfg.hex : undefined }}>
-                    {formatMinutes(b.minutes) || '—'}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Streak flame component ────────────────────────────────────────────────
-const StreakFlame = ({ streak, label, color }: { streak: number; label: string; color: 'violet' | 'cyan' }) => {
-  // Intensity: 0=dead, 1-2=low, 3-6=medium, 7-13=high, 14+=blazing
-  const intensity = streak === 0 ? 0 : streak <= 2 ? 1 : streak <= 6 ? 2 : streak <= 13 ? 3 : 4
-  const flames = intensity === 0 ? 1 : intensity
-  const speed = [0, 2.5, 1.8, 1.2, 0.7][intensity]
-  const scale = [0.7, 0.85, 1, 1.15, 1.3][intensity]
-  const glow = [0, 0, 8, 15, 25][intensity]
-
-  const flameColor = color === 'violet'
-    ? { from: '#8b5cf6', to: '#c084fc', glow: 'rgba(139,92,246,' }
-    : { from: '#06b6d4', to: '#67e8f9', glow: 'rgba(6,182,212,' }
-
-  return (
-    <div className={cn('flex items-center gap-2 px-4 py-3 rounded-2xl border transition-all',
-      color === 'violet'
-        ? 'bg-gradient-to-br from-violet-500/10 to-violet-500/5 border-violet-500/20'
-        : 'bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 border-cyan-500/20')}
-      style={{ boxShadow: glow > 0 ? `0 0 ${glow}px ${flameColor.glow}0.3)` : undefined }}>
-      <div className="relative flex items-end justify-center" style={{ width: 28, height: 28, transform: `scale(${scale})` }}>
-        {Array.from({ length: flames }).map((_, i) => (
-          <div key={i} className="absolute bottom-0"
-            style={{
-              width: 14 - i * 2,
-              height: 20 - i * 3,
-              left: '50%',
-              transform: `translateX(-50%) translateX(${(i - Math.floor(flames / 2)) * 4}px)`,
-              background: `linear-gradient(to top, ${flameColor.from}, ${flameColor.to})`,
-              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
-              animation: `flicker ${speed}s ease-in-out infinite`,
-              animationDelay: `${i * 0.15}s`,
-              opacity: 1 - i * 0.15,
-            }} />
         ))}
       </div>
-      <div>
-        <p className={cn('text-2xl font-extrabold', color === 'violet' ? 'text-violet-300' : 'text-cyan-300')}>{streak}</p>
-        <p className={cn('text-[9px] uppercase tracking-wider font-semibold', color === 'violet' ? 'text-violet-400/80' : 'text-cyan-400/80')}>
-          {streak === 0 ? 'pas de streak' : 'streak'}
-        </p>
-      </div>
     </div>
   )
 }
 
-// ─── Percent breakdown card ────────────────────────────────────────────────
-const PercentCard = ({ label, travail, personnel }: { label: string; travail: number; personnel: number }) => {
-  const total = travail + personnel
-  const pctT = total > 0 ? Math.round((travail / total) * 100) : 0
-  const pctP = total > 0 ? 100 - pctT : 0
+// ─── Streak flame component (SVG flame) ────────────────────────────────────
+const StreakFlame = ({ streak, label, color }: { streak: number; label: string; color: 'violet' | 'cyan' }) => {
+  const intensity = streak === 0 ? 0 : streak <= 2 ? 1 : streak <= 6 ? 2 : streak <= 13 ? 3 : 4
+  const speed = [0, 3, 2, 1.3, 0.6][intensity]
+  const scale = [0.8, 0.9, 1, 1.15, 1.35][intensity]
+  const glow = [0, 0, 10, 20, 35][intensity]
+
+  const c = color === 'violet'
+    ? { main: '#8b5cf6', tip: '#c084fc', inner: '#ddd6fe', glow: 'rgba(139,92,246,', grad: 'from-violet-500/10 to-violet-500/5', border: 'border-violet-500/20', text: 'text-violet-300', sub: 'text-violet-400/80' }
+    : { main: '#06b6d4', tip: '#67e8f9', inner: '#cffafe', glow: 'rgba(6,182,212,', grad: 'from-cyan-500/10 to-cyan-500/5', border: 'border-cyan-500/20', text: 'text-cyan-300', sub: 'text-cyan-400/80' }
+
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">{label}</p>
-        <p className="text-xs font-mono text-zinc-300">{formatMinutes(total) || '0'}</p>
-      </div>
-      <div className="h-3 rounded-full bg-zinc-800 overflow-hidden flex">
-        {total > 0 && (
-          <>
-            <div className="h-full bg-violet-500 transition-all duration-500" style={{ width: `${pctT}%` }} />
-            <div className="h-full bg-cyan-500 transition-all duration-500" style={{ width: `${pctP}%` }} />
-          </>
+    <div className={cn('flex items-center gap-2.5 px-4 py-3 rounded-2xl border transition-all bg-gradient-to-br', c.grad, c.border)}
+      style={{ boxShadow: glow > 0 ? `0 0 ${glow}px ${c.glow}0.35)` : undefined }}>
+      <svg width={28} height={32} viewBox="0 0 24 32" style={{ transform: `scale(${scale})`, filter: glow > 10 ? `drop-shadow(0 0 ${glow / 3}px ${c.main})` : undefined }}>
+        <defs>
+          <linearGradient id={`fg-${color}`} x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stopColor={c.main} />
+            <stop offset="60%" stopColor={c.tip} />
+            <stop offset="100%" stopColor={c.inner} />
+          </linearGradient>
+        </defs>
+        {/* Outer flame */}
+        <path d="M12 2C12 2 4 14 4 20C4 24.5 7.5 28 12 28C16.5 28 20 24.5 20 20C20 14 12 2 12 2Z"
+          fill={`url(#fg-${color})`} opacity={streak === 0 ? 0.25 : 0.9}
+          style={speed > 0 ? { animation: `flicker ${speed}s ease-in-out infinite` } : undefined} />
+        {/* Inner flame */}
+        {intensity >= 2 && (
+          <path d="M12 10C12 10 8 18 8 22C8 24.2 9.8 26 12 26C14.2 26 16 24.2 16 22C16 18 12 10 12 10Z"
+            fill={c.inner} opacity={0.5}
+            style={{ animation: `flicker ${speed * 0.8}s ease-in-out infinite`, animationDelay: '0.2s' }} />
         )}
-      </div>
-      <div className="flex justify-between mt-1.5">
-        <span className="text-[10px] text-violet-400 font-semibold">Travail {pctT}%</span>
-        <span className="text-[10px] text-cyan-400 font-semibold">Personnel {pctP}%</span>
+        {/* Core glow for high streaks */}
+        {intensity >= 3 && (
+          <ellipse cx="12" cy="23" rx="3" ry="2.5" fill="white" opacity={0.3}
+            style={{ animation: `flicker ${speed * 0.6}s ease-in-out infinite`, animationDelay: '0.1s' }} />
+        )}
+      </svg>
+      <div>
+        <p className={cn('text-2xl font-extrabold', c.text)}>{streak}</p>
+        <p className={cn('text-[9px] uppercase tracking-wider font-semibold', c.sub)}>
+          {streak === 0 ? 'pas de streak' : 'streak'}
+        </p>
       </div>
     </div>
   )

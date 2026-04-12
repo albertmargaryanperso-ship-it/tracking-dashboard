@@ -229,14 +229,16 @@ const MonthCard = ({ entry, prev, isOpen, onToggle, customCategories }: {
                 const min = data?.minutes ?? 0
                 const count = data?.count ?? 0
                 const maxMin = Math.max(1, ...CATEGORY_LIST.map(c => s.by_category?.[c]?.minutes ?? 0))
-                const pct = (min / maxMin) * 100
+                const barPct = (min / maxMin) * 100
+                const totalPct = s.total_minutes > 0 ? Math.round((min / s.total_minutes) * 100) : 0
                 return (
                   <div key={cat} className="flex items-center gap-2">
                     <span className="text-sm w-5 text-center">{cfg.emoji}</span>
                     <span className="text-[10px] text-zinc-400 w-24 truncate">{cfg.label}</span>
                     <div className="flex-1 h-2 rounded-full bg-zinc-800 overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: cfg.hex }} />
+                      <div className="h-full rounded-full transition-all" style={{ width: `${barPct}%`, backgroundColor: cfg.hex }} />
                     </div>
+                    <span className="text-[9px] font-mono text-zinc-500 w-8 text-right">{totalPct > 0 ? `${totalPct}%` : ''}</span>
                     <span className="text-[10px] font-mono text-zinc-400 w-12 text-right">{formatMinutes(min) || '—'}</span>
                     <span className="text-[9px] text-zinc-600 w-8 text-right">{count}x</span>
                   </div>
