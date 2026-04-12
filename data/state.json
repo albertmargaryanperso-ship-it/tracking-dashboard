@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 312,
-    "updated_at": "2026-04-12T00:19:06.443Z",
+    "version": 313,
+    "updated_at": "2026-04-12T00:21:59.131Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -786,8 +786,22 @@
       "id": 10038,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:19:06.086Z"
+    },
+    {
+      "text": "Voir vidéo antigravity et ce qu’on peut faire avec",
+      "category": "lecture",
+      "priority": "normal",
+      "status": "waiting",
+      "delegated_to": null,
+      "due": "2026-04-15",
+      "completed_at": null,
+      "duration_min": 60,
+      "completed_min": null,
+      "id": 10039,
+      "created": "2026-04-12",
+      "updated_at": "2026-04-12T00:21:58.775Z"
     }
   ],
-  "todos_next_id": 10039,
+  "todos_next_id": 10040,
   "archive": []
 }
