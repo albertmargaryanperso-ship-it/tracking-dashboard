@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 483,
-    "updated_at": "2026-04-12T23:14:37.992Z",
+    "updated_at": "2026-04-12T23:14:39.441Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -593,28 +593,6 @@
       "id": 10006,
       "created": "2026-04-10",
       "updated_at": "2026-04-10"
-    },
-    {
-      "text": "jojio",
-      "category": "bien-etre",
-      "priority": "urgent",
-      "status": "done",
-      "delegated_to": null,
-      "due": "2026-05-09",
-      "completed_at": "2026-04-12",
-      "duration_min": 30,
-      "completed_min": 1,
-      "id": 10054,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T16:10:40.254Z",
-      "subtasks": [
-        {
-          "id": "st_1776010016418_89hjm",
-          "text": "kojih",
-          "done": false
-        }
-      ],
-      "done": true
     },
     {
       "text": "Acheter chaussures blanches style airmax",
