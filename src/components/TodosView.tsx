@@ -129,7 +129,7 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
       </div>
 
       {/* Navigation buttons — sticky on scroll */}
-      <div className="sticky top-[env(safe-area-inset-top,0px)] md:top-[60px] z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-zinc-950/95 backdrop-blur-md" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 40px)' }}>
+      <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-zinc-950/95 backdrop-blur-md">
         <div className="grid grid-cols-4 gap-1.5">
           <button onClick={() => document.getElementById('kanban-board')?.scrollIntoView({ behavior: 'smooth' })}
             className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-2 sm:p-2.5 text-center hover:bg-emerald-500/10 transition-all">
