@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 478,
-    "updated_at": "2026-04-12T22:37:11.484Z",
+    "updated_at": "2026-04-12T22:37:33.924Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -605,9 +605,23 @@
       "id": 10057,
       "created": "2026-04-13",
       "updated_at": "2026-04-12T22:37:11.129Z"
+    },
+    {
+      "text": "Acheter chaussures blanches style Airmax",
+      "category": "cat_1776033265240",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "completed_at": null,
+      "duration_min": null,
+      "completed_min": null,
+      "id": 10058,
+      "created": "2026-04-13",
+      "updated_at": "2026-04-12T22:37:33.569Z"
     }
   ],
-  "todos_next_id": 10058,
+  "todos_next_id": 10059,
   "archive": [
     {
       "month": "2026-03",
