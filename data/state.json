@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 306,
-    "updated_at": "2026-04-12T00:12:35.397Z",
+    "version": 307,
+    "updated_at": "2026-04-12T00:13:21.757Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -660,8 +660,22 @@
       "id": 10028,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:12:35.042Z"
+    },
+    {
+      "text": "Facture + calcul + appel Amazigh",
+      "category": "finance",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": "2026-04-13",
+      "completed_at": null,
+      "duration_min": 60,
+      "completed_min": null,
+      "id": 10029,
+      "created": "2026-04-12",
+      "updated_at": "2026-04-12T00:13:21.400Z"
     }
   ],
-  "todos_next_id": 10029,
+  "todos_next_id": 10030,
   "archive": []
 }
