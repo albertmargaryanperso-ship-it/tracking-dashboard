@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 429,
-    "updated_at": "2026-04-12T20:28:56.672Z",
+    "version": 427,
+    "updated_at": "2026-04-12T20:28:59.552Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -560,32 +560,6 @@
       "updated_at": "2026-04-12T15:26:58.323Z"
     },
     {
-      "text": "bjhjkb",
-      "category": "sport",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-19",
-      "completed_at": null,
-      "duration_min": 30,
-      "completed_min": null,
-      "id": 10053,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T16:05:22.517Z",
-      "subtasks": [
-        {
-          "id": "st_1776009916600_lo4eo",
-          "text": "jhhoi",
-          "done": true
-        },
-        {
-          "id": "st_1776009918916_mw3i4",
-          "text": "iohhoioi",
-          "done": false
-        }
-      ]
-    },
-    {
       "id": 2,
       "text": "Trier emails albertmargaryan.perso",
       "priority": "normal",
@@ -641,28 +615,6 @@
       "id": 10006,
       "created": "2026-04-10",
       "updated_at": "2026-04-10"
-    },
-    {
-      "text": "jojio",
-      "category": "bien-etre",
-      "priority": "urgent",
-      "status": "done",
-      "delegated_to": null,
-      "due": "2026-05-09",
-      "completed_at": "2026-04-12",
-      "duration_min": 30,
-      "completed_min": 1,
-      "id": 10054,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T16:10:40.254Z",
-      "subtasks": [
-        {
-          "id": "st_1776010016418_89hjm",
-          "text": "kojih",
-          "done": false
-        }
-      ],
-      "done": true
     }
   ],
   "todos_next_id": 10056,
