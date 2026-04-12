@@ -431,7 +431,7 @@ export const useAppState = () => {
     if (!initialPullDoneRef.current) return
     const currentMonth = todayISO().slice(0, 7)
     const staleMonths = new Set<string>()
-    for (const t of stateRef.current.todos) {
+    for (const t of state.todos) {
       if (t.status === 'done' && t.completed_at) {
         const m = t.completed_at.slice(0, 7)
         if (m < currentMonth) staleMonths.add(m)
@@ -442,7 +442,7 @@ export const useAppState = () => {
       dirtyRef.current = true
       setPendingFlag(true)
     }
-  }, [state.meta.version]) // re-check after each sync
+  }, [state.todos]) // re-check whenever todos change
 
   // ── Action creators ──────────────────────────────────────────────────────
   const userDispatch = useCallback((action: Action) => {
