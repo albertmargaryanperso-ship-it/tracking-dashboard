@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 330,
-    "updated_at": "2026-04-12T15:38:51.078Z",
+    "updated_at": "2026-04-12T15:39:01.236Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -885,21 +885,6 @@
       "id": 10046,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T15:37:28.937Z",
-      "done": true
-    },
-    {
-      "text": "Faire le tri",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "done",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": "2026-04-12",
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10047,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T15:38:50.707Z",
       "done": true
     }
   ],
