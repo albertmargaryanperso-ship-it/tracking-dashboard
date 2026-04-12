@@ -1,13 +1,163 @@
 {
   "meta": {
-    "version": 414,
-    "updated_at": "2026-04-12T18:49:35.607Z",
+    "version": 412,
+    "updated_at": "2026-04-12T18:49:37.332Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
       "Cardio",
       "Lecture",
       "Bien-être"
+    ],
+    "custom_tabs": [
+      {
+        "id": "dashboard",
+        "label": "Tableau de bord",
+        "emoji": "📊",
+        "type": "dashboard",
+        "removable": false
+      },
+      {
+        "id": "todo-travail",
+        "label": "Travail",
+        "emoji": "💼",
+        "type": "todos",
+        "categoryFilter": [
+          "pro",
+          "finance",
+          "admin",
+          "automatisation"
+        ],
+        "removable": true
+      },
+      {
+        "id": "todo-personnel",
+        "label": "Personnel",
+        "emoji": "🧘",
+        "type": "todos",
+        "categoryFilter": [
+          "sport",
+          "cardio",
+          "lecture",
+          "bien-etre"
+        ],
+        "removable": true
+      },
+      {
+        "id": "charts",
+        "label": "Analyse",
+        "emoji": "📈",
+        "type": "charts",
+        "removable": false
+      },
+      {
+        "id": "historique",
+        "label": "Historique",
+        "emoji": "📜",
+        "type": "historique",
+        "removable": false
+      },
+      {
+        "id": "tab_1776019755644",
+        "label": "All",
+        "emoji": "🔧",
+        "type": "todos",
+        "removable": true,
+        "categoryFilter": [
+          "__empty__"
+        ]
+      },
+      {
+        "id": "settings",
+        "label": "Paramètres",
+        "emoji": "⚙️",
+        "type": "settings",
+        "removable": false
+      }
+    ],
+    "custom_categories": [
+      {
+        "id": "pro",
+        "label": "Pro",
+        "emoji": "💼",
+        "color": "text-blue-400",
+        "bg": "bg-blue-500/10 border-blue-500/30",
+        "hex": "#60a5fa",
+        "group": "travail"
+      },
+      {
+        "id": "finance",
+        "label": "Finance",
+        "emoji": "💰",
+        "color": "text-emerald-400",
+        "bg": "bg-emerald-500/10 border-emerald-500/30",
+        "hex": "#34d399",
+        "group": "travail"
+      },
+      {
+        "id": "admin",
+        "label": "Admin",
+        "emoji": "📋",
+        "color": "text-amber-400",
+        "bg": "bg-amber-500/10 border-amber-500/30",
+        "hex": "#fbbf24",
+        "group": "travail"
+      },
+      {
+        "id": "automatisation",
+        "label": "Automatisation",
+        "emoji": "⚙️",
+        "color": "text-violet-400",
+        "bg": "bg-violet-500/10 border-violet-500/30",
+        "hex": "#a78bfa",
+        "group": "travail"
+      },
+      {
+        "id": "sport",
+        "label": "Sport",
+        "emoji": "🏋️",
+        "color": "text-pink-400",
+        "bg": "bg-pink-500/10 border-pink-500/30",
+        "hex": "#f472b6",
+        "group": "personnel"
+      },
+      {
+        "id": "cardio",
+        "label": "Cardio",
+        "emoji": "🏃",
+        "color": "text-orange-400",
+        "bg": "bg-orange-500/10 border-orange-500/30",
+        "hex": "#fb923c",
+        "group": "personnel"
+      },
+      {
+        "id": "lecture",
+        "label": "Lecture",
+        "emoji": "📚",
+        "color": "text-sky-400",
+        "bg": "bg-sky-500/10 border-sky-500/30",
+        "hex": "#38bdf8",
+        "group": "personnel"
+      },
+      {
+        "id": "bien-etre",
+        "label": "Bien-être",
+        "emoji": "🧘",
+        "color": "text-teal-400",
+        "bg": "bg-teal-500/10 border-teal-500/30",
+        "hex": "#2dd4bf",
+        "group": "personnel"
+      },
+      {
+        "id": "cat_1776019765861",
+        "label": "Nouvelle",
+        "emoji": "🌟",
+        "group": "tab_1776019755644",
+        "name": "blue",
+        "color": "text-pink-400",
+        "bg": "bg-pink-500/10 border-pink-500/30",
+        "hex": "#f472b6"
+      }
     ]
   },
   "todos": [
