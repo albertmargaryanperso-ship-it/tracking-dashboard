@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 478,
-    "updated_at": "2026-04-12T22:33:56.289Z",
+    "version": 476,
+    "updated_at": "2026-04-12T22:33:59.549Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -568,20 +568,6 @@
       "updated_at": "2026-04-12T05:15:10.126Z"
     },
     {
-      "text": "Acheter chaussures blanches style airmax",
-      "category": "bien-etre",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-12",
-      "completed_at": null,
-      "duration_min": 120,
-      "completed_min": null,
-      "id": 10043,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T05:52:59.325Z"
-    },
-    {
       "text": "Acheter chaussures blanches beige dans la liste d’achat",
       "category": "bien-etre",
       "priority": "normal",
@@ -608,38 +594,6 @@
       "id": 10035,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:16:48.522Z"
-    },
-    {
-      "text": "Tâche",
-      "category": "sport",
-      "priority": "urgent",
-      "status": "done",
-      "delegated_to": null,
-      "due": "2026-04-13",
-      "completed_at": "2026-04-12",
-      "duration_min": 30,
-      "completed_min": 1,
-      "id": 10048,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T15:44:32.951Z",
-      "subtasks": [
-        {
-          "id": "st_1776008643473_jby7c",
-          "text": "Test",
-          "done": true
-        },
-        {
-          "id": "st_1776008649251_u1klt",
-          "text": "Test",
-          "done": true
-        },
-        {
-          "id": "st_1776008650861_83cir",
-          "text": "Test",
-          "done": false
-        }
-      ],
-      "done": true
     }
   ],
   "todos_next_id": 10057,
