@@ -40,26 +40,26 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
               })}
             </div>
           </div>
-          {/* Todos ouverts + Streaks */}
-          <div className="flex gap-2 flex-wrap items-center">
-            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5">
-              <CheckCheck size={20} className="text-emerald-400" />
+        </div>
+        {/* Todos ouverts + Streaks — always visible grid */}
+        <div className={cn('grid gap-2 mt-4', todoTabs.length >= 3 ? 'grid-cols-4' : todoTabs.length === 2 ? 'grid-cols-3' : 'grid-cols-2')}>
+          <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl border border-emerald-500/20 bg-emerald-500/5">
+            <CheckCheck size={18} className="text-emerald-400" />
+            <div>
+              <p className="text-xl font-extrabold text-emerald-300">{stats.todos.open}</p>
+              <p className="text-[8px] text-emerald-400/80 uppercase tracking-wider font-semibold">{stats.todos.urgent} urgent{stats.todos.urgent > 1 ? 's' : ''}</p>
+            </div>
+          </div>
+          {todoTabs.slice(0, 3).map((tab, i) => (
+            <div key={tab.id} className="flex items-center gap-2 px-3 py-2.5 rounded-2xl border transition-all"
+              style={{ borderColor: TAB_COLORS[i % TAB_COLORS.length] + '30', backgroundColor: TAB_COLORS[i % TAB_COLORS.length] + '08' }}>
+              <span className="text-base">🔥</span>
               <div>
-                <p className="text-2xl font-extrabold text-emerald-300">{stats.todos.open}</p>
-                <p className="text-[9px] text-emerald-400/80 uppercase tracking-wider font-semibold">{stats.todos.urgent} urgent{stats.todos.urgent > 1 ? 's' : ''}</p>
+                <p className="text-xl font-extrabold" style={{ color: TAB_COLORS[i % TAB_COLORS.length] }}>{t.streaks_by_tab?.[tab.id] ?? 0}</p>
+                <p className="text-[8px] uppercase tracking-wider font-semibold" style={{ color: TAB_COLORS[i % TAB_COLORS.length] + '99' }}>streak</p>
               </div>
             </div>
-            {todoTabs.slice(0, 3).map((tab, i) => (
-              <div key={tab.id} className="flex items-center gap-2 px-3 py-2.5 rounded-2xl border transition-all"
-                style={{ borderColor: TAB_COLORS[i % TAB_COLORS.length] + '30', backgroundColor: TAB_COLORS[i % TAB_COLORS.length] + '08' }}>
-                <span className="text-lg">🔥</span>
-                <div>
-                  <p className="text-xl font-extrabold" style={{ color: TAB_COLORS[i % TAB_COLORS.length] }}>{t.streaks_by_tab?.[tab.id] ?? 0}</p>
-                  <p className="text-[8px] uppercase tracking-wider font-semibold" style={{ color: TAB_COLORS[i % TAB_COLORS.length] + '99' }}>streak</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          ))}
         </div>
       </div>
 
