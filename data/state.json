@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 335,
-    "updated_at": "2026-04-12T15:45:36.781Z",
+    "updated_at": "2026-04-12T15:45:38.061Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -931,7 +931,7 @@
       "completed_min": null,
       "id": 10049,
       "created": "2026-04-12",
-      "updated_at": "2026-04-12T15:45:36.426Z",
+      "updated_at": "2026-04-12T15:45:37.707Z",
       "subtasks": [
         {
           "id": "st_1776008733441_2sqm0",
@@ -941,7 +941,7 @@
         {
           "id": "st_1776008736426_xamcv",
           "text": "Hhv",
-          "done": false
+          "done": true
         }
       ]
     }
