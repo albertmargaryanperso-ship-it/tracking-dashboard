@@ -104,6 +104,8 @@ export interface AppState {
     habitudes?: string[]           // legacy
     custom_categories?: CategoryConfig[]
     custom_tabs?: TabConfig[]
+    app_name?: string
+    app_emoji?: string
   }
   // Active data
   todos: Todo[]

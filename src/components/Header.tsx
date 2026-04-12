@@ -11,9 +11,11 @@ interface HeaderProps {
   onUpdateTabs: (tabs: TabConfig[]) => void
   onDeleteTabWithTodos: (tab: TabConfig) => void
   customCategories?: import('@/types').CategoryConfig[]
+  appName?: string
+  appEmoji?: string
 }
 
-export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWithTodos, customCategories }: HeaderProps) => {
+export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWithTodos, customCategories, appName, appEmoji }: HeaderProps) => {
   const [reorderMode, setReorderMode] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
   const [editingTabId, setEditingTabId] = useState<string | null>(null)
@@ -119,8 +121,8 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
       {/* Desktop: brand + tabs */}
       <div className="hidden md:flex max-w-screen-2xl mx-auto px-6 py-3 items-center gap-3">
         <div className="flex items-center gap-3 shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center text-base">📊</div>
-          <h1 className="text-sm font-semibold tracking-tight">Tracking</h1>
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center text-base">{appEmoji ?? '📊'}</div>
+          <h1 className="text-sm font-semibold tracking-tight">{appName ?? 'Tracking'}</h1>
         </div>
         <nav className="flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-xl flex-1 justify-center">
           {tabs.map(t => renderTab(t, false))}

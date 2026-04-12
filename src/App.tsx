@@ -28,6 +28,15 @@ import type { SyncStatus } from '@/lib/github'
     if (!tabs.find(t => t.id === view)) setView(tabs[0]?.id ?? 'dashboard')
   }, [tabs, view])
 
+  // Sync page title + favicon with app meta
+  useEffect(() => {
+    const emoji = state.meta.app_emoji ?? '📊'
+    const name = state.meta.app_name ?? 'Tracking'
+    document.title = `${emoji} ${name}`
+    const link = document.querySelector("link[rel='icon']") as HTMLLinkElement | null
+    if (link) link.href = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${encodeURIComponent(emoji)}</text></svg>`
+  }, [state.meta.app_emoji, state.meta.app_name])
+
   useEffect(() => {
     if (!tokenPresent) { const t = setTimeout(() => setTokenOpen(true), 1200); return () => clearTimeout(t) }
   }, [tokenPresent])
@@ -85,7 +94,7 @@ import type { SyncStatus } from '@/lib/github'
       case 'historique':
         return <HistoryView state={state} onEditArchived={actions.editArchivedTodo} onDeleteArchived={actions.deleteArchivedTodo} />
       case 'settings':
-        return <SettingsView state={state} onUpdateCategories={actions.updateCategories} onUpdateTabs={actions.updateTabs} />
+        return <SettingsView state={state} onUpdateCategories={actions.updateCategories} onUpdateTabs={actions.updateTabs} onUpdateAppMeta={actions.updateAppMeta} />
       default:
         return null
     }
@@ -100,7 +109,8 @@ import type { SyncStatus } from '@/lib/github'
 
       <Header view={view} onViewChange={setView} tabs={tabs} onUpdateTabs={actions.updateTabs}
         onDeleteTabWithTodos={(tab) => { if (tab.categoryFilter?.length) actions.deleteTabTodos(tab.categoryFilter) }}
-        customCategories={state.meta.custom_categories} />
+        customCategories={state.meta.custom_categories}
+        appName={state.meta.app_name} appEmoji={state.meta.app_emoji} />
 
       {syncStatus === 'no-token' && (
         <div className="relative bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-[11px] text-amber-300 flex items-center justify-center gap-2">

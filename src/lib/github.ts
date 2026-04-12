@@ -56,6 +56,8 @@ export const mergeStates = (local: AppState, remote: AppState): AppState => {
     // Always keep the non-null side for these — prevents loss during merge
     custom_categories: local.meta.custom_categories ?? remote.meta.custom_categories ?? baseMeta.custom_categories,
     custom_tabs: local.meta.custom_tabs ?? remote.meta.custom_tabs ?? baseMeta.custom_tabs,
+    app_name: local.meta.app_name ?? remote.meta.app_name ?? baseMeta.app_name,
+    app_emoji: local.meta.app_emoji ?? remote.meta.app_emoji ?? baseMeta.app_emoji,
   }
 
   return {

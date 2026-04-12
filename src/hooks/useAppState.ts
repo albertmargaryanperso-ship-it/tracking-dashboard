@@ -135,6 +135,7 @@ type Action =
   | { type: 'SWAP_TODO_ORDER'; id1: number; id2: number }
   | { type: 'UPDATE_CATEGORIES'; categories: CategoryConfig[] }
   | { type: 'UPDATE_TABS'; tabs: TabConfig[] }
+  | { type: 'UPDATE_APP_META'; patch: { app_name?: string; app_emoji?: string } }
   | { type: 'DELETE_TAB_TODOS'; categoryFilter: string[] }
   // Archive
   | { type: 'ARCHIVE_MONTH'; month: string }
@@ -246,6 +247,12 @@ const reducer = (state: AppState, action: Action): AppState => {
       return {
         ...state,
         meta: { ...state.meta, updated_at: now, updated_by: 'web', custom_tabs: action.tabs },
+      }
+
+    case 'UPDATE_APP_META':
+      return {
+        ...state,
+        meta: { ...state.meta, updated_at: now, updated_by: 'web', ...action.patch },
       }
 
     case 'DELETE_TAB_TODOS': {
@@ -462,6 +469,7 @@ export const useAppState = () => {
     updateCategories: (categories: CategoryConfig[]) => userDispatch({ type: 'UPDATE_CATEGORIES', categories }),
     updateTabs: (tabs: TabConfig[]) => userDispatch({ type: 'UPDATE_TABS', tabs }),
     deleteTabTodos: (categoryFilter: string[]) => userDispatch({ type: 'DELETE_TAB_TODOS', categoryFilter }),
+    updateAppMeta: (patch: { app_name?: string; app_emoji?: string }) => userDispatch({ type: 'UPDATE_APP_META', patch }),
     archiveMonth: (month: string) => userDispatch({ type: 'ARCHIVE_MONTH', month }),
     editArchivedTodo: (month: string, todoId: number, patch: Partial<Todo>) => userDispatch({ type: 'EDIT_ARCHIVED_TODO', month, todoId, patch }),
     deleteArchivedTodo: (month: string, todoId: number) => userDispatch({ type: 'DELETE_ARCHIVED_TODO', month, todoId }),
