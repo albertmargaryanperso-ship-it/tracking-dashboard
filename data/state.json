@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 369,
-    "updated_at": "2026-04-12T17:39:48.327Z",
+    "updated_at": "2026-04-12T17:39:49.860Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -44,13 +44,6 @@
         "removable": true
       },
       {
-        "id": "charts",
-        "label": "Camemberts",
-        "emoji": "🥧",
-        "type": "charts",
-        "removable": true
-      },
-      {
         "id": "tab_1776015230654",
         "label": "finance",
         "emoji": "📈",
@@ -60,6 +53,13 @@
           "finance",
           "admin"
         ]
+      },
+      {
+        "id": "charts",
+        "label": "Camemberts",
+        "emoji": "🥧",
+        "type": "charts",
+        "removable": true
       },
       {
         "id": "historique",
