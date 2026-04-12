@@ -98,13 +98,14 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
                     b.minutes > 0 ? 'bg-zinc-900/70' : 'bg-zinc-900/30 text-zinc-500')}
                     style={{ borderColor: b.minutes > 0 ? cfg.hex + '60' : '#27272a' }}>
                     <div className="px-3 py-2.5 flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-1.5 truncate"><span>{cfg.emoji}</span><span className="truncate">{cfg.label}</span></span>
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        {pct > 0 && <span className="text-[9px] font-mono text-zinc-400">{pct}%</span>}
-                        <span className="text-xs font-mono font-bold" style={{ color: b.minutes > 0 ? cfg.hex : undefined }}>
-                          {formatMinutes(b.minutes) || '—'}
-                        </span>
-                      </div>
+                      <span className="flex items-center gap-1.5 truncate">
+                        <span>{cfg.emoji}</span>
+                        {pct > 0 && <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold border" style={{ color: cfg.hex, borderColor: cfg.hex + '40', backgroundColor: cfg.hex + '15' }}>{pct}%</span>}
+                        <span className="truncate">{cfg.label}</span>
+                      </span>
+                      <span className="text-xs font-mono font-bold shrink-0" style={{ color: b.minutes > 0 ? cfg.hex : undefined }}>
+                        {formatMinutes(b.minutes) || '—'}
+                      </span>
                     </div>
                     {b.minutes > 0 && (
                       <div className="h-1 bg-zinc-800">
