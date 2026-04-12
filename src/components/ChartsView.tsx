@@ -105,7 +105,7 @@ export const ChartsView = ({ state, stats }: ChartsViewProps) => {
       </div>
 
       {/* Per-tab pie charts */}
-      <div className={cn('grid gap-5', todoTabs.length <= 2 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1')}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {tabSlices.map(({ tab, slices, color }) => (
           <ChartCard key={tab.id} title={`${tab.emoji} ${tab.label} — par catégorie`}
             subtitle={tab.categoryFilter?.map(c => CATEGORY_CONFIG[c]?.label).filter(Boolean).join(' · ')}
