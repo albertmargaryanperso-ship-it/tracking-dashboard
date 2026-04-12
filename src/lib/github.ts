@@ -47,11 +47,15 @@ export const mergeStates = (local: AppState, remote: AppState): AppState => {
   const travail = (local.travail?.length ?? 0) >= (remote.travail?.length ?? 0) ? local.travail : remote.travail
   const routine = (local.routine?.length ?? 0) >= (remote.routine?.length ?? 0) ? local.routine : remote.routine
 
-  // Meta — take the newer side so custom_categories aren't lost
+  // Meta — take the newer side, but ALWAYS preserve non-null custom_tabs/custom_categories
   const localNewer = (local.meta.updated_at ?? '') >= (remote.meta.updated_at ?? '')
+  const baseMeta = localNewer ? local.meta : remote.meta
   const mergedMeta = {
-    ...(localNewer ? local.meta : remote.meta),
+    ...baseMeta,
     version: Math.max(local.meta.version ?? 0, remote.meta.version ?? 0),
+    // Always keep the non-null side for these — prevents loss during merge
+    custom_categories: local.meta.custom_categories ?? remote.meta.custom_categories ?? baseMeta.custom_categories,
+    custom_tabs: local.meta.custom_tabs ?? remote.meta.custom_tabs ?? baseMeta.custom_tabs,
   }
 
   return {
