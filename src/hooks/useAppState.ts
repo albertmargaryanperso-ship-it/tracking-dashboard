@@ -10,7 +10,7 @@ import {
   PENDING_FLAG_KEY,
   PUSH_DEBOUNCE_MS,
 } from '@/lib/config'
-import { todayISO, categoryGroup, getActiveCategories } from '@/lib/utils'
+import { todayISO, categoryGroup, getActiveCategories, DEFAULT_TABS } from '@/lib/utils'
 
 // ─── Pending flag ───────────────────────────────────────────────────────────
 const setPendingFlag = (on: boolean): void => {
@@ -46,11 +46,17 @@ const migrateState = (state: AppState): AppState => {
     completed_min: t.completed_min ?? null,
     updated_at: t.updated_at ?? t.completed_at ?? t.created ?? new Date().toISOString(),
   }))
+
+  // CRITICAL: ensure custom_tabs always exists (prevents erasure on push)
+  const tabs = (state.meta?.custom_tabs && state.meta.custom_tabs.length > 0)
+    ? state.meta.custom_tabs
+    : DEFAULT_TABS
+
   return {
     ...state,
+    meta: { ...state.meta, custom_tabs: tabs },
     todos: migratedTodos,
     archive: state.archive ?? [],
-    // Keep legacy arrays as-is
     sessions: state.sessions ?? [],
     travail: state.travail ?? [],
     routine: state.routine ?? [],

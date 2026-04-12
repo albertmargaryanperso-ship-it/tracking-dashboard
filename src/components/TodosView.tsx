@@ -128,8 +128,8 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
         <TodoStat label="Temps cumulé" value={formatMinutes(filteredStats.minutes) || '0min'} sub={`${filteredStats.done} terminés`} color="blue" icon={<Clock size={14} className="text-blue-400" />} />
       </div>
 
-      {/* Navigation buttons — sticky on scroll */}
-      <div className="sticky top-0 z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-zinc-950/95 backdrop-blur-md" style={{ position: '-webkit-sticky' as any }}>
+      {/* Navigation buttons — fixed bar below header */}
+      <div className="fixed left-0 right-0 z-10 px-4 sm:px-6 py-2 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/50" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 40px)' }}>
         <div className="grid grid-cols-4 gap-1.5">
           <button onClick={() => document.getElementById('kanban-board')?.scrollIntoView({ behavior: 'smooth' })}
             className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-2 sm:p-2.5 text-center hover:bg-emerald-500/10 transition-all">
@@ -149,6 +149,8 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
           ))}
         </div>
       </div>
+      {/* Spacer for fixed nav */}
+      <div className="h-16" />
 
       {/* Log done todo button */}
       <div className="flex justify-end">
