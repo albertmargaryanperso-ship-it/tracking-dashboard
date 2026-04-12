@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 388,
-    "updated_at": "2026-04-12T18:09:03.190Z",
+    "version": 389,
+    "updated_at": "2026-04-12T18:09:43.672Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -65,6 +65,16 @@
         "removable": true,
         "categoryFilter": [
           "automatisation"
+        ]
+      },
+      {
+        "id": "tab_1776017383318",
+        "label": "ezrez",
+        "emoji": "📈",
+        "type": "todos",
+        "removable": true,
+        "categoryFilter": [
+          "admin"
         ]
       },
       {
