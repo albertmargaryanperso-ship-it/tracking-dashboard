@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { AppState, CategoryConfig } from '@/types'
-import { getActiveCategories, cn } from '@/lib/utils'
+import { getActiveCategories, getTodoTabs, cn } from '@/lib/utils'
 
 interface SettingsViewProps {
   state: AppState
@@ -21,6 +21,7 @@ const PRESET_COLORS = [
 
 export const SettingsView = ({ state, onUpdateCategories }: SettingsViewProps) => {
   const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(state.meta.custom_categories)
+  const todoTabs = getTodoTabs(state.meta.custom_tabs)
   const [categories, setCategories] = useState<CategoryConfig[]>(() => CATEGORY_LIST.map(id => CATEGORY_CONFIG[id]))
 
   const save = () => {
@@ -30,7 +31,8 @@ export const SettingsView = ({ state, onUpdateCategories }: SettingsViewProps) =
 
   const addCategory = () => {
     const id = `cat_${Date.now()}`
-    setCategories([...categories, { id, label: 'Nouvelle', emoji: '🌟', group: 'travail', ...PRESET_COLORS[0] }])
+    const defaultGroup = todoTabs[0]?.id ?? 'travail'
+    setCategories([...categories, { id, label: 'Nouvelle', emoji: '🌟', group: defaultGroup as any, ...PRESET_COLORS[0] }])
   }
 
   const updateCat = (id: string, patch: Partial<CategoryConfig>) => {
@@ -42,12 +44,25 @@ export const SettingsView = ({ state, onUpdateCategories }: SettingsViewProps) =
     setCategories(categories.filter(c => c.id !== id))
   }
 
+  // Map tab IDs to legacy group names for backward compat
+  const tabToGroup = (tabId: string): string => {
+    const idx = todoTabs.findIndex(t => t.id === tabId)
+    if (idx === 0) return 'travail'
+    if (idx === 1) return 'personnel'
+    return tabId // for 3rd+ tabs, use tab ID as group
+  }
+  const groupToTab = (group: string): string => {
+    if (group === 'travail') return todoTabs[0]?.id ?? 'travail'
+    if (group === 'personnel') return todoTabs[1]?.id ?? 'personnel'
+    return group
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold">Paramètres de Catégories</h2>
-          <p className="text-[11px] text-zinc-500">Personnalisez vos catégories et leur couleur.</p>
+          <p className="text-[11px] text-zinc-500">Personnalisez vos catégories et assignez-les à un onglet.</p>
         </div>
         <button onClick={save} className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-sm font-semibold transition-all shadow-lg shadow-emerald-500/20">
           Enregistrer
@@ -55,17 +70,19 @@ export const SettingsView = ({ state, onUpdateCategories }: SettingsViewProps) =
       </div>
 
       <div className="space-y-3">
-        {categories.map((c, i) => (
+        {categories.map((c) => (
           <div key={c.id} className="flex flex-col sm:flex-row gap-3 p-3 rounded-2xl border border-zinc-800 bg-zinc-900/50">
             <div className="flex gap-2">
               <input value={c.emoji} onChange={e => updateCat(c.id, { emoji: e.target.value })} className="w-12 h-10 text-center bg-zinc-950 border border-zinc-800 rounded-lg text-lg" title="Emoji" />
               <input value={c.label} onChange={e => updateCat(c.id, { label: e.target.value })} className="flex-1 min-w-[120px] h-10 px-3 bg-zinc-950 border border-zinc-800 rounded-lg text-sm focus:outline-none focus:border-emerald-500" placeholder="Nom" />
             </div>
-            
+
             <div className="flex gap-2 items-center flex-1">
-              <select value={c.group} onChange={e => updateCat(c.id, { group: e.target.value as any })} className="h-10 px-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-300 focus:outline-none focus:border-emerald-500">
-                <option value="travail">Travail</option>
-                <option value="personnel">Personnel</option>
+              <select value={groupToTab(c.group)} onChange={e => updateCat(c.id, { group: tabToGroup(e.target.value) as any })}
+                className="h-10 px-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-300 focus:outline-none focus:border-emerald-500">
+                {todoTabs.map(tab => (
+                  <option key={tab.id} value={tab.id}>{tab.emoji} {tab.label}</option>
+                ))}
               </select>
 
               <div className="flex flex-wrap gap-1 px-2">
@@ -83,7 +100,7 @@ export const SettingsView = ({ state, onUpdateCategories }: SettingsViewProps) =
             </button>
           </div>
         ))}
-        
+
         <button onClick={addCategory} className="w-full py-4 rounded-2xl border border-dashed border-zinc-700 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 transition-all font-semibold text-sm">
           + Ajouter une catégorie
         </button>

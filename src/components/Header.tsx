@@ -50,7 +50,13 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
     if (view === id) onViewChange(updated[0]?.id ?? 'dashboard')
   }
 
+  const todoTabCount = tabs.filter(t => t.type === 'todos').length
+
   const addTab = (tab: TabConfig) => {
+    if (tab.type === 'todos' && todoTabCount >= 3) {
+      alert("Vous avez atteint la limite de 3 listes Todo pour l'ergonomie de l'application.")
+      return
+    }
     const settingsIdx = tabs.findIndex(t => t.type === 'settings')
     const updated = [...tabs]
     if (settingsIdx >= 0) updated.splice(settingsIdx, 0, tab)
@@ -120,10 +126,12 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
           {tabs.map(t => renderTab(t, false))}
           {reorderMode && (
             <>
-              <button onClick={() => setAddOpen(true)}
-                className="w-7 h-7 rounded-lg border border-dashed border-zinc-700 text-zinc-500 hover:text-emerald-400 hover:border-emerald-500/40 flex items-center justify-center transition-all">
-                <Plus size={14} />
-              </button>
+              {todoTabCount < 3 && (
+                <button onClick={() => setAddOpen(true)}
+                  className="w-7 h-7 rounded-lg border border-dashed border-zinc-700 text-zinc-500 hover:text-emerald-400 hover:border-emerald-500/40 flex items-center justify-center transition-all">
+                  <Plus size={14} />
+                </button>
+              )}
               <button onClick={() => setReorderMode(false)}
                 className="ml-1 px-2 py-1 rounded-lg bg-emerald-600 text-white text-[10px] font-bold flex items-center gap-1">
                 <Check size={10} /> OK
@@ -153,10 +161,12 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
         )}
         {reorderMode && (
           <>
-            <button onClick={() => setAddOpen(true)}
-              className="shrink-0 w-8 h-8 rounded-lg border border-dashed border-zinc-700 text-zinc-500 hover:text-emerald-400 flex items-center justify-center">
-              <Plus size={14} />
-            </button>
+            {todoTabCount < 3 && (
+              <button onClick={() => setAddOpen(true)}
+                className="shrink-0 w-8 h-8 rounded-lg border border-dashed border-zinc-700 text-zinc-500 hover:text-emerald-400 flex items-center justify-center">
+                <Plus size={14} />
+              </button>
+            )}
             <button onClick={() => setReorderMode(false)}
               className="shrink-0 px-2 py-1.5 rounded-lg bg-emerald-600 text-white text-[10px] font-bold">
               OK

@@ -40,13 +40,25 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
               })}
             </div>
           </div>
-          {/* Todos ouverts — in hero */}
-          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5">
-            <CheckCheck size={20} className="text-emerald-400" />
-            <div>
-              <p className="text-2xl font-extrabold text-emerald-300">{stats.todos.open}</p>
-              <p className="text-[9px] text-emerald-400/80 uppercase tracking-wider font-semibold">{stats.todos.urgent} urgent{stats.todos.urgent > 1 ? 's' : ''}</p>
+          {/* Todos ouverts + Streaks */}
+          <div className="flex gap-2 flex-wrap items-center">
+            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5">
+              <CheckCheck size={20} className="text-emerald-400" />
+              <div>
+                <p className="text-2xl font-extrabold text-emerald-300">{stats.todos.open}</p>
+                <p className="text-[9px] text-emerald-400/80 uppercase tracking-wider font-semibold">{stats.todos.urgent} urgent{stats.todos.urgent > 1 ? 's' : ''}</p>
+              </div>
             </div>
+            {todoTabs.slice(0, 3).map((tab, i) => (
+              <div key={tab.id} className="flex items-center gap-2 px-3 py-2.5 rounded-2xl border transition-all"
+                style={{ borderColor: TAB_COLORS[i % TAB_COLORS.length] + '30', backgroundColor: TAB_COLORS[i % TAB_COLORS.length] + '08' }}>
+                <span className="text-lg">🔥</span>
+                <div>
+                  <p className="text-xl font-extrabold" style={{ color: TAB_COLORS[i % TAB_COLORS.length] }}>{t.streaks_by_tab?.[tab.id] ?? 0}</p>
+                  <p className="text-[8px] uppercase tracking-wider font-semibold" style={{ color: TAB_COLORS[i % TAB_COLORS.length] + '99' }}>streak</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -57,18 +69,6 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
           const tabStats = t.by_tab[tab.id]
           return (
             <StatCard key={tab.id} label={`${tab.emoji} ${tab.label} — semaine`} value={formatMinutes(tabStats?.week ?? 0) || '0'} sub={`${formatMinutes(tabStats?.month ?? 0) || '0'} ce mois`} accent="vault" icon={<Clock size={14} />} />
-          )
-        })}
-      </div>
-
-      {/* Total historique + totaux par tab (replaces streaks) */}
-      <div className={cn('grid gap-3', `grid-cols-${Math.min(todoTabs.length + 1, 4)}`)}>
-        <StatCard label="Total historique" value={formatMinutes(t.total_minutes) || '0'} sub={`${(state.archive ?? []).length} mois archivés`} accent="neutral" icon={<Clock size={14} />} />
-        {todoTabs.slice(0, 3).map((tab, i) => {
-          const tabStats = t.by_tab[tab.id]
-          return (
-            <StatCard key={tab.id} label={`${tab.emoji} ${tab.label} total`} value={formatMinutes(tabStats?.total ?? 0) || '0'}
-              sub={`🔥 ${t.streaks_by_tab?.[tab.id] ?? 0}j streak`} accent="vault" icon={<Activity size={14} />} />
           )
         })}
       </div>

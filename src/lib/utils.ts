@@ -165,8 +165,8 @@ export const DEFAULT_TABS: TabConfig[] = [
   { id: 'dashboard', label: 'Tableau de bord', emoji: '📊', type: 'dashboard', removable: false },
   { id: 'todo-travail', label: 'Travail', emoji: '💼', type: 'todos', categoryFilter: DEFAULT_TRAVAIL_CATEGORIES, removable: true },
   { id: 'todo-personnel', label: 'Personnel', emoji: '🧘', type: 'todos', categoryFilter: DEFAULT_PERSONNEL_CATEGORIES, removable: true },
-  { id: 'charts', label: 'Analyse', emoji: '📈', type: 'charts', removable: true },
-  { id: 'historique', label: 'Historique', emoji: '📜', type: 'historique', removable: true },
+  { id: 'charts', label: 'Analyse', emoji: '📈', type: 'charts', removable: false },
+  { id: 'historique', label: 'Historique', emoji: '📜', type: 'historique', removable: false },
   { id: 'settings', label: 'Paramètres', emoji: '⚙️', type: 'settings', removable: false },
 ]
 
