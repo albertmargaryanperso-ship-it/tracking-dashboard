@@ -204,7 +204,7 @@ const AddTabModal = ({ onAdd, onClose, customCategories }: {
     if (!label.trim()) return
     onAdd({
       id: `tab_${Date.now()}`, label: label.trim(), emoji, type: 'todos', removable: true,
-      ...(selectedCats.length > 0 ? { categoryFilter: selectedCats } : {}),
+      categoryFilter: selectedCats.length > 0 ? selectedCats : ['__empty__'],
     })
   }
 
@@ -248,7 +248,7 @@ const AddTabModal = ({ onAdd, onClose, customCategories }: {
                 )
               })}
             </div>
-            {selectedCats.length === 0 && <p className="text-[9px] text-zinc-600 mt-1">Aucun filtre = toutes les catégories</p>}
+            {selectedCats.length === 0 && <p className="text-[9px] text-amber-500/70 mt-1">Sélectionnez au moins une catégorie (sinon l'onglet sera vide)</p>}
           </div>
 
           <button onClick={submit} disabled={!label.trim()}
