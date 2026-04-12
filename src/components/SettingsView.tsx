@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import type { AppState, CategoryConfig } from '@/types'
-import { getActiveCategories, getTodoTabs, cn } from '@/lib/utils'
+import type { AppState, CategoryConfig, TabConfig } from '@/types'
+import { getActiveCategories, getTodoTabs, getActiveTabs, cn } from '@/lib/utils'
 
 interface SettingsViewProps {
   state: AppState
   onUpdateCategories: (cats: CategoryConfig[]) => void
+  onUpdateTabs: (tabs: TabConfig[]) => void
 }
 
 const PRESET_COLORS = [
@@ -19,20 +20,56 @@ const PRESET_COLORS = [
   { name: 'rose', color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/30', hex: '#fb7185' },
 ]
 
-export const SettingsView = ({ state, onUpdateCategories }: SettingsViewProps) => {
+export const SettingsView = ({ state, onUpdateCategories, onUpdateTabs }: SettingsViewProps) => {
   const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(state.meta.custom_categories)
   const todoTabs = getTodoTabs(state.meta.custom_tabs)
+  const allTabs = getActiveTabs(state.meta.custom_tabs)
+
   const [categories, setCategories] = useState<CategoryConfig[]>(() => CATEGORY_LIST.map(id => CATEGORY_CONFIG[id]))
 
+  // Track which tab each category belongs to (derived from current tab categoryFilters)
+  const [catTabMap, setCatTabMap] = useState<Record<string, string>>(() => {
+    const map: Record<string, string> = {}
+    for (const cat of CATEGORY_LIST) {
+      // Find which tab contains this category
+      for (const tab of todoTabs) {
+        if (tab.categoryFilter?.includes(cat)) { map[cat] = tab.id; break }
+      }
+      // Fallback: legacy group field
+      if (!map[cat]) {
+        const cfg = CATEGORY_CONFIG[cat]
+        if (cfg?.group === 'travail' && todoTabs[0]) map[cat] = todoTabs[0].id
+        else if (cfg?.group === 'personnel' && todoTabs[1]) map[cat] = todoTabs[1].id
+        else if (todoTabs[0]) map[cat] = todoTabs[0].id
+      }
+    }
+    return map
+  })
+
+  const assignCatToTab = (catId: string, tabId: string) => {
+    setCatTabMap(prev => ({ ...prev, [catId]: tabId }))
+  }
+
   const save = () => {
+    // 1. Save categories
     onUpdateCategories(categories)
-    alert("Catégories sauvegardées !")
+
+    // 2. Rebuild tab categoryFilters from catTabMap
+    const updatedTabs = allTabs.map(tab => {
+      if (tab.type !== 'todos') return tab
+      const catsForTab = categories.filter(c => catTabMap[c.id] === tab.id).map(c => c.id)
+      return { ...tab, categoryFilter: catsForTab.length > 0 ? catsForTab : ['__empty__'] }
+    })
+    onUpdateTabs(updatedTabs)
+
+    alert("Catégories et onglets sauvegardés !")
   }
 
   const addCategory = () => {
     const id = `cat_${Date.now()}`
-    const defaultGroup = todoTabs[0]?.id ?? 'travail'
-    setCategories([...categories, { id, label: 'Nouvelle', emoji: '🌟', group: defaultGroup as any, ...PRESET_COLORS[0] }])
+    const defaultTabId = todoTabs[0]?.id ?? ''
+    setCategories([...categories, { id, label: 'Nouvelle', emoji: '🌟', group: 'travail', ...PRESET_COLORS[0] }])
+    setCatTabMap(prev => ({ ...prev, [id]: defaultTabId }))
   }
 
   const updateCat = (id: string, patch: Partial<CategoryConfig>) => {
@@ -42,19 +79,7 @@ export const SettingsView = ({ state, onUpdateCategories }: SettingsViewProps) =
   const deleteCat = (id: string) => {
     if (categories.length <= 1) return alert("Vous devez garder au moins une catégorie.")
     setCategories(categories.filter(c => c.id !== id))
-  }
-
-  // Map tab IDs to legacy group names for backward compat
-  const tabToGroup = (tabId: string): string => {
-    const idx = todoTabs.findIndex(t => t.id === tabId)
-    if (idx === 0) return 'travail'
-    if (idx === 1) return 'personnel'
-    return tabId // for 3rd+ tabs, use tab ID as group
-  }
-  const groupToTab = (group: string): string => {
-    if (group === 'travail') return todoTabs[0]?.id ?? 'travail'
-    if (group === 'personnel') return todoTabs[1]?.id ?? 'personnel'
-    return group
+    setCatTabMap(prev => { const next = { ...prev }; delete next[id]; return next })
   }
 
   return (
@@ -78,7 +103,7 @@ export const SettingsView = ({ state, onUpdateCategories }: SettingsViewProps) =
             </div>
 
             <div className="flex gap-2 items-center flex-1">
-              <select value={groupToTab(c.group)} onChange={e => updateCat(c.id, { group: tabToGroup(e.target.value) as any })}
+              <select value={catTabMap[c.id] ?? ''} onChange={e => assignCatToTab(c.id, e.target.value)}
                 className="h-10 px-2 bg-zinc-950 border border-zinc-800 rounded-lg text-xs text-zinc-300 focus:outline-none focus:border-emerald-500">
                 {todoTabs.map(tab => (
                   <option key={tab.id} value={tab.id}>{tab.emoji} {tab.label}</option>
