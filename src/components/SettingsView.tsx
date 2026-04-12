@@ -6,7 +6,6 @@ interface SettingsViewProps {
   state: AppState
   onUpdateCategories: (cats: CategoryConfig[]) => void
   onUpdateTabs: (tabs: TabConfig[]) => void
-  onUpdateAppMeta: (patch: { app_name?: string; app_emoji?: string }) => void
 }
 
 const PRESET_COLORS = [
@@ -21,11 +20,7 @@ const PRESET_COLORS = [
   { name: 'rose', color: 'text-rose-400', bg: 'bg-rose-500/10 border-rose-500/30', hex: '#fb7185' },
 ]
 
-const APP_EMOJIS = ['📊', '🎯', '🚀', '💼', '📋', '⚡', '🔥', '💎', '🏆', '📈', '🌟', '🎨', '🧠', '💰', '🛠️', '🎮']
-
-export const SettingsView = ({ state, onUpdateCategories, onUpdateTabs, onUpdateAppMeta }: SettingsViewProps) => {
-  const [appName, setAppName] = useState(state.meta.app_name ?? 'Tracking')
-  const [appEmoji, setAppEmoji] = useState(state.meta.app_emoji ?? '📊')
+export const SettingsView = ({ state, onUpdateCategories, onUpdateTabs }: SettingsViewProps) => {
   const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(state.meta.custom_categories)
   const todoTabs = getTodoTabs(state.meta.custom_tabs)
   const allTabs = getActiveTabs(state.meta.custom_tabs)
@@ -87,45 +82,8 @@ export const SettingsView = ({ state, onUpdateCategories, onUpdateTabs, onUpdate
     setCatTabMap(prev => { const next = { ...prev }; delete next[id]; return next })
   }
 
-  const saveAppMeta = () => {
-    onUpdateAppMeta({ app_name: appName.trim() || 'Tracking', app_emoji: appEmoji })
-    // Update page title + PWA manifest dynamically
-    document.title = `${appEmoji} ${appName.trim() || 'Tracking'}`
-    // Update favicon
-    const link = document.querySelector("link[rel='icon']") as HTMLLinkElement | null
-    if (link) link.href = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${appEmoji}</text></svg>`
-  }
-
   return (
     <div className="max-w-2xl mx-auto space-y-8">
-      {/* App identity */}
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-        <h2 className="text-lg font-bold mb-1">Identité de l'application</h2>
-        <p className="text-[11px] text-zinc-500 mb-4">Nom, icône et logo de l'écran d'accueil.</p>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Nom</label>
-            <input value={appName} onChange={e => setAppName(e.target.value)}
-              className="w-full mt-1 px-3 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-sm focus:outline-none focus:border-emerald-500" />
-          </div>
-          <div>
-            <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Icône</label>
-            <div className="flex flex-wrap gap-1.5 mt-1">
-              {APP_EMOJIS.map(e => (
-                <button key={e} onClick={() => setAppEmoji(e)}
-                  className={cn('w-10 h-10 rounded-xl text-lg flex items-center justify-center border transition-all',
-                    appEmoji === e ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/30' : 'border-zinc-800 hover:border-zinc-700')}>
-                  {e}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-        <button onClick={saveAppMeta} className="mt-4 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-sm font-semibold transition-all">
-          Appliquer
-        </button>
-        <p className="text-[9px] text-zinc-600 mt-2">Pour mettre à jour l'icône sur l'écran d'accueil iPhone : supprimer l'app → re-télécharger depuis Safari.</p>
-      </div>
 
       {/* Categories */}
       <div className="flex items-center justify-between">

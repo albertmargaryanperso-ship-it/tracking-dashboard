@@ -94,7 +94,7 @@ import type { SyncStatus } from '@/lib/github'
       case 'historique':
         return <HistoryView state={state} onEditArchived={actions.editArchivedTodo} onDeleteArchived={actions.deleteArchivedTodo} onDeleteMonth={actions.deleteArchiveMonth} />
       case 'settings':
-        return <SettingsView state={state} onUpdateCategories={actions.updateCategories} onUpdateTabs={actions.updateTabs} onUpdateAppMeta={actions.updateAppMeta} />
+        return <SettingsView state={state} onUpdateCategories={actions.updateCategories} onUpdateTabs={actions.updateTabs} />
       default:
         return null
     }
