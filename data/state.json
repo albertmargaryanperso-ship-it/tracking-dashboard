@@ -2,12 +2,70 @@
   "meta": {
     "version": 481,
     "updated_at": "2026-04-13T01:00:46",
-    "updated_by": "obsidian",
+    "updated_by": "web",
     "habitudes": [
       "Sport",
       "Cardio",
       "Lecture",
       "Bien-être"
+    ],
+    "custom_tabs": [
+      {
+        "id": "dashboard",
+        "label": "Tableau de bord",
+        "emoji": "📊",
+        "type": "dashboard",
+        "removable": false
+      },
+      {
+        "id": "todo-travail",
+        "label": "Travail",
+        "emoji": "💼",
+        "type": "todos",
+        "categoryFilter": [
+          "pro",
+          "finance",
+          "admin",
+          "automatisation"
+        ],
+        "removable": true
+      },
+      {
+        "id": "todo-personnel",
+        "label": "Personnel",
+        "emoji": "🧘",
+        "type": "todos",
+        "categoryFilter": [
+          "sport",
+          "cardio",
+          "lecture",
+          "bien-etre",
+          "cat_1776032171060",
+          "cat_1776033265240"
+        ],
+        "removable": true
+      },
+      {
+        "id": "charts",
+        "label": "Analyse",
+        "emoji": "📈",
+        "type": "charts",
+        "removable": false
+      },
+      {
+        "id": "historique",
+        "label": "Historique",
+        "emoji": "📜",
+        "type": "historique",
+        "removable": false
+      },
+      {
+        "id": "settings",
+        "label": "Paramètres",
+        "emoji": "⚙️",
+        "type": "settings",
+        "removable": false
+      }
     ]
   },
   "sessions": [
