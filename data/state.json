@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 439,
-    "updated_at": "2026-04-12T20:51:35.545Z",
+    "version": 440,
+    "updated_at": "2026-04-12T20:52:17.059Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -158,7 +158,9 @@
         "type": "settings",
         "removable": false
       }
-    ]
+    ],
+    "app_name": "To Do",
+    "app_emoji": "🛠️"
   },
   "todos": [
     {
