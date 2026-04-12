@@ -46,38 +46,48 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
             </div>
           </div>
         </div>
-        {/* Row 2: Streaks with animated flames */}
+        {/* Row 2: Streaks with big animated flames */}
         <div className={cn('grid gap-2 mt-3', isMobile ? 'grid-cols-2' : 'grid-cols-3')}>
           {todoTabs.slice(0, 3).map((tab, i) => {
             const streak = t.streaks_by_tab?.[tab.id] ?? 0
             const hex = TAB_COLORS[i % TAB_COLORS.length]
             const intensity = streak === 0 ? 0 : streak <= 2 ? 1 : streak <= 6 ? 2 : streak <= 13 ? 3 : 4
-            const speed = [0, 3, 2, 1.2, 0.6][intensity]
-            const glow = [0, 4, 10, 18, 30][intensity]
+            const speed = [0, 2.5, 1.5, 0.8, 0.4][intensity]
+            const glow = [0, 6, 14, 24, 40][intensity]
+            const scale = [0.8, 1, 1.1, 1.2, 1.35][intensity]
             return (
-              <div key={tab.id} className="flex items-center gap-2 px-3 py-2 rounded-xl border"
-                style={{ borderColor: hex + '30', backgroundColor: hex + '08', boxShadow: glow > 0 ? `0 0 ${glow}px ${hex}40` : undefined }}>
-                <svg width={24} height={28} viewBox="0 0 32 40" className="shrink-0"
-                  style={{ filter: glow > 8 ? `drop-shadow(0 0 ${glow / 3}px ${hex})` : undefined }}>
+              <div key={tab.id} className="flex items-center justify-center gap-1 px-2 py-3 rounded-xl border"
+                style={{ borderColor: hex + '30', backgroundColor: hex + '08', boxShadow: glow > 0 ? `0 0 ${glow}px ${hex}50` : undefined }}>
+                <svg width={36} height={42} viewBox="0 0 32 40" className="shrink-0"
+                  style={{ transform: `scale(${scale})`, filter: glow > 8 ? `drop-shadow(0 0 ${glow / 2}px ${hex})` : undefined }}>
                   <defs>
                     <linearGradient id={`fl-${tab.id}`} x1="0.5" y1="1" x2="0.5" y2="0">
                       <stop offset="0%" stopColor={hex} />
-                      <stop offset="60%" stopColor={hex + 'cc'} />
-                      <stop offset="100%" stopColor="#fff" stopOpacity="0.6" />
+                      <stop offset="40%" stopColor={hex} />
+                      <stop offset="75%" stopColor="#fbbf24" />
+                      <stop offset="100%" stopColor="#fff" />
                     </linearGradient>
                   </defs>
-                  <path d="M16 3C16 3 6 16 6 25C6 30 10.5 34 16 34C21.5 34 26 30 26 25C26 16 16 3 16 3Z"
-                    fill={`url(#fl-${tab.id})`} opacity={streak === 0 ? 0.15 : 0.9}
-                    style={speed > 0 ? { animation: `flameWave ${speed}s ease-in-out infinite`, transformOrigin: '16px 34px' } : undefined} />
+                  {/* Main flame */}
+                  <path d="M16 2C16 2 4 15 4 24C4 30 9 36 16 36C23 36 28 30 28 24C28 15 16 2 16 2Z"
+                    fill={`url(#fl-${tab.id})`} opacity={streak === 0 ? 0.12 : 0.95}
+                    style={speed > 0 ? { animation: `flameWave ${speed}s ease-in-out infinite`, transformOrigin: '16px 36px' } : undefined} />
+                  {/* Inner core */}
+                  {intensity >= 1 && (
+                    <path d="M16 14C16 14 10 23 10 28C10 31.3 12.7 34 16 34C19.3 34 22 31.3 22 28C22 23 16 14 16 14Z"
+                      fill="#fef08a" opacity={[0, 0.3, 0.5, 0.65, 0.8][intensity]}
+                      style={speed > 0 ? { animation: `flameWave ${speed * 0.6}s ease-in-out infinite`, animationDelay: '0.1s', transformOrigin: '16px 34px' } : undefined} />
+                  )}
+                  {/* White hot center */}
                   {intensity >= 2 && (
-                    <path d="M16 16C16 16 11 24 11 28C11 30.8 13.2 33 16 33C18.8 33 21 30.8 21 28C21 24 16 16 16 16Z"
-                      fill="white" opacity={[0, 0, 0.25, 0.4, 0.55][intensity]}
-                      style={{ animation: `flameWave ${speed * 0.7}s ease-in-out infinite`, animationDelay: '0.15s', transformOrigin: '16px 33px' }} />
+                    <ellipse cx="16" cy="30" rx={[0, 0, 3, 4, 5][intensity]} ry={[0, 0, 2, 3, 3.5][intensity]}
+                      fill="white" opacity={[0, 0, 0.4, 0.6, 0.8][intensity]}
+                      style={{ animation: `flameWave ${speed * 0.4}s ease-in-out infinite`, animationDelay: '0.05s', transformOrigin: '16px 30px' }} />
                   )}
                 </svg>
-                <div>
-                  <p className="text-lg font-extrabold" style={{ color: hex }}>{streak}</p>
-                  <p className="text-[7px] uppercase tracking-wider font-semibold" style={{ color: hex + '99' }}>streak</p>
+                <div className="text-center">
+                  <p className="text-2xl font-black" style={{ color: hex }}>{streak}</p>
+                  <p className="text-[7px] uppercase tracking-widest font-bold" style={{ color: hex + 'aa' }}>streak</p>
                 </div>
               </div>
             )

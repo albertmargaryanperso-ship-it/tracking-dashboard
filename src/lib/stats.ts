@@ -67,7 +67,8 @@ export const computeStats = (state: AppState): Stats => {
       doneTodos.filter(t => !cats || cats.has(t.category)).map(t => t.completed_at!)
     )
     let streak = 0
-    let cursor = today
+    // Start from today; if no activity today, start from yesterday (day not over yet)
+    let cursor = dates.has(today) ? today : addDays(today, -1)
     while (dates.has(cursor)) { streak += 1; cursor = addDays(cursor, -1) }
     streaks_by_tab[tab.id] = streak
   }
