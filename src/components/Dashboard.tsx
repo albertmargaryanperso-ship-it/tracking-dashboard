@@ -21,16 +21,16 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
         {/* Row 1: Time + Todos count */}
         <div className="relative flex items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 mb-1">Aujourd'hui</p>
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 mb-1">Total</p>
             <p className="text-5xl sm:text-6xl font-black tracking-tight bg-gradient-to-r from-violet-400 via-white to-cyan-400 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(139,92,246,0.25)]"
               style={{ letterSpacing: '-0.02em' }}>
-              {formatMinutes(t.today_minutes) || '0min'}
+              {formatMinutes(t.total_minutes) || '0min'}
             </p>
             <div className="flex items-center gap-2 mt-1.5 text-[11px] flex-wrap">
               {todoTabs.map((tab, i) => (
                 <span key={tab.id}>
                   {i > 0 && <span className="text-zinc-600 mr-2">·</span>}
-                  <span className="font-semibold" style={{ color: TAB_COLORS[i % TAB_COLORS.length] }}>{formatMinutes(t.by_tab[tab.id]?.today ?? 0) || '0'} {tab.label}</span>
+                  <span className="font-semibold" style={{ color: TAB_COLORS[i % TAB_COLORS.length] }}>{formatMinutes(t.by_tab[tab.id]?.total ?? 0) || '0'} {tab.label}</span>
                 </span>
               ))}
             </div>
