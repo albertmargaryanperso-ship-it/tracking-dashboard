@@ -93,7 +93,7 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
                 <span className="text-[10px] text-zinc-500 font-mono">{formatMinutes(tabGroup?.minutes ?? 0) || '0'} total</span>
               </div>
               <Heatmap todos={state.todos} archive={state.archive} customCategories={state.meta.custom_categories}
-                mode="combined" categoryFilter={tab.categoryFilter} days={182} />
+                mode="combined" categoryFilter={tab.categoryFilter} colorHex={hex} days={182} />
             </div>
           )
         })}

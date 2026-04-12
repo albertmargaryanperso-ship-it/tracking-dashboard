@@ -7,6 +7,7 @@ interface HeatmapProps {
   archive?: ArchiveMonth[]
   customCategories?: CategoryConfig[]
   categoryFilter?: string[]
+  colorHex?: string
   days?: number
   mode: 'travail' | 'personnel' | 'combined'
 }
@@ -14,7 +15,7 @@ interface HeatmapProps {
 const MONTH_LABELS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
 const DAY_LABELS = ['', 'L', '', 'M', '', 'V', '']
 
-export const Heatmap = ({ todos, archive, customCategories, categoryFilter, days = 182, mode }: HeatmapProps) => {
+export const Heatmap = ({ todos, archive, customCategories, categoryFilter, colorHex = '#8b5cf6', days = 182, mode }: HeatmapProps) => {
   const { cells, months } = useMemo(() => {
     const today = todayISO()
     const start = addDays(today, -(days - 1))
@@ -66,17 +67,14 @@ export const Heatmap = ({ todos, archive, customCategories, categoryFilter, days
     return { cells: cellList, months: monthPositions }
   }, [todos, archive, customCategories, categoryFilter, days])
 
-  const color = (cell: typeof cells[number]): string => {
-    if (cell.future) return 'bg-zinc-900/30'
-    const val = mode === 'travail' ? cell.travail : mode === 'personnel' ? cell.personnel : cell.travail + cell.personnel
-    if (val === 0) return 'bg-zinc-800/60'
-    if (val >= 4) return 'bg-amber-500'
-    const isViolet = mode === 'travail' || (mode === 'combined' && cell.travail >= cell.personnel)
-    if (val < 0.5) return isViolet ? 'bg-violet-500/15' : 'bg-cyan-500/15'
-    if (val < 1)   return isViolet ? 'bg-violet-500/25' : 'bg-cyan-500/25'
-    if (val < 2)   return isViolet ? 'bg-violet-500/40' : 'bg-cyan-500/40'
-    if (val < 3)   return isViolet ? 'bg-violet-500/60' : 'bg-cyan-500/60'
-    return isViolet ? 'bg-violet-500/80' : 'bg-cyan-500/80'
+  // Returns inline style with opacity-based coloring using colorHex
+  const cellStyle = (cell: typeof cells[number]): React.CSSProperties => {
+    if (cell.future) return { backgroundColor: '#18181b30' }
+    const val = cell.travail + cell.personnel
+    if (val === 0) return { backgroundColor: '#27272a60' }
+    if (val >= 4) return { backgroundColor: '#f59e0b' } // amber for high
+    const opacity = val < 0.5 ? 0.2 : val < 1 ? 0.35 : val < 2 ? 0.5 : val < 3 ? 0.7 : 0.9
+    return { backgroundColor: colorHex, opacity }
   }
 
   const totalCols = Math.ceil(cells.length / 7)
@@ -113,8 +111,9 @@ export const Heatmap = ({ todos, archive, customCategories, categoryFilter, days
           {/* Heatmap cells */}
           <div className="inline-grid gap-[3px]" style={{ gridTemplateRows: 'repeat(7, 12px)', gridAutoFlow: 'column' }}>
             {cells.map((cell, i) => (
-              <div key={i} className={cn('w-3 h-3 rounded-[3px] transition-all hover:scale-150 hover:z-10', color(cell))}
-                title={`${cell.date.split('-').reverse().join('/')} | T: ${cell.travail.toFixed(1)}h | P: ${cell.personnel.toFixed(1)}h`} />
+              <div key={i} className="w-3 h-3 rounded-[3px] transition-all hover:scale-150 hover:z-10"
+                style={cellStyle(cell)}
+                title={`${cell.date.split('-').reverse().join('/')} | ${(cell.travail + cell.personnel).toFixed(1)}h`} />
             ))}
           </div>
         </div>
@@ -122,11 +121,11 @@ export const Heatmap = ({ todos, archive, customCategories, categoryFilter, days
         {/* Legend */}
         <div className="flex items-center gap-1 mt-2 justify-end">
           <span className="text-[9px] text-zinc-500">Moins</span>
-          <div className="w-3 h-3 rounded-[2px] bg-zinc-800/60" />
-          <div className={cn('w-3 h-3 rounded-[2px]', mode === 'personnel' ? 'bg-cyan-500/20' : 'bg-violet-500/20')} />
-          <div className={cn('w-3 h-3 rounded-[2px]', mode === 'personnel' ? 'bg-cyan-500/40' : 'bg-violet-500/40')} />
-          <div className={cn('w-3 h-3 rounded-[2px]', mode === 'personnel' ? 'bg-cyan-500/60' : 'bg-violet-500/60')} />
-          <div className={cn('w-3 h-3 rounded-[2px]', mode === 'personnel' ? 'bg-cyan-500/80' : 'bg-violet-500/80')} />
+          <div className="w-3 h-3 rounded-[2px]" style={{ backgroundColor: '#27272a60' }} />
+          <div className="w-3 h-3 rounded-[2px]" style={{ backgroundColor: colorHex, opacity: 0.2 }} />
+          <div className="w-3 h-3 rounded-[2px]" style={{ backgroundColor: colorHex, opacity: 0.4 }} />
+          <div className="w-3 h-3 rounded-[2px]" style={{ backgroundColor: colorHex, opacity: 0.65 }} />
+          <div className="w-3 h-3 rounded-[2px]" style={{ backgroundColor: colorHex, opacity: 0.9 }} />
           <div className="w-3 h-3 rounded-[2px] bg-amber-500" />
           <span className="text-[9px] text-zinc-500">Plus</span>
         </div>
