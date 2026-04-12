@@ -126,17 +126,23 @@ export const HistoryView = ({ state, onEditArchived, onDeleteArchived }: History
       </div>
 
       {/* Summary stats — includes current month + archives */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <HistStat label="Mois comptés" value={String(archive.length + 1)} icon={<Calendar size={14} />} />
-        <HistStat label="Todos total" value={String(archive.reduce((s, a) => s + a.todos.length, 0) + currentMonthData.doneCount)} icon={<TrendingUp size={14} />} />
-        <HistStat label="Moyenne / mois" value={(() => {
-          const archiveMin = archive.reduce((s, a) => s + (a.stats?.total_minutes ?? 0), 0)
-          const totalMin = archiveMin + currentMonthData.totalMin
-          const totalMonths = archive.length + 1
-          return formatMinutes(totalMonths > 0 ? Math.round(totalMin / totalMonths) : 0) || '0'
-        })()} icon={<Clock size={14} />} />
-        <HistStat label="Total cumulé" value={formatMinutes(archive.reduce((s, a) => s + (a.stats?.total_minutes ?? 0), 0) + currentMonthData.totalMin) || '0'} icon={<Award size={14} />} />
-      </div>
+      {(() => {
+        const allDoneTodos = [...state.todos.filter(td => td.status === 'done' && td.completed_at), ...archive.flatMap(a => a.todos)]
+        const archiveMin = archive.reduce((s, a) => s + (a.stats?.total_minutes ?? 0), 0)
+        const totalMin = archiveMin + currentMonthData.totalMin
+        const totalMonths = archive.length + 1
+        const weeksActive = new Set(allDoneTodos.map(td => { const d = new Date((td.completed_at ?? '') + 'T12:00:00'); const day = d.getDay(); d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day)); return d.toISOString().slice(0, 10) })).size
+        const avgWeek = weeksActive > 0 ? Math.round(totalMin / weeksActive) : 0
+        const avgMonth = totalMonths > 0 ? Math.round(totalMin / totalMonths) : 0
+        return (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <HistStat label="Moyenne / semaine" value={formatMinutes(avgWeek) || '0'} icon={<Clock size={14} />} />
+            <HistStat label="Moyenne / mois" value={formatMinutes(avgMonth) || '0'} icon={<Calendar size={14} />} />
+            <HistStat label="Todos total" value={String(allDoneTodos.length)} icon={<TrendingUp size={14} />} />
+            <HistStat label="Total cumulé" value={formatMinutes(totalMin) || '0'} icon={<Award size={14} />} />
+          </div>
+        )
+      })()}
 
       {/* 30-Day Heatmap compact */}
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
