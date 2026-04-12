@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 368,
-    "updated_at": "2026-04-12T17:33:51.013Z",
+    "version": 369,
+    "updated_at": "2026-04-12T17:39:48.327Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -51,13 +51,6 @@
         "removable": true
       },
       {
-        "id": "historique",
-        "label": "Historique",
-        "emoji": "📜",
-        "type": "historique",
-        "removable": true
-      },
-      {
         "id": "tab_1776015230654",
         "label": "finance",
         "emoji": "📈",
@@ -67,6 +60,13 @@
           "finance",
           "admin"
         ]
+      },
+      {
+        "id": "historique",
+        "label": "Historique",
+        "emoji": "📜",
+        "type": "historique",
+        "removable": true
       },
       {
         "id": "settings",
