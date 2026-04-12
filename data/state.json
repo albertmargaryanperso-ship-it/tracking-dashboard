@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 346,
-    "updated_at": "2026-04-12T16:04:18.136Z",
+    "updated_at": "2026-04-12T16:04:32.469Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -918,20 +918,6 @@
         }
       ],
       "done": true
-    },
-    {
-      "text": "jhjhg",
-      "category": "bien-etre",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-19",
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10052,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T16:04:17.782Z"
     }
   ],
   "todos_next_id": 10053,
