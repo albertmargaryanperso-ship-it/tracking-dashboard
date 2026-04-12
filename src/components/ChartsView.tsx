@@ -104,27 +104,26 @@ export const ChartsView = ({ state, stats }: ChartsViewProps) => {
         })}
       </div>
 
-      {/* Per-tab pie charts */}
+      {/* All charts in one grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {tabSlices.map(({ tab, slices, color }) => (
           <ChartCard key={tab.id} title={`${tab.emoji} ${tab.label} — par catégorie`}
             subtitle={tab.categoryFilter?.map(c => CATEGORY_CONFIG[c]?.label).filter(Boolean).join(' · ')}
             borderColor={color + '30'} slices={slices} />
         ))}
-      </div>
-
-      {/* Combined */}
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300">Combiné — tous les onglets</h3>
-          <div className="flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-lg">
-            <button onClick={() => setCombinedMode('macro')} className={cn('px-3 py-1 rounded text-[10px] font-semibold transition-all', combinedMode === 'macro' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-500')}>Macro</button>
-            <button onClick={() => setCombinedMode('detailed')} className={cn('px-3 py-1 rounded text-[10px] font-semibold transition-all', combinedMode === 'detailed' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-500')}>Détaillé</button>
+        {/* Combined — same grid */}
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-300">Combiné</h3>
+            <div className="flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-lg">
+              <button onClick={() => setCombinedMode('macro')} className={cn('px-3 py-1 rounded text-[10px] font-semibold transition-all', combinedMode === 'macro' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-500')}>Macro</button>
+              <button onClick={() => setCombinedMode('detailed')} className={cn('px-3 py-1 rounded text-[10px] font-semibold transition-all', combinedMode === 'detailed' ? 'bg-zinc-800 text-zinc-200' : 'text-zinc-500')}>Détaillé</button>
+            </div>
           </div>
-        </div>
-        <div className="flex flex-col lg:flex-row items-center gap-5">
-          <div className="shrink-0"><PieChart size={260} slices={combinedMode === 'macro' ? combinedMacro : combinedDetailed} label="Combiné" /></div>
-          <div className="flex-1 w-full max-h-[260px] overflow-y-auto scrollbar-thin pr-1"><Legend slices={combinedMode === 'macro' ? combinedMacro : combinedDetailed} /></div>
+          <div className="flex flex-col lg:flex-row items-center gap-5">
+            <div className="shrink-0"><PieChart slices={combinedMode === 'macro' ? combinedMacro : combinedDetailed} label="Combiné" /></div>
+            <div className="flex-1 w-full max-h-[220px] overflow-y-auto scrollbar-thin pr-1"><Legend slices={combinedMode === 'macro' ? combinedMacro : combinedDetailed} /></div>
+          </div>
         </div>
       </div>
     </div>
