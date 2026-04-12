@@ -6,6 +6,7 @@ import { TodosView } from '@/components/TodosView'
 import { ChartsView } from '@/components/ChartsView'
 import { HistoryView } from '@/components/HistoryView'
 import { SettingsView } from '@/components/SettingsView'
+import { DeepWorkModal } from '@/components/DeepWorkModal'
 import { QuickAddModal } from '@/components/QuickAddModal'
 import { TokenModal } from '@/components/TokenModal'
 import { useAppState } from '@/hooks/useAppState'
@@ -147,6 +148,8 @@ import type { SyncStatus } from '@/lib/github'
       </footer>
 
       {/* Mobile FAB (hidden since we have footer) */}
+
+      <DeepWorkModal state={state} onToggleTodo={actions.toggleTodo} />
 
       <QuickAddModal open={quickAddOpen} onClose={() => setQuickAddOpen(false)}
         onAddTodo={actions.addTodo} onAddDoneTodo={actions.addDoneTodo} customCategories={state.meta.custom_categories} />
