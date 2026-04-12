@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 335,
-    "updated_at": "2026-04-12T15:45:25.283Z",
+    "updated_at": "2026-04-12T15:45:33.797Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -931,7 +931,14 @@
       "completed_min": null,
       "id": 10049,
       "created": "2026-04-12",
-      "updated_at": "2026-04-12T15:45:24.927Z"
+      "updated_at": "2026-04-12T15:45:33.442Z",
+      "subtasks": [
+        {
+          "id": "st_1776008733441_2sqm0",
+          "text": "Ghjj",
+          "done": false
+        }
+      ]
     }
   ],
   "todos_next_id": 10050,
