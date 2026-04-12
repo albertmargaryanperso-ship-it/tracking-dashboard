@@ -23,7 +23,7 @@ export const LAST_SYNC_KEY = 'tracking-last-sync-v1'
 export const PENDING_FLAG_KEY = 'tracking-pending-v1'
 
 // Sync interval (auto-refresh)
-export const AUTO_SYNC_INTERVAL_MS = 60_000 // 1 minute
+export const AUTO_SYNC_INTERVAL_MS = 10_000 // 10 seconds
 // Debounce for pushes after user actions. Short enough that iOS doesn't
 // kill the timer when the tab backgrounds, long enough to batch rapid
 // edits (e.g. typing in a routine note).
