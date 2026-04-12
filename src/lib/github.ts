@@ -2,7 +2,7 @@
 // GitHub API client — read/write state.json as a single source of truth
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { AppState } from '@/types'
+import type { AppState, TabConfig } from '@/types'
 import {
   CONTENTS_API_URL,
   RAW_STATE_URL,
@@ -47,28 +47,34 @@ export const mergeStates = (local: AppState, remote: AppState): AppState => {
   const travail = (local.travail?.length ?? 0) >= (remote.travail?.length ?? 0) ? local.travail : remote.travail
   const routine = (local.routine?.length ?? 0) >= (remote.routine?.length ?? 0) ? local.routine : remote.routine
 
-  // Meta — take the newer side for base, but merge custom fields intelligently
+  // Meta — merge intelligently
   const localNewer = (local.meta.updated_at ?? '') >= (remote.meta.updated_at ?? '')
-  const baseMeta = localNewer ? local.meta : remote.meta
-  const otherMeta = localNewer ? remote.meta : local.meta
+  const newerMeta = localNewer ? local.meta : remote.meta
 
-  // For arrays: keep the longer/more complete side (prevents losing added tabs/categories)
-  const pickBest = <T,>(a?: T[] | null, b?: T[] | null): T[] | undefined => {
-    const aa = a && a.length > 0 ? a : null
-    const bb = b && b.length > 0 ? b : null
-    if (!aa && !bb) return undefined
-    if (!aa) return bb!
-    if (!bb) return aa
-    return aa.length >= bb.length ? aa : bb
+  // Tabs: UNION by ID — never lose a tab. Newer side wins for label/config.
+  const mergeTabs = (a?: TabConfig[] | null, b?: TabConfig[] | null): TabConfig[] | undefined => {
+    const mapA = new Map((a ?? []).map(t => [t.id, t]))
+    const mapB = new Map((b ?? []).map(t => [t.id, t]))
+    const allIds = new Set([...mapA.keys(), ...mapB.keys()])
+    const merged: TabConfig[] = []
+    for (const id of allIds) {
+      const fromA = mapA.get(id)
+      const fromB = mapB.get(id)
+      if (fromA && fromB) merged.push(localNewer ? fromA : fromB) // newer wins for labels
+      else merged.push((fromA ?? fromB)!)
+    }
+    return merged.length > 0 ? merged : undefined
   }
 
+  const mergedTabs = mergeTabs(local.meta.custom_tabs, remote.meta.custom_tabs)
+
   const mergedMeta = {
-    ...baseMeta,
+    ...newerMeta,
     version: Math.max(local.meta.version ?? 0, remote.meta.version ?? 0),
-    custom_categories: pickBest(local.meta.custom_categories, remote.meta.custom_categories),
-    custom_tabs: pickBest(local.meta.custom_tabs, remote.meta.custom_tabs),
-    app_name: baseMeta.app_name ?? otherMeta.app_name,
-    app_emoji: baseMeta.app_emoji ?? otherMeta.app_emoji,
+    custom_categories: newerMeta.custom_categories ?? (localNewer ? remote : local).meta.custom_categories,
+    custom_tabs: mergedTabs,
+    app_name: newerMeta.app_name ?? (localNewer ? remote : local).meta.app_name,
+    app_emoji: newerMeta.app_emoji ?? (localNewer ? remote : local).meta.app_emoji,
   }
 
   return {
@@ -134,36 +140,10 @@ export const writeState = async (state: AppState, previousSha: string | null, re
   const token = getToken()
   if (!token) throw new Error('NO_TOKEN')
 
-  // Before writing, read remote to preserve custom fields that local might not have
-  let remoteMeta: AppState['meta'] | null = null
-  try {
-    if (previousSha) {
-      const { state: remoteState } = await readState()
-      remoteMeta = remoteState.meta
-    }
-  } catch { /* ignore — will write local as-is */ }
-
-  // Pick the longer/richer array (prevents losing user-added tabs)
-  const best = <T,>(a?: T[] | null, b?: T[] | null): T[] | undefined => {
-    const aa = a && a.length > 0 ? a : null
-    const bb = b && b.length > 0 ? b : null
-    if (!aa) return bb ?? undefined
-    if (!bb) return aa
-    return aa.length >= bb.length ? aa : bb
+  const stamped: AppState = {
+    ...state,
+    meta: { ...state.meta, updated_at: new Date().toISOString(), updated_by: 'web', version: (state.meta.version ?? 0) + 1 },
   }
-
-  const mergedMeta = {
-    ...state.meta,
-    updated_at: new Date().toISOString(),
-    updated_by: 'web' as const,
-    version: (state.meta.version ?? 0) + 1,
-    custom_tabs: best(state.meta.custom_tabs, remoteMeta?.custom_tabs),
-    custom_categories: best(state.meta.custom_categories, remoteMeta?.custom_categories),
-    app_name: state.meta.app_name ?? remoteMeta?.app_name,
-    app_emoji: state.meta.app_emoji ?? remoteMeta?.app_emoji,
-  }
-
-  const stamped: AppState = { ...state, meta: mergedMeta }
 
   // JSON.stringify replacer: convert undefined to null so keys are preserved on remote
   const jsonReplacer = (_key: string, value: unknown) => value === undefined ? null : value

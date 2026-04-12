@@ -44,13 +44,15 @@ export const computeStats = (state: AppState): Stats => {
     }
   }
 
-  // Legacy compat (keep for existing components that still use these)
-  const travail_today_min = by_tab[todoTabs[0]?.id]?.today ?? 0
-  const travail_week_min = by_tab[todoTabs[0]?.id]?.week ?? 0
-  const travail_month_min = by_tab[todoTabs[0]?.id]?.month ?? 0
-  const personnel_today_min = by_tab[todoTabs[1]?.id]?.today ?? 0
-  const personnel_week_min = by_tab[todoTabs[1]?.id]?.week ?? 0
-  const personnel_month_min = by_tab[todoTabs[1]?.id]?.month ?? 0
+  // Legacy compat — look up by known ID, not by position
+  const travailTab = todoTabs.find(t => t.id === 'todo-travail')
+  const personnelTab = todoTabs.find(t => t.id === 'todo-personnel')
+  const travail_today_min = by_tab[travailTab?.id ?? '']?.today ?? 0
+  const travail_week_min = by_tab[travailTab?.id ?? '']?.week ?? 0
+  const travail_month_min = by_tab[travailTab?.id ?? '']?.month ?? 0
+  const personnel_today_min = by_tab[personnelTab?.id ?? '']?.today ?? 0
+  const personnel_week_min = by_tab[personnelTab?.id ?? '']?.week ?? 0
+  const personnel_month_min = by_tab[personnelTab?.id ?? '']?.month ?? 0
 
   // Total = active done + all archived
   const archiveTotal = archive.reduce((sum, a) => sum + (a.stats?.total_minutes ?? 0), 0)
@@ -70,9 +72,9 @@ export const computeStats = (state: AppState): Stats => {
     streaks_by_tab[tab.id] = streak
   }
 
-  // Legacy
-  const streak_travail = streaks_by_tab[todoTabs[0]?.id] ?? 0
-  const streak_personnel = streaks_by_tab[todoTabs[1]?.id] ?? 0
+  // Legacy — by known ID
+  const streak_travail = streaks_by_tab[travailTab?.id ?? ''] ?? 0
+  const streak_personnel = streaks_by_tab[personnelTab?.id ?? ''] ?? 0
 
   // ─── By category ──────────────────────────────────────────────────────────
   const { CATEGORY_LIST } = getActiveCategories(state.meta?.custom_categories)

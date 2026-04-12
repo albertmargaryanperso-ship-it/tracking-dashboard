@@ -52,7 +52,14 @@ export const SettingsView = ({ state, onUpdateCategories, onUpdateTabs }: Settin
 
   const save = () => {
     // 1. Save categories
-    onUpdateCategories(categories)
+    // 1. Update category group field based on tab assignment
+    const updatedCategories = categories.map(c => {
+      const tabId = catTabMap[c.id]
+      const tabIdx = todoTabs.findIndex(t => t.id === tabId)
+      const group = tabIdx === 0 ? 'travail' : tabIdx === 1 ? 'personnel' : (tabId ?? 'travail')
+      return { ...c, group: group as any }
+    })
+    onUpdateCategories(updatedCategories)
 
     // 2. Rebuild tab categoryFilters from catTabMap
     const updatedTabs = allTabs.map(tab => {

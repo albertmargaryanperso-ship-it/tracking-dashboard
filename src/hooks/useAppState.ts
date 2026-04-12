@@ -383,14 +383,12 @@ export const useAppState = () => {
       const { state: remote, sha } = await readState()
       shaRef.current = sha
 
-      // Always merge — prevents data loss from GitHub eventual consistency
+      // Always merge — prevents data loss
       const merged = mergeStates(stateRef.current, remote)
       dispatch({ type: 'HYDRATE', state: merged })
 
-      if (dirtyRef.current) {
-        setPendingFlag(true)
-        void pushNow(merged)
-      }
+      // Don't push here — let schedulePush handle it via dirty flag
+      // This avoids the race condition of pushing stale stateRef
 
       initialPullDoneRef.current = true
       const ts = new Date().toISOString()
