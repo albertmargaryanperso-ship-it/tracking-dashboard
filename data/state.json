@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 351,
-    "updated_at": "2026-04-12T16:06:56.772Z",
+    "updated_at": "2026-04-12T16:06:59.105Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -566,11 +566,16 @@
       "completed_min": null,
       "id": 10054,
       "created": "2026-04-12",
-      "updated_at": "2026-04-12T16:06:56.419Z",
+      "updated_at": "2026-04-12T16:06:58.752Z",
       "subtasks": [
         {
           "id": "st_1776010016418_89hjm",
           "text": "kojih",
+          "done": false
+        },
+        {
+          "id": "st_1776010018751_242j9",
+          "text": "jjojop",
           "done": false
         }
       ]
