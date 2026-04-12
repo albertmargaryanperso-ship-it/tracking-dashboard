@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 439,
-    "updated_at": "2026-04-12T20:50:59.214Z",
+    "version": 441,
+    "updated_at": "2026-04-12T20:51:01.183Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -128,13 +128,6 @@
         "removable": true
       },
       {
-        "id": "charts",
-        "label": "Analyse",
-        "emoji": "📈",
-        "type": "charts",
-        "removable": false
-      },
-      {
         "id": "tab_1776024372196",
         "label": "ok",
         "emoji": "🌟",
@@ -143,6 +136,13 @@
         "categoryFilter": [
           "cat_1776020403131"
         ]
+      },
+      {
+        "id": "charts",
+        "label": "Analyse",
+        "emoji": "📈",
+        "type": "charts",
+        "removable": false
       },
       {
         "id": "historique",
