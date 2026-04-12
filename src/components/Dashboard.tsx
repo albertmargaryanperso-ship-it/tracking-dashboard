@@ -18,7 +18,8 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
       {/* Hero */}
       <div className="relative rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 overflow-hidden p-6 sm:p-8">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-cyan-500/5 pointer-events-none" />
-        <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        {/* Row 1: Time + Todos count */}
+        <div className="relative flex items-start justify-between gap-4">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 mb-1">Aujourd'hui</p>
             <p className="text-5xl sm:text-6xl font-black tracking-tight bg-gradient-to-r from-violet-400 via-white to-cyan-400 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(139,92,246,0.25)]"
@@ -34,26 +35,27 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
               ))}
             </div>
           </div>
-          {/* Todos + Streaks — grid inside hero */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full sm:w-auto">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5">
-              <CheckCheck size={16} className="text-emerald-400" />
+          {/* Todos count — top right */}
+          <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-emerald-500/20 bg-emerald-500/5 shrink-0">
+            <CheckCheck size={16} className="text-emerald-400" />
+            <div>
+              <p className="text-lg font-extrabold text-emerald-300">{stats.todos.open}</p>
+              <p className="text-[7px] text-emerald-400/80 uppercase tracking-wider font-semibold">{stats.todos.urgent} urgents</p>
+            </div>
+          </div>
+        </div>
+        {/* Row 2: Streaks — full width row of 3 */}
+        <div className="grid grid-cols-3 gap-2 mt-3">
+          {todoTabs.slice(0, 3).map((tab, i) => (
+            <div key={tab.id} className="flex items-center gap-2 px-3 py-2 rounded-xl border"
+              style={{ borderColor: TAB_COLORS[i % TAB_COLORS.length] + '30', backgroundColor: TAB_COLORS[i % TAB_COLORS.length] + '08' }}>
+              <span className="text-sm">🔥</span>
               <div>
-                <p className="text-lg font-extrabold text-emerald-300">{stats.todos.open}</p>
-                <p className="text-[7px] text-emerald-400/80 uppercase tracking-wider font-semibold">{stats.todos.urgent} urgents</p>
+                <p className="text-lg font-extrabold" style={{ color: TAB_COLORS[i % TAB_COLORS.length] }}>{t.streaks_by_tab?.[tab.id] ?? 0}</p>
+                <p className="text-[7px] uppercase tracking-wider font-semibold" style={{ color: TAB_COLORS[i % TAB_COLORS.length] + '99' }}>streak</p>
               </div>
             </div>
-            {todoTabs.slice(0, 3).map((tab, i) => (
-              <div key={tab.id} className="flex items-center gap-2 px-3 py-2 rounded-xl border"
-                style={{ borderColor: TAB_COLORS[i % TAB_COLORS.length] + '30', backgroundColor: TAB_COLORS[i % TAB_COLORS.length] + '08' }}>
-                <span className="text-sm">🔥</span>
-                <div>
-                  <p className="text-lg font-extrabold" style={{ color: TAB_COLORS[i % TAB_COLORS.length] }}>{t.streaks_by_tab?.[tab.id] ?? 0}</p>
-                  <p className="text-[7px] uppercase tracking-wider font-semibold" style={{ color: TAB_COLORS[i % TAB_COLORS.length] + '99' }}>streak</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          ))}
         </div>
       </div>
 
