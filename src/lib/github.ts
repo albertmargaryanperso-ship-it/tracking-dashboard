@@ -134,10 +134,28 @@ export const writeState = async (state: AppState, previousSha: string | null, re
   const token = getToken()
   if (!token) throw new Error('NO_TOKEN')
 
-  const stamped: AppState = {
-    ...state,
-    meta: { ...state.meta, updated_at: new Date().toISOString(), updated_by: 'web', version: (state.meta.version ?? 0) + 1 },
+  // Before writing, read remote to preserve custom fields that local might not have
+  let remoteMeta: AppState['meta'] | null = null
+  try {
+    if (previousSha) {
+      const { state: remoteState } = await readState()
+      remoteMeta = remoteState.meta
+    }
+  } catch { /* ignore — will write local as-is */ }
+
+  const mergedMeta = {
+    ...state.meta,
+    updated_at: new Date().toISOString(),
+    updated_by: 'web' as const,
+    version: (state.meta.version ?? 0) + 1,
+    // Preserve remote custom fields if local doesn't have them
+    custom_tabs: state.meta.custom_tabs ?? remoteMeta?.custom_tabs,
+    custom_categories: state.meta.custom_categories ?? remoteMeta?.custom_categories,
+    app_name: state.meta.app_name ?? remoteMeta?.app_name,
+    app_emoji: state.meta.app_emoji ?? remoteMeta?.app_emoji,
   }
+
+  const stamped: AppState = { ...state, meta: mergedMeta }
 
   // JSON.stringify replacer: convert undefined to null so keys are preserved on remote
   const jsonReplacer = (_key: string, value: unknown) => value === undefined ? null : value
