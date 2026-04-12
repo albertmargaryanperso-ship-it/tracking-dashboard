@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 322,
-    "updated_at": "2026-04-12T15:27:07.041Z",
+    "updated_at": "2026-04-12T15:27:11.809Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -876,15 +876,16 @@
       "text": "jhij",
       "category": "sport",
       "priority": "normal",
-      "status": "delegated",
+      "status": "done",
       "delegated_to": null,
       "due": null,
-      "completed_at": null,
+      "completed_at": "2026-04-12",
       "duration_min": null,
-      "completed_min": null,
+      "completed_min": 1,
       "id": 10045,
       "created": "2026-04-12",
-      "updated_at": "2026-04-12T15:27:06.688Z"
+      "updated_at": "2026-04-12T15:27:11.455Z",
+      "done": true
     }
   ],
   "todos_next_id": 10046,
