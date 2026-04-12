@@ -124,7 +124,7 @@ import type { SyncStatus } from '@/lib/github'
         </div>
       )}
 
-      <main className="relative max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 pb-24 overflow-x-hidden">
+      <main className="relative max-w-screen-2xl mx-auto px-4 sm:px-6 py-6 pb-24">
         {renderView()}
       </main>
 

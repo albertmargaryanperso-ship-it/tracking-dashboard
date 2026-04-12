@@ -121,7 +121,7 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
       {/* Desktop: brand + tabs */}
       <div className="hidden md:flex max-w-screen-2xl mx-auto px-6 py-3 items-center gap-3">
         <div className="flex items-center gap-3 shrink-0">
-          <img src="./icon-192.svg" alt="logo" className="w-9 h-9 rounded-xl" />
+          <div className="w-9 h-9 rounded-xl bg-cyan-500 flex items-center justify-center text-lg">💎</div>
           <h1 className="text-sm font-semibold tracking-tight">{appName ?? 'Tracking'}</h1>
         </div>
         <nav className="flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-xl flex-1 justify-center">
