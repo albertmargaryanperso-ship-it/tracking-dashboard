@@ -91,13 +91,13 @@ export const ChartsView = ({ state, stats }: ChartsViewProps) => {
         {todoTabs.slice(0, 3).map((tab, i) => {
           const grp = stats.tracking.by_group[tab.id]
           const hex = TAB_COLORS[i % TAB_COLORS.length]
-          const daysActive = new Set(state.todos.filter(td => td.status === 'done' && td.completed_at && (!tab.categoryFilter?.length || tab.categoryFilter.includes(td.category))).map(td => td.completed_at!)).size
-          const avg = daysActive > 0 ? Math.round((grp?.minutes ?? 0) / daysActive) : 0
+          const weeksActive = new Set(state.todos.filter(td => td.status === 'done' && td.completed_at && (!tab.categoryFilter?.length || tab.categoryFilter.includes(td.category))).map(td => { const d = new Date(td.completed_at! + 'T12:00:00'); const day = d.getDay(); const diff = day === 0 ? -6 : 1 - day; d.setDate(d.getDate() + diff); return d.toISOString().slice(0, 10) })).size
+          const avgWeek = weeksActive > 0 ? Math.round((grp?.minutes ?? 0) / weeksActive) : 0
           const doneCount = state.todos.filter(td => td.status === 'done' && (!tab.categoryFilter?.length || tab.categoryFilter.includes(td.category))).length
           return [
             <div key={`${tab.id}-avg`} className="rounded-xl p-2.5 border bg-zinc-900/50" style={{ borderColor: hex + '30' }}>
-              <p className="text-[9px] uppercase tracking-wider text-zinc-500 font-semibold">{tab.emoji} Moy/jour</p>
-              <p className="text-lg font-extrabold" style={{ color: hex }}>{formatMinutes(avg) || '0'}</p>
+              <p className="text-[9px] uppercase tracking-wider text-zinc-500 font-semibold">{tab.emoji} Moy/sem</p>
+              <p className="text-lg font-extrabold" style={{ color: hex }}>{formatMinutes(avgWeek) || '0'}</p>
             </div>,
             <div key={`${tab.id}-done`} className="rounded-xl p-2.5 border bg-zinc-900/50" style={{ borderColor: hex + '30' }}>
               <p className="text-[9px] uppercase tracking-wider text-zinc-500 font-semibold">✅ Terminées</p>

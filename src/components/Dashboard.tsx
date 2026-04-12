@@ -59,20 +59,23 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
         </div>
       </div>
 
-      {/* Stats grid — tab semaine only, colored per tab */}
+      {/* Stats grid — moyenne/jour per tab */}
       <div className={cn('grid gap-3', todoTabs.length >= 3 ? 'grid-cols-3' : todoTabs.length === 2 ? 'grid-cols-2' : 'grid-cols-1')}>
         {todoTabs.slice(0, 3).map((tab, i) => {
-          const tabStats = t.by_tab[tab.id]
           const hex = TAB_COLORS[i % TAB_COLORS.length]
+          const cats = tab.categoryFilter?.length ? tab.categoryFilter : undefined
+          const daysActive = new Set(state.todos.filter(td => td.status === 'done' && td.completed_at && (!cats || cats.includes(td.category))).map(td => td.completed_at!)).size
+          const totalMin = state.todos.filter(td => td.status === 'done' && (!cats || cats.includes(td.category))).reduce((s, td) => s + (td.completed_min ?? 0), 0)
+          const avg = daysActive > 0 ? Math.round(totalMin / daysActive) : 0
           return (
             <div key={tab.id} className="relative rounded-2xl border bg-zinc-900/60 p-4 transition-all hover:-translate-y-0.5"
               style={{ borderColor: hex + '30' }}>
               <div className="flex items-start justify-between gap-2 mb-2">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{tab.emoji} {tab.label} — semaine</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{tab.emoji} {tab.label} — moy/jour</p>
                 <Clock size={14} style={{ color: hex }} />
               </div>
-              <p className="text-2xl font-extrabold" style={{ color: hex }}>{formatMinutes(tabStats?.week ?? 0) || '0'}</p>
-              <p className="text-[10px] text-zinc-500 mt-1 font-medium">{formatMinutes(tabStats?.month ?? 0) || '0'} ce mois</p>
+              <p className="text-2xl font-extrabold" style={{ color: hex }}>{formatMinutes(avg) || '0'}</p>
+              <p className="text-[10px] text-zinc-500 mt-1 font-medium">{daysActive} jours actifs</p>
             </div>
           )
         })}
