@@ -1,15 +1,16 @@
 import { useState, useMemo } from 'react'
 import { ChevronDown, ChevronRight, Calendar, Clock, TrendingUp, Award } from 'lucide-react'
-import type { AppState, ArchiveMonth, Todo, TodoCategory, CategoryConfig } from '@/types'
+import type { AppState, ArchiveMonth, Todo, TodoCategory, CategoryConfig, CategoryGroup } from '@/types'
 import { cn, formatMinutes, categoryGroup, todayISO, getActiveCategories } from '@/lib/utils'
 
 interface HistoryViewProps { state: AppState }
 
 const MONTH_NAMES = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
+const fmtMonth = (m: string): string => { const [y, mm] = m.split('-'); return `${MONTH_NAMES[parseInt(mm, 10)] ?? mm} ${y}` }
 
-const fmtMonth = (m: string): string => {
-  const [y, mm] = m.split('-')
-  return `${MONTH_NAMES[parseInt(mm, 10)] ?? mm} ${y}`
+const GROUP_META: Record<CategoryGroup, { label: string; emoji: string; color: string; border: string; bg: string; hex: string }> = {
+  travail: { label: 'Travail', emoji: '💼', color: 'text-violet-400', border: 'border-violet-500/30', bg: 'bg-violet-500/5', hex: '#8b5cf6' },
+  personnel: { label: 'Personnel', emoji: '🧘', color: 'text-cyan-400', border: 'border-cyan-500/30', bg: 'bg-cyan-500/5', hex: '#06b6d4' },
 }
 
 export const HistoryView = ({ state }: HistoryViewProps) => {
@@ -17,7 +18,6 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
   const [currentMonthOpen, setCurrentMonthOpen] = useState(false)
   const archive = useMemo(() => [...(state.archive ?? [])].sort((a, b) => b.month.localeCompare(a.month)), [state.archive])
 
-  // ── Current month progress ──────────────────────────────────────────────
   const monthProgress = useMemo(() => {
     const today = new Date()
     const dayOfMonth = today.getDate()
@@ -28,8 +28,10 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
     return { dayOfMonth, daysInMonth, daysLeft, pct, monthStr }
   }, [])
 
-  // ── Current month data ──────────────────────────────────────────────────
-  const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(state.meta.custom_categories)
+  // Source unique : getActiveCategories
+  const { CATEGORY_CONFIG, CATEGORY_LIST, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES } = getActiveCategories(state.meta.custom_categories)
+
+  // Current month data grouped
   const currentMonthData = useMemo(() => {
     const currentMonth = todayISO().slice(0, 7)
     const doneTodos = state.todos.filter(t => t.status === 'done' && t.completed_at?.startsWith(currentMonth))
@@ -45,36 +47,48 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
       if (t.status !== 'done' && byCategory[t.category]) byCategory[t.category].open += 1
     }
     const totalMin = doneTodos.reduce((s, t) => s + (t.completed_min ?? 0), 0)
-    return { byCategory, totalMin, doneCount: doneTodos.length }
-  }, [state.todos, CATEGORY_LIST])
+    const travailMin = doneTodos.filter(t => TRAVAIL_CATEGORIES.includes(t.category)).reduce((s, t) => s + (t.completed_min ?? 0), 0)
+    const personnelMin = totalMin - travailMin
+    return { byCategory, totalMin, travailMin, personnelMin, doneCount: doneTodos.length }
+  }, [state.todos, CATEGORY_LIST, TRAVAIL_CATEGORIES])
 
-  // ── 30-day chart ────────────────────────────────────────────────────────
+  // 30-day chart
   const last30Days = useMemo(() => {
     const todayStr = todayISO()
     const todayDate = new Date(todayStr + 'T12:00:00')
     const days: { date: string; travail: number; personnel: number }[] = []
     for (let i = 29; i >= 0; i--) {
-      const d = new Date(todayDate)
-      d.setDate(d.getDate() - i)
-      const iso = d.toISOString().split('T')[0]
-      days.push({ date: iso, travail: 0, personnel: 0 })
+      const d = new Date(todayDate); d.setDate(d.getDate() - i)
+      days.push({ date: d.toISOString().split('T')[0], travail: 0, personnel: 0 })
     }
     const map = new Map(days.map(d => [d.date, d]))
-    const processTodo = (t: any) => {
+    const process = (t: any) => {
       if (!t.completed_at || !t.completed_min) return
-      const iso = t.completed_at.slice(0, 10)
-      const day = map.get(iso)
-      if (day) {
-        if (categoryGroup(t.category, state.meta.custom_categories) === 'travail') day.travail += t.completed_min
-        else day.personnel += t.completed_min
-      }
+      const day = map.get(t.completed_at.slice(0, 10))
+      if (day) { if (categoryGroup(t.category, state.meta.custom_categories) === 'travail') day.travail += t.completed_min; else day.personnel += t.completed_min }
     }
-    state.todos.forEach(t => { if (t.status === 'done') processTodo(t) })
-    state.archive?.forEach(a => { a.todos.forEach(processTodo) })
+    state.todos.forEach(t => { if (t.status === 'done') process(t) })
+    state.archive?.forEach(a => a.todos.forEach(process))
     return days
   }, [state.todos, state.archive])
-
   const maxDayMin = Math.max(1, ...last30Days.map(d => d.travail + d.personnel))
+
+  // Build group data for any set of todos
+  const buildGroupData = (todos: Todo[], totalMin: number) => {
+    const groups: Array<{ group: CategoryGroup; categories: string[]; minutes: number; pct: number; catData: Record<string, { minutes: number; count: number; todos: Todo[] }> }> = []
+    for (const [grp, cats] of [['travail', TRAVAIL_CATEGORIES], ['personnel', PERSONNEL_CATEGORIES]] as const) {
+      let grpMin = 0
+      const catData: Record<string, { minutes: number; count: number; todos: Todo[] }> = {}
+      for (const cat of cats) {
+        const catTodos = todos.filter(t => t.category === cat)
+        const min = catTodos.reduce((s, t) => s + (t.completed_min ?? 0), 0)
+        catData[cat] = { minutes: min, count: catTodos.length, todos: catTodos }
+        grpMin += min
+      }
+      groups.push({ group: grp, categories: cats, minutes: grpMin, pct: totalMin > 0 ? Math.round((grpMin / totalMin) * 100) : 0, catData })
+    }
+    return groups
+  }
 
   return (
     <div className="space-y-4">
@@ -88,26 +102,23 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
           </div>
           <span className="text-xl font-extrabold text-zinc-200">{monthProgress.pct}%</span>
         </button>
-        {/* Progress bar always visible */}
         <div className="px-4 pb-3">
           <div className="h-2 rounded-full bg-zinc-800 overflow-hidden">
-            <div className="h-full rounded-full bg-gradient-to-r from-violet-500 via-cyan-500 to-emerald-500 transition-all duration-500"
-              style={{ width: `${monthProgress.pct}%` }} />
+            <div className="h-full rounded-full bg-gradient-to-r from-violet-500 via-cyan-500 to-emerald-500 transition-all duration-500" style={{ width: `${monthProgress.pct}%` }} />
           </div>
           <p className="text-[9px] text-zinc-600 mt-1">Archivage automatique au 1er du mois suivant.</p>
         </div>
 
-        {/* Expanded: categories with % + collapsible tasks */}
+        {/* Level 2: Travail / Personnel groups */}
         {currentMonthOpen && (
           <div className="px-4 pb-4 border-t border-zinc-800 pt-3 space-y-2">
-            {CATEGORY_LIST.map(cat => {
-              const cfg = CATEGORY_CONFIG[cat]; const data = currentMonthData.byCategory[cat]
-              if (!data) return null
-              const pct = currentMonthData.totalMin > 0 ? Math.round((data.minutes / currentMonthData.totalMin) * 100) : 0
-              return (
-                <CategoryAccordion key={cat} cfg={cfg} pct={pct} minutes={data.minutes} count={data.count} open={data.open} todos={data.todos} />
-              )
-            })}
+            {buildGroupData(
+              state.todos.filter(t => t.status === 'done' && t.completed_at?.startsWith(todayISO().slice(0, 7))),
+              currentMonthData.totalMin
+            ).map(g => (
+              <GroupAccordion key={g.group} group={g.group} groupMin={g.minutes} groupPct={g.pct} totalMin={currentMonthData.totalMin}
+                categories={g.categories} catData={g.catData} config={CATEGORY_CONFIG} showOpen currentMonthCats={currentMonthData.byCategory} />
+            ))}
             {currentMonthData.doneCount === 0 && <p className="text-[10px] text-zinc-600 italic text-center py-2">Aucune tâche terminée ce mois-ci.</p>}
           </div>
         )}
@@ -123,25 +134,23 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
         </div>
       )}
 
-      {/* 30-Day Activity Chart */}
+      {/* 30-Day Chart */}
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[12px] font-bold uppercase tracking-wider text-zinc-400">Activité des 30 derniers jours</h3>
           <div className="flex gap-3 text-[10px] font-semibold">
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-violet-500"></span> Travail</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-cyan-500"></span> Personnel</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-violet-500" /> Travail</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-cyan-500" /> Personnel</span>
           </div>
         </div>
         <div className="flex items-end gap-1 h-32 pt-2">
           {last30Days.map((day, i) => {
-            const hT = (day.travail / maxDayMin) * 100
-            const hP = (day.personnel / maxDayMin) * 100
-            const isToday = i === last30Days.length - 1
+            const hT = (day.travail / maxDayMin) * 100; const hP = (day.personnel / maxDayMin) * 100
             return (
-              <div key={day.date} className="flex-1 flex flex-col justify-end gap-0.5 group relative" title={`${day.date}: ${day.travail}m travail / ${day.personnel}m perso`}>
-                <div className="w-full bg-cyan-500/80 rounded-t-sm transition-all group-hover:bg-cyan-400" style={{ height: `${hP}%` }} />
-                <div className={cn("w-full bg-violet-500/80 rounded-b-sm transition-all group-hover:bg-violet-400", isToday && 'ring-1 ring-emerald-500 ring-offset-1 ring-offset-zinc-900')} style={{ height: `${hT}%` }} />
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max bg-zinc-800 border border-zinc-700 text-[10px] p-2 rounded shadow-xl whitespace-nowrap">
+              <div key={day.date} className="flex-1 flex flex-col justify-end gap-0.5 group relative">
+                <div className="w-full bg-cyan-500/80 rounded-t-sm group-hover:bg-cyan-400" style={{ height: `${hP}%` }} />
+                <div className={cn("w-full bg-violet-500/80 rounded-b-sm group-hover:bg-violet-400", i === 29 && 'ring-1 ring-emerald-500 ring-offset-1 ring-offset-zinc-900')} style={{ height: `${hT}%` }} />
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max bg-zinc-800 border border-zinc-700 text-[10px] p-2 rounded shadow-xl">
                   <p className="font-bold text-zinc-300 mb-1">{day.date.split('-').reverse().join('/')}</p>
                   <p className="text-violet-300 font-mono">Travail: {formatMinutes(day.travail) || '0'}</p>
                   <p className="text-cyan-300 font-mono">Perso: {formatMinutes(day.personnel) || '0'}</p>
@@ -160,7 +169,7 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
       {archive.map((entry, idx) => {
         const prev = idx + 1 < archive.length ? archive[idx + 1] : null
         return (
-          <MonthCard key={entry.month} entry={entry} prev={prev}
+          <ArchivedMonthCard key={entry.month} entry={entry} prev={prev}
             isOpen={openMonth === entry.month}
             onToggle={() => setOpenMonth(openMonth === entry.month ? null : entry.month)}
             customCategories={state.meta.custom_categories} />
@@ -170,7 +179,55 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
   )
 }
 
-// ─── Category accordion (reused in current month + archive months) ─────────
+// ─── Group accordion (Travail / Personnel) ─────────────────────────────────
+const GroupAccordion = ({ group, groupMin, groupPct, totalMin, categories, catData, config, showOpen, currentMonthCats }: {
+  group: CategoryGroup; groupMin: number; groupPct: number; totalMin: number
+  categories: string[]; catData: Record<string, { minutes: number; count: number; todos: Todo[] }>
+  config: Record<string, CategoryConfig>; showOpen?: boolean
+  currentMonthCats?: Record<string, { open: number }>
+}) => {
+  const [expanded, setExpanded] = useState(false)
+  const meta = GROUP_META[group]
+
+  return (
+    <div className={cn('rounded-xl border overflow-hidden', meta.border, meta.bg)}>
+      <button onClick={() => setExpanded(o => !o)} className="w-full px-3 py-3 flex items-center justify-between gap-2 hover:bg-zinc-800/30 transition-all">
+        <span className="flex items-center gap-2">
+          {expanded ? <ChevronDown size={12} className="text-zinc-400" /> : <ChevronRight size={12} className="text-zinc-400" />}
+          <span className="text-sm">{meta.emoji}</span>
+          {groupPct > 0 && <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold border" style={{ color: meta.hex, borderColor: meta.hex + '40', backgroundColor: meta.hex + '15' }}>{groupPct}%</span>}
+          <span className={cn('text-[12px] font-bold', meta.color)}>{meta.label}</span>
+        </span>
+        <span className="text-sm font-mono font-bold" style={{ color: groupMin > 0 ? meta.hex : '#71717a' }}>
+          {formatMinutes(groupMin) || '—'}
+        </span>
+      </button>
+      {groupMin > 0 && (
+        <div className="h-1 bg-zinc-800/50">
+          <div className="h-full transition-all duration-300" style={{ width: `${groupPct}%`, backgroundColor: meta.hex }} />
+        </div>
+      )}
+
+      {/* Level 3: Individual categories */}
+      {expanded && (
+        <div className="px-3 pb-3 pt-2 space-y-1.5">
+          {categories.map(cat => {
+            const cfg = config[cat]; const data = catData[cat]
+            if (!cfg) return null
+            const catPct = groupMin > 0 ? Math.round(((data?.minutes ?? 0) / groupMin) * 100) : 0
+            const openCount = showOpen ? (currentMonthCats?.[cat]?.open ?? 0) : 0
+            return (
+              <CategoryAccordion key={cat} cfg={cfg} pct={catPct} minutes={data?.minutes ?? 0}
+                count={data?.count ?? 0} open={openCount} todos={data?.todos ?? []} />
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Category accordion ────────────────────────────────────────────────────
 const CategoryAccordion = ({ cfg, pct, minutes, count, open, todos }: {
   cfg: CategoryConfig; pct: number; minutes: number; count: number; open: number; todos: Todo[]
 }) => {
@@ -178,35 +235,29 @@ const CategoryAccordion = ({ cfg, pct, minutes, count, open, todos }: {
   const hasTodos = todos.length > 0
 
   return (
-    <div className={cn('rounded-xl border overflow-hidden', minutes > 0 ? 'bg-zinc-900/70' : 'bg-zinc-900/30')}
-      style={{ borderColor: minutes > 0 ? cfg.hex + '50' : '#27272a' }}>
+    <div className={cn('rounded-lg border overflow-hidden', minutes > 0 ? 'bg-zinc-900/70' : 'bg-zinc-900/30')}
+      style={{ borderColor: minutes > 0 ? cfg.hex + '40' : '#27272a' }}>
       <button onClick={() => hasTodos && setExpanded(o => !o)}
-        className={cn('w-full px-3 py-2.5 flex items-center justify-between gap-2 transition-all', hasTodos && 'hover:bg-zinc-800/50')}>
+        className={cn('w-full px-2.5 py-2 flex items-center justify-between gap-2 transition-all text-[11px]', hasTodos && 'hover:bg-zinc-800/50')}>
         <span className="flex items-center gap-1.5">
-          {hasTodos && (expanded ? <ChevronDown size={10} className="text-zinc-500" /> : <ChevronRight size={10} className="text-zinc-500" />)}
+          {hasTodos && (expanded ? <ChevronDown size={9} className="text-zinc-500" /> : <ChevronRight size={9} className="text-zinc-500" />)}
           <span>{cfg.emoji}</span>
-          {pct > 0 && <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold border" style={{ color: cfg.hex, borderColor: cfg.hex + '40', backgroundColor: cfg.hex + '15' }}>{pct}%</span>}
-          <span className="text-[11px] font-semibold text-zinc-300">{cfg.label}</span>
-          {open > 0 && <span className="text-[9px] text-zinc-500">{open} ouv.</span>}
+          {pct > 0 && <span className="px-1 py-0.5 rounded text-[9px] font-bold border" style={{ color: cfg.hex, borderColor: cfg.hex + '40', backgroundColor: cfg.hex + '15' }}>{pct}%</span>}
+          <span className="font-semibold text-zinc-300">{cfg.label}</span>
+          {open > 0 && <span className="text-[8px] text-zinc-500">{open} ouv.</span>}
         </span>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           {count > 0 && <span className="text-[9px] text-zinc-500">{count}x</span>}
-          <span className="text-xs font-mono font-bold" style={{ color: minutes > 0 ? cfg.hex : '#71717a' }}>
+          <span className="text-[11px] font-mono font-bold" style={{ color: minutes > 0 ? cfg.hex : '#71717a' }}>
             {formatMinutes(minutes) || '—'}
           </span>
         </div>
       </button>
-      {/* Mini progress bar */}
-      {minutes > 0 && (
-        <div className="h-1 bg-zinc-800">
-          <div className="h-full transition-all duration-300" style={{ width: `${pct}%`, backgroundColor: cfg.hex }} />
-        </div>
-      )}
-      {/* Expanded: individual tasks */}
-      {expanded && todos.length > 0 && (
-        <div className="px-3 pb-2 pt-1 space-y-0.5">
+      {minutes > 0 && <div className="h-0.5 bg-zinc-800"><div className="h-full" style={{ width: `${pct}%`, backgroundColor: cfg.hex }} /></div>}
+      {expanded && (
+        <div className="px-2.5 pb-2 pt-1 space-y-0.5">
           {todos.sort((a, b) => (a.completed_at ?? '').localeCompare(b.completed_at ?? '')).map(t => (
-            <div key={t.id} className="flex items-center gap-2 px-2 py-1 rounded-lg bg-zinc-900/50 text-[10px]">
+            <div key={t.id} className="flex items-center gap-2 px-2 py-1 rounded bg-zinc-900/50 text-[10px]">
               <span className="text-zinc-500 w-14 shrink-0 font-mono">{t.completed_at?.split('-').reverse().join('/') ?? ''}</span>
               <span className="flex-1 text-zinc-300 truncate">{t.text}</span>
               {t.completed_min ? <span className="text-emerald-400 font-mono shrink-0">{formatMinutes(t.completed_min)}</span> : null}
@@ -218,59 +269,59 @@ const CategoryAccordion = ({ cfg, pct, minutes, count, open, todos }: {
   )
 }
 
-// ─── Month card (archived months) ──────────────────────────────────────────
-const MonthCard = ({ entry, prev, isOpen, onToggle, customCategories }: {
+// ─── Archived month card ───────────────────────────────────────────────────
+const ArchivedMonthCard = ({ entry, prev, isOpen, onToggle, customCategories }: {
   entry: ArchiveMonth; prev: ArchiveMonth | null; isOpen: boolean; onToggle: () => void; customCategories?: CategoryConfig[]
 }) => {
-  const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(customCategories)
+  const { CATEGORY_CONFIG, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES } = getActiveCategories(customCategories)
   const s = entry.stats
+
+  const groups = useMemo(() => {
+    const result: Array<{ group: CategoryGroup; categories: string[]; minutes: number; pct: number; catData: Record<string, { minutes: number; count: number; todos: Todo[] }> }> = []
+    for (const [grp, cats] of [['travail', TRAVAIL_CATEGORIES], ['personnel', PERSONNEL_CATEGORIES]] as const) {
+      let grpMin = 0
+      const catData: Record<string, { minutes: number; count: number; todos: Todo[] }> = {}
+      for (const cat of cats) {
+        const catTodos = entry.todos.filter(t => t.category === cat)
+        const min = catTodos.reduce((s, t) => s + (t.completed_min ?? 0), 0)
+        catData[cat] = { minutes: min, count: catTodos.length, todos: catTodos }
+        grpMin += min
+      }
+      result.push({ group: grp, categories: cats, minutes: grpMin, pct: s.total_minutes > 0 ? Math.round((grpMin / s.total_minutes) * 100) : 0, catData })
+    }
+    return result
+  }, [entry, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES])
 
   return (
     <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 overflow-hidden">
-      {/* Header — always visible */}
       <button onClick={onToggle} className="w-full p-4 flex items-center gap-3 hover:bg-zinc-900/70 transition-all">
         {isOpen ? <ChevronDown size={16} className="text-zinc-400" /> : <ChevronRight size={16} className="text-zinc-400" />}
         <div className="flex-1 text-left">
           <p className="text-sm font-bold text-zinc-200">{fmtMonth(entry.month)}</p>
-          <p className="text-[10px] text-zinc-500 mt-0.5">
-            {entry.todos.length} tâches · {formatMinutes(s.total_minutes) || '0'} · {s.days_active}j actifs
-          </p>
+          <p className="text-[10px] text-zinc-500 mt-0.5">{entry.todos.length} tâches · {formatMinutes(s.total_minutes) || '0'} · {s.days_active}j actifs</p>
         </div>
         <div className="flex gap-2">
-          <span className="px-2 py-1 rounded-lg bg-violet-500/10 border border-violet-500/20 text-[10px] font-semibold text-violet-300">
-            {formatMinutes(s.travail_minutes) || '0'}
-          </span>
-          <span className="px-2 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-semibold text-cyan-300">
-            {formatMinutes(s.personnel_minutes) || '0'}
-          </span>
+          <span className="px-2 py-1 rounded-lg bg-violet-500/10 border border-violet-500/20 text-[10px] font-semibold text-violet-300">{formatMinutes(s.travail_minutes) || '0'}</span>
+          <span className="px-2 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-semibold text-cyan-300">{formatMinutes(s.personnel_minutes) || '0'}</span>
         </div>
       </button>
 
-      {/* Expanded: category accordions */}
       {isOpen && (
         <div className="px-4 pb-4 border-t border-zinc-800 pt-3 space-y-2">
-          {/* Quick stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
-            <MiniStat label="Ratio Travail" value={s.total_minutes > 0 ? `${Math.round((s.travail_minutes / s.total_minutes) * 100)}%` : '—'} />
-            <MiniStat label="Jour top" value={s.best_day ? `${s.best_day.date.split('-').reverse().join('/')} (${formatMinutes(s.best_day.minutes)})` : '—'} />
-            {prev && <MiniStat label="Delta Travail" value={`${(s.travail_minutes - (prev.stats?.travail_minutes ?? 0)) >= 0 ? '+' : ''}${formatMinutes(s.travail_minutes - (prev.stats?.travail_minutes ?? 0))}`}
-              color={(s.travail_minutes - (prev.stats?.travail_minutes ?? 0)) > 0 ? 'text-emerald-400' : (s.travail_minutes - (prev.stats?.travail_minutes ?? 0)) < 0 ? 'text-rose-400' : undefined} />}
-            {prev && <MiniStat label="Delta Personnel" value={`${(s.personnel_minutes - (prev.stats?.personnel_minutes ?? 0)) >= 0 ? '+' : ''}${formatMinutes(s.personnel_minutes - (prev.stats?.personnel_minutes ?? 0))}`}
-              color={(s.personnel_minutes - (prev.stats?.personnel_minutes ?? 0)) > 0 ? 'text-emerald-400' : (s.personnel_minutes - (prev.stats?.personnel_minutes ?? 0)) < 0 ? 'text-rose-400' : undefined} />}
-          </div>
-
-          {/* Per-category accordions */}
-          {CATEGORY_LIST.map(cat => {
-            const cfg = CATEGORY_CONFIG[cat]
-            const data = s.by_category?.[cat]
-            const min = data?.minutes ?? 0
-            const count = data?.count ?? 0
-            const pct = s.total_minutes > 0 ? Math.round((min / s.total_minutes) * 100) : 0
-            const catTodos = entry.todos.filter(t => t.category === cat)
-            return (
-              <CategoryAccordion key={cat} cfg={cfg} pct={pct} minutes={min} count={count} open={0} todos={catTodos} />
-            )
-          })}
+          {prev && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
+              <MiniStat label="Ratio Travail" value={s.total_minutes > 0 ? `${Math.round((s.travail_minutes / s.total_minutes) * 100)}%` : '—'} />
+              <MiniStat label="Jour top" value={s.best_day ? `${s.best_day.date.split('-').reverse().join('/')} (${formatMinutes(s.best_day.minutes)})` : '—'} />
+              <MiniStat label="Δ Travail" value={`${(s.travail_minutes - (prev.stats?.travail_minutes ?? 0)) >= 0 ? '+' : ''}${formatMinutes(s.travail_minutes - (prev.stats?.travail_minutes ?? 0))}`}
+                color={(s.travail_minutes - (prev.stats?.travail_minutes ?? 0)) > 0 ? 'text-emerald-400' : 'text-rose-400'} />
+              <MiniStat label="Δ Personnel" value={`${(s.personnel_minutes - (prev.stats?.personnel_minutes ?? 0)) >= 0 ? '+' : ''}${formatMinutes(s.personnel_minutes - (prev.stats?.personnel_minutes ?? 0))}`}
+                color={(s.personnel_minutes - (prev.stats?.personnel_minutes ?? 0)) > 0 ? 'text-emerald-400' : 'text-rose-400'} />
+            </div>
+          )}
+          {groups.map(g => (
+            <GroupAccordion key={g.group} group={g.group} groupMin={g.minutes} groupPct={g.pct} totalMin={s.total_minutes}
+              categories={g.categories} catData={g.catData} config={CATEGORY_CONFIG} />
+          ))}
         </div>
       )}
     </div>
