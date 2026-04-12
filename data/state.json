@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 342,
-    "updated_at": "2026-04-12T15:52:23.550Z",
+    "version": 343,
+    "updated_at": "2026-04-12T16:01:09.818Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -918,8 +918,22 @@
         }
       ],
       "done": true
+    },
+    {
+      "text": "guigu",
+      "category": "sport",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": "2026-04-24",
+      "completed_at": null,
+      "duration_min": null,
+      "completed_min": null,
+      "id": 10051,
+      "created": "2026-04-12",
+      "updated_at": "2026-04-12T16:01:09.463Z"
     }
   ],
-  "todos_next_id": 10051,
+  "todos_next_id": 10052,
   "archive": []
 }
