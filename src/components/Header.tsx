@@ -86,14 +86,14 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
           <button
             onClick={() => { if (reorderMode) startRename(tab); else onViewChange(tab.id) }}
             className={cn('rounded-lg font-semibold transition-all flex items-center gap-1',
-              isMobile ? 'px-2 py-1 text-[11px]' : 'px-3 py-1.5 text-xs gap-1.5',
+              isMobile ? 'px-2.5 py-1.5 text-xs' : 'px-3 py-1.5 text-xs gap-1.5',
               reorderMode && 'ring-1 ring-zinc-700',
               isActive
                 ? 'bg-gradient-to-br from-violet-600 to-cyan-600 text-white shadow-lg shadow-violet-500/20'
                 : isMobile
                   ? 'text-zinc-400 bg-zinc-900 border border-zinc-800'
                   : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60')}>
-            <span className={isMobile ? 'text-xs' : 'text-sm'}>{tab.emoji}</span>
+            <span className={isMobile ? 'text-base' : 'text-sm'}>{tab.emoji}</span>
             <span className={isMobile ? 'hidden sm:inline' : ''}>{tab.label}</span>
           </button>
         )}
