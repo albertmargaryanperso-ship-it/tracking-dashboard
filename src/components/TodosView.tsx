@@ -128,24 +128,26 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
         <TodoStat label="Temps cumulé" value={formatMinutes(filteredStats.minutes) || '0min'} sub={`${filteredStats.done} terminés`} color="blue" icon={<Clock size={14} className="text-blue-400" />} />
       </div>
 
-      {/* Navigation buttons → scroll to kanban columns */}
-      <div className="grid grid-cols-4 gap-1.5">
-        <button onClick={() => document.getElementById('kanban-board')?.scrollIntoView({ behavior: 'smooth' })}
-          className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-2.5 text-center hover:bg-emerald-500/10 transition-all">
-          <p className="text-lg font-extrabold text-emerald-400">{filteredStats.open}</p>
-          <p className="text-[9px] font-semibold text-emerald-300/70 uppercase tracking-wider">Ouverts</p>
-        </button>
-        {([
-          { id: 'col-todo', label: 'À faire', count: byColumn.todo.length, dot: 'bg-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/5 hover:bg-amber-500/10', text: 'text-amber-400', sub: 'text-amber-300/70' },
-          { id: 'col-delegated', label: 'Délégué', count: byColumn.delegated.length, dot: 'bg-violet-500', border: 'border-violet-500/30', bg: 'bg-violet-500/5 hover:bg-violet-500/10', text: 'text-violet-400', sub: 'text-violet-300/70' },
-          { id: 'col-waiting', label: 'En attente', count: byColumn.waiting.length, dot: 'bg-sky-500', border: 'border-sky-500/30', bg: 'bg-sky-500/5 hover:bg-sky-500/10', text: 'text-sky-400', sub: 'text-sky-300/70' },
-        ] as const).map(btn => (
-          <button key={btn.id} onClick={() => document.getElementById(btn.id)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-            className={cn('rounded-xl border p-2.5 text-center transition-all', btn.border, btn.bg)}>
-            <p className={cn('text-lg font-extrabold', btn.text)}>{btn.count}</p>
-            <p className={cn('text-[9px] font-semibold uppercase tracking-wider', btn.sub)}>{btn.label}</p>
+      {/* Navigation buttons — sticky on scroll */}
+      <div className="sticky top-[env(safe-area-inset-top,0px)] md:top-[60px] z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 bg-zinc-950/95 backdrop-blur-md" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 40px)' }}>
+        <div className="grid grid-cols-4 gap-1.5">
+          <button onClick={() => document.getElementById('kanban-board')?.scrollIntoView({ behavior: 'smooth' })}
+            className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-2 sm:p-2.5 text-center hover:bg-emerald-500/10 transition-all">
+            <p className="text-base sm:text-lg font-extrabold text-emerald-400">{filteredStats.open}</p>
+            <p className="text-[8px] sm:text-[9px] font-semibold text-emerald-300/70 uppercase tracking-wider">Ouverts</p>
           </button>
-        ))}
+          {([
+            { id: 'col-todo', label: 'À faire', count: byColumn.todo.length, border: 'border-amber-500/30', bg: 'bg-amber-500/5 hover:bg-amber-500/10', text: 'text-amber-400', sub: 'text-amber-300/70' },
+            { id: 'col-delegated', label: 'Délégué', count: byColumn.delegated.length, border: 'border-violet-500/30', bg: 'bg-violet-500/5 hover:bg-violet-500/10', text: 'text-violet-400', sub: 'text-violet-300/70' },
+            { id: 'col-waiting', label: 'En attente', count: byColumn.waiting.length, border: 'border-sky-500/30', bg: 'bg-sky-500/5 hover:bg-sky-500/10', text: 'text-sky-400', sub: 'text-sky-300/70' },
+          ] as const).map(btn => (
+            <button key={btn.id} onClick={() => document.getElementById(btn.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+              className={cn('rounded-xl border p-2 sm:p-2.5 text-center transition-all', btn.border, btn.bg)}>
+              <p className={cn('text-base sm:text-lg font-extrabold', btn.text)}>{btn.count}</p>
+              <p className={cn('text-[8px] sm:text-[9px] font-semibold uppercase tracking-wider', btn.sub)}>{btn.label}</p>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Log done todo button */}
@@ -296,20 +298,20 @@ const TodoCard = ({ todo, dragging, isDragOver, isActive, elapsedMinutes, config
   return (
     <div draggable={!isDone} onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart() }} 
       onDragEnd={onDragEnd} onDragOver={onDragOver} onDrop={onDrop}
-      className={cn('group relative rounded-xl border bg-zinc-900/70 hover:bg-zinc-900 p-2.5 transition-all',
+      className={cn('group relative rounded-xl border bg-zinc-900/70 hover:bg-zinc-900 p-3.5 transition-all',
         isDone ? 'border-zinc-800/60 opacity-60' : 'border-zinc-800 hover:border-emerald-500/30 cursor-grab active:cursor-grabbing',
         dragging && 'opacity-40 ring-2 ring-emerald-500/50',
         isDragOver && 'ring-2 ring-emerald-500/80 bg-zinc-800/50',
         isActive && 'border-cyan-500/50 bg-cyan-900/20 shadow-[0_0_15px_rgba(6,182,212,0.15)] ring-1 ring-cyan-500/30')}>
       <div className="flex items-start gap-2">
-        <button onClick={handleToggle} className={cn('shrink-0 mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all',
+        <button onClick={handleToggle} className={cn('shrink-0 mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all',
           isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-zinc-600 hover:border-emerald-400')}>
           {isDone && <Check size={9} strokeWidth={3.5} />}
         </button>
         <div className="flex-1 min-w-0">
-          <p className={cn('text-[12px] leading-snug font-medium', isDone ? 'line-through text-zinc-500' : (isActive ? 'text-cyan-300' : 'text-zinc-100'))}>{todo.text}</p>
-          <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
-            <span className={cn('px-1.5 py-0.5 rounded text-[9px] font-semibold border', cat.bg, cat.color)}>{cat.emoji} {cat.label}</span>
+          <p className={cn('text-sm leading-snug font-medium', isDone ? 'line-through text-zinc-500' : (isActive ? 'text-cyan-300' : 'text-zinc-100'))}>{todo.text}</p>
+          <div className="flex items-center gap-1.5 flex-wrap mt-2">
+            <span className={cn('px-2 py-0.5 rounded text-[10px] font-semibold border', cat.bg, cat.color)}>{cat.emoji} {cat.label}</span>
             {todo.status === 'delegated' && todo.delegated_to && <span className="text-[9px] text-violet-300 font-semibold">→ {todo.delegated_to}</span>}
             {todo.due && !isDone && (
               <span className={cn('flex items-center gap-0.5 text-[9px] font-semibold',
