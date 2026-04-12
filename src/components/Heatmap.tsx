@@ -63,11 +63,12 @@ export const Heatmap = ({ todos, days = 182, mode }: HeatmapProps) => {
     if (cell.future) return 'bg-zinc-900/30'
     const val = mode === 'travail' ? cell.travail : mode === 'personnel' ? cell.personnel : cell.travail + cell.personnel
     if (val === 0) return 'bg-zinc-800/60'
-    if (val >= 8) return 'bg-amber-500'
+    if (val >= 4) return 'bg-amber-500'
     const isViolet = mode === 'travail' || (mode === 'combined' && cell.travail >= cell.personnel)
-    if (val < 1) return isViolet ? 'bg-violet-500/20' : 'bg-cyan-500/20'
-    if (val < 2) return isViolet ? 'bg-violet-500/40' : 'bg-cyan-500/40'
-    if (val < 4) return isViolet ? 'bg-violet-500/60' : 'bg-cyan-500/60'
+    if (val < 0.5) return isViolet ? 'bg-violet-500/15' : 'bg-cyan-500/15'
+    if (val < 1)   return isViolet ? 'bg-violet-500/25' : 'bg-cyan-500/25'
+    if (val < 2)   return isViolet ? 'bg-violet-500/40' : 'bg-cyan-500/40'
+    if (val < 3)   return isViolet ? 'bg-violet-500/60' : 'bg-cyan-500/60'
     return isViolet ? 'bg-violet-500/80' : 'bg-cyan-500/80'
   }
 
