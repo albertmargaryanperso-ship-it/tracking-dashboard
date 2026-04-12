@@ -1,4 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="110" fill="#06b6d4"/>
-  <text x="256" y="290" text-anchor="middle" font-size="280" dominant-baseline="central">💎</text>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </linearGradient>
+    <filter id="glow">
+      <feDropShadow dx="0" dy="0" stdDeviation="8" flood-color="#06b6d4" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  <g transform="translate(256,270)" filter="url(#glow)">
+    <polygon points="0,-140 128,-32 80,118 -80,118 -128,-32" fill="none" stroke="#06b6d4" stroke-width="10"/>
+    <polygon points="0,-140 128,-32 80,118 -80,118 -128,-32" fill="#06b6d4" opacity="0.12"/>
+    <line x1="-128" y1="-32" x2="128" y2="-32" stroke="#06b6d4" stroke-width="6"/>
+    <line x1="0" y1="-140" x2="-48" y2="-32" stroke="#06b6d4" stroke-width="6"/>
+    <line x1="0" y1="-140" x2="48" y2="-32" stroke="#06b6d4" stroke-width="6"/>
+    <line x1="-48" y1="-32" x2="0" y2="118" stroke="#06b6d4" stroke-width="5" opacity="0.5"/>
+    <line x1="48" y1="-32" x2="0" y2="118" stroke="#06b6d4" stroke-width="5" opacity="0.5"/>
+    <polygon points="-48,-32 0,-140 48,-32" fill="white" opacity="0.2"/>
+  </g>
 </svg>

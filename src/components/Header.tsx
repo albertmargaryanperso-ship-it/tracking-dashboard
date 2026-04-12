@@ -121,7 +121,11 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
       {/* Desktop: brand + tabs */}
       <div className="hidden md:flex max-w-screen-2xl mx-auto px-6 py-3 items-center gap-3">
         <div className="flex items-center gap-3 shrink-0">
-          <div className="w-9 h-9 rounded-xl bg-zinc-900 border-2 border-cyan-500 flex items-center justify-center text-lg">💎</div>
+          <svg width={36} height={36} viewBox="0 0 192 192" className="rounded-xl shrink-0">
+            <defs><linearGradient id="hdr-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#fff"/><stop offset="100%" stopColor="#000"/></linearGradient></defs>
+            <rect width="192" height="192" rx="42" fill="url(#hdr-bg)"/>
+            <g transform="translate(96,100)"><polygon points="0,-52 48,-12 30,44 -30,44 -48,-12" fill="none" stroke="#06b6d4" strokeWidth="5"/><polygon points="0,-52 48,-12 30,44 -30,44 -48,-12" fill="#06b6d4" opacity="0.15"/><line x1="-48" y1="-12" x2="48" y2="-12" stroke="#06b6d4" strokeWidth="3"/><line x1="0" y1="-52" x2="-18" y2="-12" stroke="#06b6d4" strokeWidth="3"/><line x1="0" y1="-52" x2="18" y2="-12" stroke="#06b6d4" strokeWidth="3"/><polygon points="-18,-12 0,-52 18,-12" fill="white" opacity="0.25"/></g>
+          </svg>
           <h1 className="text-sm font-semibold tracking-tight">{appName ?? 'Tracking'}</h1>
         </div>
         <nav className="flex items-center gap-1 p-1 bg-zinc-900 border border-zinc-800 rounded-xl flex-1 justify-center">

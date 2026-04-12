@@ -93,7 +93,7 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: hex }} />
-                  <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: hex }}>{tab.emoji} {tab.label} — 6 mois</h3>
+                  <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: hex }}>{tab.emoji} {tab.label} — {isMobile ? '3 mois' : '6 mois'}</h3>
                 </div>
                 <span className="text-[10px] text-zinc-500 font-mono">{formatMinutes(tabGroup?.minutes ?? 0) || '0'} total</span>
               </div>
