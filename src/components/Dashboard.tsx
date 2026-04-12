@@ -1,4 +1,4 @@
-import { Flame, Clock, Activity, CheckCheck } from 'lucide-react'
+import { Clock, Activity, CheckCheck } from 'lucide-react'
 import type { AppState, Stats } from '@/types'
 import { StatCard } from './StatCard'
 import { Heatmap } from './Heatmap'
@@ -27,22 +27,20 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
                 personnel <span className="text-cyan-400 font-semibold">{formatMinutes(t.personnel_today_min) || '0'}</span>
               </span>
             </div>
+            {t.today_minutes > 0 && (
+              <div className="flex items-center gap-3 mt-2">
+                <div className="flex-1 h-2 rounded-full bg-zinc-800 overflow-hidden flex">
+                  <div className="h-full bg-violet-500 transition-all duration-500" style={{ width: `${t.today_minutes > 0 ? Math.round((t.travail_today_min / t.today_minutes) * 100) : 0}%` }} />
+                  <div className="h-full bg-cyan-500 transition-all duration-500" style={{ width: `${t.today_minutes > 0 ? Math.round((t.personnel_today_min / t.today_minutes) * 100) : 0}%` }} />
+                </div>
+                <span className="text-[10px] font-mono text-violet-300 shrink-0">{t.today_minutes > 0 ? Math.round((t.travail_today_min / t.today_minutes) * 100) : 0}%</span>
+                <span className="text-[10px] font-mono text-cyan-300 shrink-0">{t.today_minutes > 0 ? Math.round((t.personnel_today_min / t.today_minutes) * 100) : 0}%</span>
+              </div>
+            )}
           </div>
           <div className="flex gap-3">
-            <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-br from-violet-500/10 to-violet-500/5 border border-violet-500/20">
-              <Flame className="text-violet-400" size={24} />
-              <div>
-                <p className="text-2xl font-extrabold text-violet-300">{t.streak_travail}</p>
-                <p className="text-[9px] text-violet-400/80 uppercase tracking-wider font-semibold">travail</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 border border-cyan-500/20">
-              <Flame className="text-cyan-400" size={24} />
-              <div>
-                <p className="text-2xl font-extrabold text-cyan-300">{t.streak_personnel}</p>
-                <p className="text-[9px] text-cyan-400/80 uppercase tracking-wider font-semibold">personnel</p>
-              </div>
-            </div>
+            <StreakFlame streak={t.streak_travail} label="Streak Travail" color="violet" />
+            <StreakFlame streak={t.streak_personnel} label="Streak Personnel" color="cyan" />
           </div>
         </div>
       </div>
@@ -77,6 +75,12 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
           </div>
           <Heatmap todos={state.todos} archive={state.archive} customCategories={state.meta.custom_categories} mode="personnel" days={182} />
         </div>
+      </div>
+
+      {/* % breakdown — week & month */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <PercentCard label="Semaine" travail={t.travail_week_min} personnel={t.personnel_week_min} />
+        <PercentCard label="Mois" travail={t.travail_month_min} personnel={t.personnel_month_min} />
       </div>
 
       {/* Categories */}
@@ -119,6 +123,78 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
             })}
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Streak flame component ────────────────────────────────────────────────
+const StreakFlame = ({ streak, label, color }: { streak: number; label: string; color: 'violet' | 'cyan' }) => {
+  // Intensity: 0=dead, 1-2=low, 3-6=medium, 7-13=high, 14+=blazing
+  const intensity = streak === 0 ? 0 : streak <= 2 ? 1 : streak <= 6 ? 2 : streak <= 13 ? 3 : 4
+  const flames = intensity === 0 ? 1 : intensity
+  const speed = [0, 2.5, 1.8, 1.2, 0.7][intensity]
+  const scale = [0.7, 0.85, 1, 1.15, 1.3][intensity]
+  const glow = [0, 0, 8, 15, 25][intensity]
+
+  const flameColor = color === 'violet'
+    ? { from: '#8b5cf6', to: '#c084fc', glow: 'rgba(139,92,246,' }
+    : { from: '#06b6d4', to: '#67e8f9', glow: 'rgba(6,182,212,' }
+
+  return (
+    <div className={cn('flex items-center gap-2 px-4 py-3 rounded-2xl border transition-all',
+      color === 'violet'
+        ? 'bg-gradient-to-br from-violet-500/10 to-violet-500/5 border-violet-500/20'
+        : 'bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 border-cyan-500/20')}
+      style={{ boxShadow: glow > 0 ? `0 0 ${glow}px ${flameColor.glow}0.3)` : undefined }}>
+      <div className="relative flex items-end justify-center" style={{ width: 28, height: 28, transform: `scale(${scale})` }}>
+        {Array.from({ length: flames }).map((_, i) => (
+          <div key={i} className="absolute bottom-0"
+            style={{
+              width: 14 - i * 2,
+              height: 20 - i * 3,
+              left: '50%',
+              transform: `translateX(-50%) translateX(${(i - Math.floor(flames / 2)) * 4}px)`,
+              background: `linear-gradient(to top, ${flameColor.from}, ${flameColor.to})`,
+              borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+              animation: `flicker ${speed}s ease-in-out infinite`,
+              animationDelay: `${i * 0.15}s`,
+              opacity: 1 - i * 0.15,
+            }} />
+        ))}
+      </div>
+      <div>
+        <p className={cn('text-2xl font-extrabold', color === 'violet' ? 'text-violet-300' : 'text-cyan-300')}>{streak}</p>
+        <p className={cn('text-[9px] uppercase tracking-wider font-semibold', color === 'violet' ? 'text-violet-400/80' : 'text-cyan-400/80')}>
+          {streak === 0 ? 'pas de streak' : 'streak'}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ─── Percent breakdown card ────────────────────────────────────────────────
+const PercentCard = ({ label, travail, personnel }: { label: string; travail: number; personnel: number }) => {
+  const total = travail + personnel
+  const pctT = total > 0 ? Math.round((travail / total) * 100) : 0
+  const pctP = total > 0 ? 100 - pctT : 0
+  return (
+    <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">{label}</p>
+        <p className="text-xs font-mono text-zinc-300">{formatMinutes(total) || '0'}</p>
+      </div>
+      <div className="h-3 rounded-full bg-zinc-800 overflow-hidden flex">
+        {total > 0 && (
+          <>
+            <div className="h-full bg-violet-500 transition-all duration-500" style={{ width: `${pctT}%` }} />
+            <div className="h-full bg-cyan-500 transition-all duration-500" style={{ width: `${pctP}%` }} />
+          </>
+        )}
+      </div>
+      <div className="flex justify-between mt-1.5">
+        <span className="text-[10px] text-violet-400 font-semibold">Travail {pctT}%</span>
+        <span className="text-[10px] text-cyan-400 font-semibold">Personnel {pctP}%</span>
       </div>
     </div>
   )

@@ -25,6 +25,12 @@
 
 @keyframes slideIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes flicker {
+  0%, 100% { transform: translateX(-50%) scaleY(1) scaleX(1); opacity: 1; }
+  25% { transform: translateX(-50%) scaleY(1.1) scaleX(0.9); opacity: 0.9; }
+  50% { transform: translateX(-50%) scaleY(0.85) scaleX(1.05); opacity: 1; }
+  75% { transform: translateX(-50%) scaleY(1.05) scaleX(0.95); opacity: 0.85; }
+}
 
 /* Date inputs: show placeholder text when empty on iOS */
 input[type="date"]:not(:valid):not(:focus)::before {

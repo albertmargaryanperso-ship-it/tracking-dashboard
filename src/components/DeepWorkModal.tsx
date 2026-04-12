@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Square, X } from 'lucide-react'
 import type { AppState } from '@/types'
 import { useActiveTimer } from '@/hooks/useActiveTimer'
@@ -12,6 +12,16 @@ interface DeepWorkModalProps {
 export const DeepWorkModal = ({ state, onToggleTodo }: DeepWorkModalProps) => {
   const { activeTodoId, elapsedMinutes, elapsedSeconds, stopTimer } = useActiveTimer()
   const [isOpen, setIsOpen] = useState(false)
+  const prevTodoIdRef = useRef<number | null>(null)
+
+  // Auto-open zen mode when a new timer starts
+  useEffect(() => {
+    if (activeTodoId && activeTodoId !== prevTodoIdRef.current) {
+      setIsOpen(true)
+    }
+    if (!activeTodoId) setIsOpen(false)
+    prevTodoIdRef.current = activeTodoId
+  }, [activeTodoId])
 
   if (!activeTodoId) return null
 
