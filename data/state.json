@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 423,
-    "updated_at": "2026-04-12T20:08:22.199Z",
+    "updated_at": "2026-04-12T20:08:23.365Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -138,17 +138,17 @@
         ]
       },
       {
-        "id": "historique",
-        "label": "Historique",
-        "emoji": "📜",
-        "type": "historique",
-        "removable": false
-      },
-      {
         "id": "charts",
         "label": "Analyse",
         "emoji": "📈",
         "type": "charts",
+        "removable": false
+      },
+      {
+        "id": "historique",
+        "label": "Historique",
+        "emoji": "📜",
+        "type": "historique",
         "removable": false
       },
       {
