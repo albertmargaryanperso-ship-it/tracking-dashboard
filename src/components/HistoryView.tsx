@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { ChevronDown, ChevronRight, Calendar, Clock, TrendingUp, Award, Pencil, Trash2, Check, X } from 'lucide-react'
-import type { AppState, ArchiveMonth, Todo, TodoCategory, CategoryConfig, CategoryGroup } from '@/types'
-import { cn, formatMinutes, categoryGroup, todayISO, getActiveCategories } from '@/lib/utils'
+import type { AppState, ArchiveMonth, Todo, TodoCategory, CategoryConfig, CategoryGroup, TabConfig } from '@/types'
+import { cn, formatMinutes, categoryGroup, todayISO, getActiveCategories, getTodoTabs } from '@/lib/utils'
 
 interface HistoryViewProps {
   state: AppState
@@ -12,10 +12,7 @@ interface HistoryViewProps {
 const MONTH_NAMES = ['', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']
 const fmtMonth = (m: string): string => { const [y, mm] = m.split('-'); return `${MONTH_NAMES[parseInt(mm, 10)] ?? mm} ${y}` }
 
-const GROUP_META: Record<CategoryGroup, { label: string; emoji: string; color: string; border: string; bg: string; hex: string }> = {
-  travail: { label: 'Travail', emoji: '💼', color: 'text-violet-400', border: 'border-violet-500/30', bg: 'bg-violet-500/5', hex: '#8b5cf6' },
-  personnel: { label: 'Personnel', emoji: '🧘', color: 'text-cyan-400', border: 'border-cyan-500/30', bg: 'bg-cyan-500/5', hex: '#06b6d4' },
-}
+const TAB_COLORS = ['#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#f472b6', '#fb923c']
 
 export const HistoryView = ({ state, onEditArchived, onDeleteArchived }: HistoryViewProps) => {
   const [openMonth, setOpenMonth] = useState<string | null>(null)
@@ -32,8 +29,9 @@ export const HistoryView = ({ state, onEditArchived, onDeleteArchived }: History
     return { dayOfMonth, daysInMonth, daysLeft, pct, monthStr }
   }, [])
 
-  // Source unique : getActiveCategories
-  const { CATEGORY_CONFIG, CATEGORY_LIST, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES } = getActiveCategories(state.meta.custom_categories)
+  // Sources uniques
+  const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(state.meta.custom_categories)
+  const todoTabs = getTodoTabs(state.meta.custom_tabs)
 
   // Current month data grouped
   const currentMonthData = useMemo(() => {
@@ -51,10 +49,8 @@ export const HistoryView = ({ state, onEditArchived, onDeleteArchived }: History
       if (t.status !== 'done' && byCategory[t.category]) byCategory[t.category].open += 1
     }
     const totalMin = doneTodos.reduce((s, t) => s + (t.completed_min ?? 0), 0)
-    const travailMin = doneTodos.filter(t => TRAVAIL_CATEGORIES.includes(t.category)).reduce((s, t) => s + (t.completed_min ?? 0), 0)
-    const personnelMin = totalMin - travailMin
-    return { byCategory, totalMin, travailMin, personnelMin, doneCount: doneTodos.length }
-  }, [state.todos, CATEGORY_LIST, TRAVAIL_CATEGORIES])
+    return { byCategory, totalMin, doneCount: doneTodos.length }
+  }, [state.todos, CATEGORY_LIST])
 
   // 30-day chart
   const last30Days = useMemo(() => {
@@ -77,10 +73,10 @@ export const HistoryView = ({ state, onEditArchived, onDeleteArchived }: History
   }, [state.todos, state.archive])
   const maxDayMin = Math.max(1, ...last30Days.map(d => d.travail + d.personnel))
 
-  // Build group data for any set of todos
-  const buildGroupData = (todos: Todo[], totalMin: number) => {
-    const groups: Array<{ group: CategoryGroup; categories: string[]; minutes: number; pct: number; catData: Record<string, { minutes: number; count: number; todos: Todo[] }> }> = []
-    for (const [grp, cats] of [['travail', TRAVAIL_CATEGORIES], ['personnel', PERSONNEL_CATEGORIES]] as const) {
+  // Build group data from tabs (not hardcoded)
+  const buildGroupData = (todos: Todo[], totalMin: number, tabs: TabConfig[]) => {
+    return tabs.map((tab, i) => {
+      const cats = tab.categoryFilter?.length ? tab.categoryFilter : CATEGORY_LIST
       let grpMin = 0
       const catData: Record<string, { minutes: number; count: number; todos: Todo[] }> = {}
       for (const cat of cats) {
@@ -89,9 +85,8 @@ export const HistoryView = ({ state, onEditArchived, onDeleteArchived }: History
         catData[cat] = { minutes: min, count: catTodos.length, todos: catTodos }
         grpMin += min
       }
-      groups.push({ group: grp, categories: cats, minutes: grpMin, pct: totalMin > 0 ? Math.round((grpMin / totalMin) * 100) : 0, catData })
-    }
-    return groups
+      return { tab, categories: cats, minutes: grpMin, pct: totalMin > 0 ? Math.round((grpMin / totalMin) * 100) : 0, catData, colorIdx: i }
+    })
   }
 
   return (
@@ -113,15 +108,17 @@ export const HistoryView = ({ state, onEditArchived, onDeleteArchived }: History
           <p className="text-[9px] text-zinc-600 mt-1">Archivage automatique au 1er du mois suivant.</p>
         </div>
 
-        {/* Level 2: Travail / Personnel groups */}
+        {/* Level 2: Groups from tabs */}
         {currentMonthOpen && (
           <div className="px-4 pb-4 border-t border-zinc-800 pt-3 space-y-2">
             {buildGroupData(
               state.todos.filter(t => t.status === 'done' && t.completed_at?.startsWith(todayISO().slice(0, 7))),
-              currentMonthData.totalMin
+              currentMonthData.totalMin, todoTabs
             ).map(g => (
-              <GroupAccordion key={g.group} group={g.group} groupMin={g.minutes} groupPct={g.pct} totalMin={currentMonthData.totalMin}
-                categories={g.categories} catData={g.catData} config={CATEGORY_CONFIG} showOpen currentMonthCats={currentMonthData.byCategory} />
+              <GroupAccordion key={g.tab.id} tab={g.tab} colorHex={TAB_COLORS[g.colorIdx % TAB_COLORS.length]}
+                groupMin={g.minutes} groupPct={g.pct}
+                categories={g.categories} catData={g.catData} config={CATEGORY_CONFIG}
+                showOpen currentMonthCats={currentMonthData.byCategory} />
             ))}
             {currentMonthData.doneCount === 0 && <p className="text-[10px] text-zinc-600 italic text-center py-2">Aucune tâche terminée ce mois-ci.</p>}
           </div>
@@ -184,7 +181,7 @@ export const HistoryView = ({ state, onEditArchived, onDeleteArchived }: History
           <ArchivedMonthCard key={entry.month} entry={entry} prev={prev}
             isOpen={openMonth === entry.month}
             onToggle={() => setOpenMonth(openMonth === entry.month ? null : entry.month)}
-            customCategories={state.meta.custom_categories}
+            customCategories={state.meta.custom_categories} customTabs={state.meta.custom_tabs}
             onEditTodo={onEditArchived} onDeleteTodo={onDeleteArchived} />
         )
       })}
@@ -193,36 +190,33 @@ export const HistoryView = ({ state, onEditArchived, onDeleteArchived }: History
 }
 
 // ─── Group accordion (Travail / Personnel) ─────────────────────────────────
-const GroupAccordion = ({ group, groupMin, groupPct, totalMin, categories, catData, config, showOpen, currentMonthCats, month, onEdit, onDelete }: {
-  group: CategoryGroup; groupMin: number; groupPct: number; totalMin: number
+const GroupAccordion = ({ tab, colorHex, groupMin, groupPct, categories, catData, config, showOpen, currentMonthCats, month, onEdit, onDelete }: {
+  tab: TabConfig; colorHex: string; groupMin: number; groupPct: number
   categories: string[]; catData: Record<string, { minutes: number; count: number; todos: Todo[] }>
   config: Record<string, CategoryConfig>; showOpen?: boolean
   currentMonthCats?: Record<string, { open: number }>
   month?: string; onEdit?: (month: string, todoId: number, patch: Partial<Todo>) => void; onDelete?: (month: string, todoId: number) => void
 }) => {
   const [expanded, setExpanded] = useState(false)
-  const meta = GROUP_META[group]
 
   return (
-    <div className={cn('rounded-xl border overflow-hidden', meta.border, meta.bg)}>
+    <div className="rounded-xl border overflow-hidden" style={{ borderColor: colorHex + '30', backgroundColor: colorHex + '08' }}>
       <button onClick={() => setExpanded(o => !o)} className="w-full px-3 py-3 flex items-center justify-between gap-2 hover:bg-zinc-800/30 transition-all">
         <span className="flex items-center gap-2">
           {expanded ? <ChevronDown size={12} className="text-zinc-400" /> : <ChevronRight size={12} className="text-zinc-400" />}
-          <span className="text-sm">{meta.emoji}</span>
-          {groupPct > 0 && <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold border" style={{ color: meta.hex, borderColor: meta.hex + '40', backgroundColor: meta.hex + '15' }}>{groupPct}%</span>}
-          <span className={cn('text-[12px] font-bold', meta.color)}>{meta.label}</span>
+          <span className="text-sm">{tab.emoji}</span>
+          {groupPct > 0 && <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold border" style={{ color: colorHex, borderColor: colorHex + '40', backgroundColor: colorHex + '15' }}>{groupPct}%</span>}
+          <span className="text-[12px] font-bold" style={{ color: colorHex }}>{tab.label}</span>
         </span>
-        <span className="text-sm font-mono font-bold" style={{ color: groupMin > 0 ? meta.hex : '#71717a' }}>
+        <span className="text-sm font-mono font-bold" style={{ color: groupMin > 0 ? colorHex : '#71717a' }}>
           {formatMinutes(groupMin) || '—'}
         </span>
       </button>
       {groupMin > 0 && (
         <div className="h-1 bg-zinc-800/50">
-          <div className="h-full transition-all duration-300" style={{ width: `${groupPct}%`, backgroundColor: meta.hex }} />
+          <div className="h-full transition-all duration-300" style={{ width: `${groupPct}%`, backgroundColor: colorHex }} />
         </div>
       )}
-
-      {/* Level 3: Individual categories */}
       {expanded && (
         <div className="px-3 pb-3 pt-2 space-y-1.5">
           {categories.map(cat => {
@@ -320,16 +314,18 @@ const CategoryAccordion = ({ cfg, pct, minutes, count, open, todos, month, onEdi
 }
 
 // ─── Archived month card ───────────────────────────────────────────────────
-const ArchivedMonthCard = ({ entry, prev, isOpen, onToggle, customCategories, onEditTodo, onDeleteTodo }: {
-  entry: ArchiveMonth; prev: ArchiveMonth | null; isOpen: boolean; onToggle: () => void; customCategories?: CategoryConfig[]
+const ArchivedMonthCard = ({ entry, prev, isOpen, onToggle, customCategories, customTabs, onEditTodo, onDeleteTodo }: {
+  entry: ArchiveMonth; prev: ArchiveMonth | null; isOpen: boolean; onToggle: () => void
+  customCategories?: CategoryConfig[]; customTabs?: TabConfig[]
   onEditTodo?: (month: string, todoId: number, patch: Partial<Todo>) => void; onDeleteTodo?: (month: string, todoId: number) => void
 }) => {
-  const { CATEGORY_CONFIG, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES } = getActiveCategories(customCategories)
+  const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(customCategories)
+  const archiveTabs = getTodoTabs(customTabs)
   const s = entry.stats
 
   const groups = useMemo(() => {
-    const result: Array<{ group: CategoryGroup; categories: string[]; minutes: number; pct: number; catData: Record<string, { minutes: number; count: number; todos: Todo[] }> }> = []
-    for (const [grp, cats] of [['travail', TRAVAIL_CATEGORIES], ['personnel', PERSONNEL_CATEGORIES]] as const) {
+    return archiveTabs.map((tab, i) => {
+      const cats = tab.categoryFilter?.length ? tab.categoryFilter : CATEGORY_LIST
       let grpMin = 0
       const catData: Record<string, { minutes: number; count: number; todos: Todo[] }> = {}
       for (const cat of cats) {
@@ -338,10 +334,9 @@ const ArchivedMonthCard = ({ entry, prev, isOpen, onToggle, customCategories, on
         catData[cat] = { minutes: min, count: catTodos.length, todos: catTodos }
         grpMin += min
       }
-      result.push({ group: grp, categories: cats, minutes: grpMin, pct: s.total_minutes > 0 ? Math.round((grpMin / s.total_minutes) * 100) : 0, catData })
-    }
-    return result
-  }, [entry, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES])
+      return { tab, categories: cats, minutes: grpMin, pct: s.total_minutes > 0 ? Math.round((grpMin / s.total_minutes) * 100) : 0, catData, colorIdx: i }
+    })
+  }, [entry, archiveTabs, CATEGORY_LIST])
 
   return (
     <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 overflow-hidden">
@@ -351,26 +346,27 @@ const ArchivedMonthCard = ({ entry, prev, isOpen, onToggle, customCategories, on
           <p className="text-sm font-bold text-zinc-200">{fmtMonth(entry.month)}</p>
           <p className="text-[10px] text-zinc-500 mt-0.5">{entry.todos.length} tâches · {formatMinutes(s.total_minutes) || '0'} · {s.days_active}j actifs</p>
         </div>
-        <div className="flex gap-2">
-          <span className="px-2 py-1 rounded-lg bg-violet-500/10 border border-violet-500/20 text-[10px] font-semibold text-violet-300">{formatMinutes(s.travail_minutes) || '0'}</span>
-          <span className="px-2 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-[10px] font-semibold text-cyan-300">{formatMinutes(s.personnel_minutes) || '0'}</span>
+        <div className="flex gap-1.5 flex-wrap">
+          {groups.map(g => (
+            <span key={g.tab.id} className="px-2 py-1 rounded-lg text-[10px] font-semibold"
+              style={{ backgroundColor: TAB_COLORS[g.colorIdx % TAB_COLORS.length] + '15', borderColor: TAB_COLORS[g.colorIdx % TAB_COLORS.length] + '30', color: TAB_COLORS[g.colorIdx % TAB_COLORS.length], border: '1px solid' }}>
+              {formatMinutes(g.minutes) || '0'}
+            </span>
+          ))}
         </div>
       </button>
 
       {isOpen && (
         <div className="px-4 pb-4 border-t border-zinc-800 pt-3 space-y-2">
           {prev && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
-              <MiniStat label="Ratio Travail" value={s.total_minutes > 0 ? `${Math.round((s.travail_minutes / s.total_minutes) * 100)}%` : '—'} />
+            <div className="grid grid-cols-2 gap-2 mb-2">
               <MiniStat label="Jour top" value={s.best_day ? `${s.best_day.date.split('-').reverse().join('/')} (${formatMinutes(s.best_day.minutes)})` : '—'} />
-              <MiniStat label="Δ Travail" value={`${(s.travail_minutes - (prev.stats?.travail_minutes ?? 0)) >= 0 ? '+' : ''}${formatMinutes(s.travail_minutes - (prev.stats?.travail_minutes ?? 0))}`}
-                color={(s.travail_minutes - (prev.stats?.travail_minutes ?? 0)) > 0 ? 'text-emerald-400' : 'text-rose-400'} />
-              <MiniStat label="Δ Personnel" value={`${(s.personnel_minutes - (prev.stats?.personnel_minutes ?? 0)) >= 0 ? '+' : ''}${formatMinutes(s.personnel_minutes - (prev.stats?.personnel_minutes ?? 0))}`}
-                color={(s.personnel_minutes - (prev.stats?.personnel_minutes ?? 0)) > 0 ? 'text-emerald-400' : 'text-rose-400'} />
+              <MiniStat label="Jours actifs" value={`${s.days_active}j`} />
             </div>
           )}
           {groups.map(g => (
-            <GroupAccordion key={g.group} group={g.group} groupMin={g.minutes} groupPct={g.pct} totalMin={s.total_minutes}
+            <GroupAccordion key={g.tab.id} tab={g.tab} colorHex={TAB_COLORS[g.colorIdx % TAB_COLORS.length]}
+              groupMin={g.minutes} groupPct={g.pct}
               categories={g.categories} catData={g.catData} config={CATEGORY_CONFIG}
               month={entry.month} onEdit={onEditTodo} onDelete={onDeleteTodo} />
           ))}

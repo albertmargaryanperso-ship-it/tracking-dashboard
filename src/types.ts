@@ -130,6 +130,8 @@ export interface Stats {
     personnel_month_min: number
     streak_travail: number
     streak_personnel: number
+    streaks_by_tab: Record<string, number>
+    by_tab: Record<string, { today: number; week: number; month: number; total: number }>
     by_category: Record<string, { total: number; open: number; done: number; minutes: number }>
     by_group: Record<string, { total: number; open: number; done: number; minutes: number }>
   }

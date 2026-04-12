@@ -162,10 +162,10 @@ export const categoryGroup = (cat: string, custom?: CategoryConfig[]): CategoryG
 import type { TabConfig } from '@/types'
 
 export const DEFAULT_TABS: TabConfig[] = [
-  { id: 'dashboard', label: 'Dashboard', emoji: '📊', type: 'dashboard', removable: false },
+  { id: 'dashboard', label: 'Tableau de bord', emoji: '📊', type: 'dashboard', removable: false },
   { id: 'todo-travail', label: 'Travail', emoji: '💼', type: 'todos', categoryFilter: DEFAULT_TRAVAIL_CATEGORIES, removable: true },
   { id: 'todo-personnel', label: 'Personnel', emoji: '🧘', type: 'todos', categoryFilter: DEFAULT_PERSONNEL_CATEGORIES, removable: true },
-  { id: 'charts', label: 'Camemberts', emoji: '🥧', type: 'charts', removable: true },
+  { id: 'charts', label: 'Analyse', emoji: '📈', type: 'charts', removable: true },
   { id: 'historique', label: 'Historique', emoji: '📜', type: 'historique', removable: true },
   { id: 'settings', label: 'Paramètres', emoji: '⚙️', type: 'settings', removable: false },
 ]
@@ -173,6 +173,20 @@ export const DEFAULT_TABS: TabConfig[] = [
 export const getActiveTabs = (custom?: TabConfig[]): TabConfig[] => {
   if (custom && custom.length > 0) return custom
   return DEFAULT_TABS
+}
+
+/** Returns only the todo-type tabs — these ARE the groups for Dashboard/History/Charts */
+export const getTodoTabs = (custom?: TabConfig[]): TabConfig[] => {
+  return getActiveTabs(custom).filter(t => t.type === 'todos')
+}
+
+/** Get which tab a category belongs to (first match). Returns tab id or null */
+export const categoryTabId = (cat: string, tabs: TabConfig[]): string | null => {
+  const todoTabs = tabs.filter(t => t.type === 'todos')
+  for (const tab of todoTabs) {
+    if (!tab.categoryFilter || tab.categoryFilter.length === 0 || tab.categoryFilter.includes(cat)) return tab.id
+  }
+  return todoTabs[0]?.id ?? null
 }
 
 // ─── Habit config — kept for backward compat with routine entries ─────────

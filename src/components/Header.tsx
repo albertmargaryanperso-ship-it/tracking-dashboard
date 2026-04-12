@@ -16,6 +16,16 @@ interface HeaderProps {
 export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWithTodos, customCategories }: HeaderProps) => {
   const [reorderMode, setReorderMode] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
+  const [editingTabId, setEditingTabId] = useState<string | null>(null)
+  const [editLabel, setEditLabel] = useState('')
+
+  const startRename = (tab: TabConfig) => { setEditingTabId(tab.id); setEditLabel(tab.label) }
+  const saveRename = () => {
+    if (editingTabId && editLabel.trim()) {
+      onUpdateTabs(tabs.map(t => t.id === editingTabId ? { ...t, label: editLabel.trim() } : t))
+    }
+    setEditingTabId(null)
+  }
 
   const moveTab = (id: string, dir: -1 | 1) => {
     const idx = tabs.findIndex(t => t.id === id)
@@ -52,6 +62,7 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
 
   const renderTab = (tab: TabConfig, isMobile: boolean) => {
     const isActive = view === tab.id
+    const isEditing = editingTabId === tab.id
     return (
       <div key={tab.id} className="relative flex items-center shrink-0">
         {reorderMode && (
@@ -60,18 +71,25 @@ export const Header = ({ view, onViewChange, tabs, onUpdateTabs, onDeleteTabWith
             <ChevronLeft size={12} />
           </button>
         )}
-        <button
-          onClick={() => { if (!reorderMode) onViewChange(tab.id) }}
-          className={cn('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5',
-            reorderMode && 'animate-pulse ring-1 ring-zinc-700',
-            isActive
-              ? 'bg-gradient-to-br from-violet-600 to-cyan-600 text-white shadow-lg shadow-violet-500/20'
-              : isMobile
-                ? 'text-zinc-400 bg-zinc-900 border border-zinc-800'
-                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60')}>
-          <span className={isMobile ? '' : 'text-sm'}>{tab.emoji}</span>
-          {tab.label}
-        </button>
+        {isEditing ? (
+          <input value={editLabel} onChange={e => setEditLabel(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') setEditingTabId(null) }}
+            onBlur={saveRename} autoFocus
+            className="px-2 py-1 rounded-lg text-xs font-semibold bg-zinc-800 border border-emerald-500 text-zinc-100 focus:outline-none w-24" />
+        ) : (
+          <button
+            onClick={() => { if (reorderMode) startRename(tab); else onViewChange(tab.id) }}
+            className={cn('px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5',
+              reorderMode && 'ring-1 ring-zinc-700',
+              isActive
+                ? 'bg-gradient-to-br from-violet-600 to-cyan-600 text-white shadow-lg shadow-violet-500/20'
+                : isMobile
+                  ? 'text-zinc-400 bg-zinc-900 border border-zinc-800'
+                  : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60')}>
+            <span className={isMobile ? '' : 'text-sm'}>{tab.emoji}</span>
+            {tab.label}
+          </button>
+        )}
         {reorderMode && (
           <button onClick={(e) => { e.stopPropagation(); moveTab(tab.id, 1) }}
             className="p-0.5 text-zinc-500 hover:text-zinc-200 transition-all">

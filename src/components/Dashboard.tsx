@@ -2,13 +2,16 @@ import { Clock, Activity, CheckCheck } from 'lucide-react'
 import type { AppState, Stats } from '@/types'
 import { StatCard } from './StatCard'
 import { Heatmap } from './Heatmap'
-import { formatMinutes, cn, getActiveCategories } from '@/lib/utils'
+import { formatMinutes, cn, getActiveCategories, getTodoTabs, todayISO } from '@/lib/utils'
+
+const TAB_COLORS = ['#8b5cf6', '#06b6d4', '#f59e0b', '#10b981', '#f472b6', '#fb923c']
 
 interface DashboardProps { state: AppState; stats: Stats }
 
 export const Dashboard = ({ state, stats }: DashboardProps) => {
   const t = stats.tracking
-  const { CATEGORY_CONFIG, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES } = getActiveCategories(state.meta.custom_categories)
+  const { CATEGORY_CONFIG } = getActiveCategories(state.meta.custom_categories)
+  const todoTabs = getTodoTabs(state.meta.custom_tabs)
 
   return (
     <div className="space-y-6">
@@ -22,73 +25,98 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
               style={{ letterSpacing: '-0.02em' }}>
               {formatMinutes(t.today_minutes) || '0min'}
             </p>
-            <div className="flex items-center gap-2 mt-1.5 text-[11px]">
-              <span className="text-violet-400 font-semibold">{formatMinutes(t.travail_today_min) || '0'} travail</span>
-              <span className="text-zinc-600">·</span>
-              <span className="text-cyan-400 font-semibold">{formatMinutes(t.personnel_today_min) || '0'} perso</span>
+            <div className="flex items-center gap-2 mt-1.5 text-[11px] flex-wrap">
+              {todoTabs.map((tab, i) => {
+                const tabMin = (tab.categoryFilter ?? []).reduce((s, c) => {
+                  const done = state.todos.filter(td => td.status === 'done' && td.category === c && td.completed_at === todayISO())
+                  return s + done.reduce((ss, td) => ss + (td.completed_min ?? 0), 0)
+                }, 0)
+                return (
+                  <span key={tab.id}>
+                    {i > 0 && <span className="text-zinc-600 mr-2">·</span>}
+                    <span className="font-semibold" style={{ color: TAB_COLORS[i % TAB_COLORS.length] }}>{formatMinutes(tabMin) || '0'} {tab.label}</span>
+                  </span>
+                )
+              })}
             </div>
           </div>
-          <div className="flex gap-3">
-            <StreakFlame streak={t.streak_travail} label="Streak Travail" color="violet" />
-            <StreakFlame streak={t.streak_personnel} label="Streak Personnel" color="cyan" />
+          {/* Todos ouverts — in hero */}
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5">
+            <CheckCheck size={20} className="text-emerald-400" />
+            <div>
+              <p className="text-2xl font-extrabold text-emerald-300">{stats.todos.open}</p>
+              <p className="text-[9px] text-emerald-400/80 uppercase tracking-wider font-semibold">{stats.todos.urgent} urgent{stats.todos.urgent > 1 ? 's' : ''}</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard label="Travail — semaine" value={formatMinutes(t.travail_week_min) || '0'} sub={`${formatMinutes(t.travail_month_min) || '0'} ce mois`} accent="vault" icon={<Clock size={14} />} />
-        <StatCard label="Personnel — semaine" value={formatMinutes(t.personnel_week_min) || '0'} sub={`${formatMinutes(t.personnel_month_min) || '0'} ce mois`} accent="routine" icon={<Activity size={14} />} />
-        <StatCard label="Todos ouverts" value={stats.todos.open} sub={`${stats.todos.urgent} urgent${stats.todos.urgent > 1 ? 's' : ''}`} accent="todo" icon={<CheckCheck size={14} />} />
-        <StatCard label="Total historique" value={formatMinutes(t.total_minutes) || '0'} sub={`${(state.archive ?? []).length} mois archivés`} accent="neutral" icon={<Clock size={14} />} />
-      </div>
-
-      {/* Heatmaps */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-violet-500/20 bg-zinc-900/50 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-6 rounded-full bg-violet-500" />
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-violet-300">Travail — 6 mois</h3>
-            </div>
-            <span className="text-[10px] text-zinc-500 font-mono">{formatMinutes(t.by_group.travail.minutes) || '0'} total</span>
-          </div>
-          <Heatmap todos={state.todos} archive={state.archive} customCategories={state.meta.custom_categories} mode="travail" days={182} />
-        </div>
-        <div className="rounded-2xl border border-cyan-500/20 bg-zinc-900/50 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-6 rounded-full bg-cyan-500" />
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-cyan-300">Personnel — 6 mois</h3>
-            </div>
-            <span className="text-[10px] text-zinc-500 font-mono">{t.streak_personnel}j streak</span>
-          </div>
-          <Heatmap todos={state.todos} archive={state.archive} customCategories={state.meta.custom_categories} mode="personnel" days={182} />
-        </div>
-      </div>
-
-      {/* Categories with % */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {[
-          { cats: TRAVAIL_CATEGORIES, label: 'Travail', totalMin: t.by_group.travail.minutes, hex: '#8b5cf6', border: 'border-violet-500/20' },
-          { cats: PERSONNEL_CATEGORIES, label: 'Personnel', totalMin: t.by_group.personnel.minutes, hex: '#06b6d4', border: 'border-cyan-500/20' },
-        ].map(group => {
-          const globalTotal = t.by_group.travail.minutes + t.by_group.personnel.minutes
-          const groupPct = globalTotal > 0 ? Math.round((group.totalMin / globalTotal) * 100) : 0
+      {/* Stats grid — tab semaine only */}
+      <div className={cn('grid gap-3', `grid-cols-${Math.min(todoTabs.length, 3)}`)}>
+        {todoTabs.slice(0, 3).map((tab, i) => {
+          const tabStats = t.by_tab[tab.id]
           return (
-          <div key={group.label} className={cn('rounded-2xl border bg-zinc-900/50 p-5', group.border)}>
+            <StatCard key={tab.id} label={`${tab.emoji} ${tab.label} — semaine`} value={formatMinutes(tabStats?.week ?? 0) || '0'} sub={`${formatMinutes(tabStats?.month ?? 0) || '0'} ce mois`} accent="vault" icon={<Clock size={14} />} />
+          )
+        })}
+      </div>
+
+      {/* Total historique + totaux par tab (replaces streaks) */}
+      <div className={cn('grid gap-3', `grid-cols-${Math.min(todoTabs.length + 1, 4)}`)}>
+        <StatCard label="Total historique" value={formatMinutes(t.total_minutes) || '0'} sub={`${(state.archive ?? []).length} mois archivés`} accent="neutral" icon={<Clock size={14} />} />
+        {todoTabs.slice(0, 3).map((tab, i) => {
+          const tabStats = t.by_tab[tab.id]
+          return (
+            <StatCard key={tab.id} label={`${tab.emoji} ${tab.label} total`} value={formatMinutes(tabStats?.total ?? 0) || '0'}
+              sub={`🔥 ${t.streaks_by_tab?.[tab.id] ?? 0}j streak`} accent="vault" icon={<Activity size={14} />} />
+          )
+        })}
+      </div>
+
+      {/* Heatmaps — per tab */}
+      <div className={cn('grid gap-4', todoTabs.length <= 2 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1')}>
+        {todoTabs.map((tab, i) => {
+          const hex = TAB_COLORS[i % TAB_COLORS.length]
+          const tabGroup = t.by_group[tab.id]
+          return (
+            <div key={tab.id} className="rounded-2xl border bg-zinc-900/50 p-5" style={{ borderColor: hex + '30' }}>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-6 rounded-full" style={{ backgroundColor: hex }} />
+                  <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: hex }}>{tab.emoji} {tab.label} — 6 mois</h3>
+                </div>
+                <span className="text-[10px] text-zinc-500 font-mono">{formatMinutes(tabGroup?.minutes ?? 0) || '0'} total</span>
+              </div>
+              <Heatmap todos={state.todos} archive={state.archive} customCategories={state.meta.custom_categories}
+                mode="combined" categoryFilter={tab.categoryFilter} days={182} />
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Categories with % — per tab */}
+      <div className={cn('grid gap-4', todoTabs.length <= 2 ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1')}>
+        {todoTabs.map((tab, i) => {
+          const hex = TAB_COLORS[i % TAB_COLORS.length]
+          const cats = tab.categoryFilter?.length ? tab.categoryFilter : Object.keys(CATEGORY_CONFIG)
+          const tabGroup = t.by_group[tab.id]
+          const tabMin = tabGroup?.minutes ?? 0
+          const globalTotal = Object.values(t.by_group).reduce((s, g) => s + g.minutes, 0)
+          const groupPct = globalTotal > 0 ? Math.round((tabMin / globalTotal) * 100) : 0
+          return (
+          <div key={tab.id} className="rounded-2xl border bg-zinc-900/50 p-5" style={{ borderColor: hex + '30' }}>
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">{group.label}</h3>
-                {groupPct > 0 && <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold border" style={{ color: group.hex, borderColor: group.hex + '40', backgroundColor: group.hex + '15' }}>{groupPct}%</span>}
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">{tab.emoji} {tab.label}</h3>
+                {groupPct > 0 && <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold border" style={{ color: hex, borderColor: hex + '40', backgroundColor: hex + '15' }}>{groupPct}%</span>}
               </div>
-              <span className="text-[10px] text-zinc-500 font-mono">{formatMinutes(group.totalMin) || '0'}</span>
+              <span className="text-[10px] text-zinc-500 font-mono">{formatMinutes(tabMin) || '0'}</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {group.cats.map(cat => {
+              {cats.map(cat => {
                 const cfg = CATEGORY_CONFIG[cat]; const b = t.by_category[cat] || { minutes: 0 }
                 if (!cfg) return null
-                const pct = group.totalMin > 0 ? Math.round((b.minutes / group.totalMin) * 100) : 0
+                const pct = tabMin > 0 ? Math.round((b.minutes / tabMin) * 100) : 0
                 return (
                   <div key={cat} className={cn('rounded-xl border text-xs font-medium overflow-hidden',
                     b.minutes > 0 ? 'bg-zinc-900/70' : 'bg-zinc-900/30 text-zinc-500')}
@@ -119,52 +147,3 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
   )
 }
 
-// ─── Streak flame component (animated SVG) ─────────────────────────────────
-const StreakFlame = ({ streak, label, color }: { streak: number; label: string; color: 'violet' | 'cyan' }) => {
-  const intensity = streak === 0 ? 0 : streak <= 2 ? 1 : streak <= 6 ? 2 : streak <= 13 ? 3 : 4
-  const glow = [0, 6, 12, 22, 38][intensity]
-  const speed = [0, 3.5, 2.2, 1.4, 0.7][intensity]
-
-  const v = color === 'violet'
-  const colors = v
-    ? { a: '#7c3aed', b: '#a78bfa', c: '#ddd6fe', glow: 'rgba(139,92,246,', grad: 'from-violet-500/10 to-violet-500/5', border: 'border-violet-500/20', text: 'text-violet-300', sub: 'text-violet-400/80' }
-    : { a: '#0891b2', b: '#22d3ee', c: '#cffafe', glow: 'rgba(6,182,212,', grad: 'from-cyan-500/10 to-cyan-500/5', border: 'border-cyan-500/20', text: 'text-cyan-300', sub: 'text-cyan-400/80' }
-  const id = `flame-${color}`
-
-  return (
-    <div className={cn('flex items-center gap-2 px-3 py-2.5 rounded-2xl border transition-all bg-gradient-to-br', colors.grad, colors.border)}
-      style={{ boxShadow: glow > 0 ? `0 0 ${glow}px ${colors.glow}0.35)` : undefined }}>
-      <svg width={26} height={30} viewBox="0 0 32 40" className="shrink-0"
-        style={{ filter: glow > 10 ? `drop-shadow(0 0 ${glow / 3}px ${colors.a})` : undefined }}>
-        <defs>
-          <linearGradient id={id} x1="0.5" y1="1" x2="0.5" y2="0">
-            <stop offset="0%" stopColor={colors.a} />
-            <stop offset="50%" stopColor={colors.b} />
-            <stop offset="100%" stopColor={colors.c} />
-          </linearGradient>
-        </defs>
-        {/* Main flame body */}
-        <path d="M16 3C16 3 6 16 6 25C6 30 10.5 34 16 34C21.5 34 26 30 26 25C26 16 16 3 16 3Z"
-          fill={`url(#${id})`} opacity={streak === 0 ? 0.2 : 1}
-          style={speed > 0 ? { animation: `flameWave ${speed}s ease-in-out infinite`, transformOrigin: '16px 34px' } : undefined} />
-        {/* Inner bright core */}
-        {intensity >= 1 && (
-          <path d="M16 16C16 16 11 24 11 28C11 30.8 13.2 33 16 33C18.8 33 21 30.8 21 28C21 24 16 16 16 16Z"
-            fill={colors.c} opacity={[0, 0.3, 0.4, 0.55, 0.7][intensity]}
-            style={speed > 0 ? { animation: `flameWave ${speed * 0.7}s ease-in-out infinite`, animationDelay: '0.15s', transformOrigin: '16px 33px' } : undefined} />
-        )}
-        {/* Hot center for high streaks */}
-        {intensity >= 3 && (
-          <ellipse cx="16" cy="29" rx="3.5" ry="2.5" fill="white" opacity={0.35}
-            style={{ animation: `flameWave ${speed * 0.5}s ease-in-out infinite`, animationDelay: '0.1s', transformOrigin: '16px 29px' }} />
-        )}
-      </svg>
-      <div>
-        <p className={cn('text-2xl font-extrabold', colors.text)}>{streak}</p>
-        <p className={cn('text-[9px] uppercase tracking-wider font-semibold', colors.sub)}>
-          {streak === 0 ? 'pas de streak' : 'streak'}
-        </p>
-      </div>
-    </div>
-  )
-}

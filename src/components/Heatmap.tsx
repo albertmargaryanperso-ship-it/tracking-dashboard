@@ -6,6 +6,7 @@ interface HeatmapProps {
   todos: Todo[]
   archive?: ArchiveMonth[]
   customCategories?: CategoryConfig[]
+  categoryFilter?: string[]
   days?: number
   mode: 'travail' | 'personnel' | 'combined'
 }
@@ -13,7 +14,7 @@ interface HeatmapProps {
 const MONTH_LABELS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
 const DAY_LABELS = ['', 'L', '', 'M', '', 'V', '']
 
-export const Heatmap = ({ todos, archive, customCategories, days = 182, mode }: HeatmapProps) => {
+export const Heatmap = ({ todos, archive, customCategories, categoryFilter, days = 182, mode }: HeatmapProps) => {
   const { cells, months } = useMemo(() => {
     const today = todayISO()
     const start = addDays(today, -(days - 1))
@@ -24,8 +25,10 @@ export const Heatmap = ({ todos, archive, customCategories, days = 182, mode }: 
 
     // Build per-day hours from completed todos + archived todos
     const byDate: Record<string, { travail: number; personnel: number }> = {}
+    const catSet = categoryFilter?.length ? new Set(categoryFilter) : null
     const addTodo = (t: Todo) => {
       if (!t.completed_at || !t.completed_min) return
+      if (catSet && !catSet.has(t.category)) return
       const d = t.completed_at
       if (!byDate[d]) byDate[d] = { travail: 0, personnel: 0 }
       const hours = (t.completed_min ?? 0) / 60
@@ -61,7 +64,7 @@ export const Heatmap = ({ todos, archive, customCategories, days = 182, mode }: 
       cursor.setDate(cursor.getDate() + 1)
     }
     return { cells: cellList, months: monthPositions }
-  }, [todos, archive, customCategories, days])
+  }, [todos, archive, customCategories, categoryFilter, days])
 
   const color = (cell: typeof cells[number]): string => {
     if (cell.future) return 'bg-zinc-900/30'

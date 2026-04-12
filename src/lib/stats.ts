@@ -1,5 +1,5 @@
 import type { AppState, Stats, TodoCategory, CategoryGroup } from '@/types'
-import { todayISO, startOfWeekISO, startOfMonthISO, addDays, categoryGroup, getActiveCategories } from './utils'
+import { todayISO, startOfWeekISO, startOfMonthISO, addDays, categoryGroup, getActiveCategories, getTodoTabs } from './utils'
 
 export const computeStats = (state: AppState): Stats => {
   const today = todayISO()
@@ -7,6 +7,7 @@ export const computeStats = (state: AppState): Stats => {
   const monthStart = startOfMonthISO(today)
   const todos = state.todos ?? []
   const archive = state.archive ?? []
+  const todoTabs = getTodoTabs(state.meta?.custom_tabs)
 
   // ─── Todos task stats ─────────────────────────────────────────────────────
   const total = todos.length
@@ -18,44 +19,60 @@ export const computeStats = (state: AppState): Stats => {
   // ─── Tracking stats (from todos completed_min) ───────────────────────────
   const doneTodos = todos.filter(t => t.status === 'done' && t.completed_at)
 
-  const sumMin = (list: typeof doneTodos, dateFilter?: (d: string) => boolean, groupFilter?: CategoryGroup) =>
+  const sumMinByCats = (list: typeof doneTodos, dateFilter?: (d: string) => boolean, cats?: string[]) =>
     list
-      .filter(t => (!dateFilter || dateFilter(t.completed_at!)) && (!groupFilter || categoryGroup(t.category, state.meta?.custom_categories) === groupFilter))
+      .filter(t => (!dateFilter || dateFilter(t.completed_at!)) && (!cats || cats.includes(t.category)))
       .reduce((sum, t) => sum + (t.completed_min ?? 0), 0)
 
   const isToday = (d: string) => d === today
   const isWeek = (d: string) => d >= weekStart && d <= today
   const isMonth = (d: string) => d >= monthStart && d <= today
 
-  const today_minutes = sumMin(doneTodos, isToday)
-  const week_minutes = sumMin(doneTodos, isWeek)
-  const month_minutes = sumMin(doneTodos, isMonth)
+  const today_minutes = sumMinByCats(doneTodos, isToday)
+  const week_minutes = sumMinByCats(doneTodos, isWeek)
+  const month_minutes = sumMinByCats(doneTodos, isMonth)
 
-  const travail_today_min = sumMin(doneTodos, isToday, 'travail')
-  const travail_week_min = sumMin(doneTodos, isWeek, 'travail')
-  const travail_month_min = sumMin(doneTodos, isMonth, 'travail')
-  const personnel_today_min = sumMin(doneTodos, isToday, 'personnel')
-  const personnel_week_min = sumMin(doneTodos, isWeek, 'personnel')
-  const personnel_month_min = sumMin(doneTodos, isMonth, 'personnel')
+  // Per-tab breakdown (replaces hardcoded travail/personnel)
+  const by_tab: Record<string, { today: number; week: number; month: number; total: number }> = {}
+  for (const tab of todoTabs) {
+    const cats = tab.categoryFilter?.length ? tab.categoryFilter : undefined
+    by_tab[tab.id] = {
+      today: sumMinByCats(doneTodos, isToday, cats),
+      week: sumMinByCats(doneTodos, isWeek, cats),
+      month: sumMinByCats(doneTodos, isMonth, cats),
+      total: sumMinByCats(doneTodos, undefined, cats),
+    }
+  }
+
+  // Legacy compat (keep for existing components that still use these)
+  const travail_today_min = by_tab[todoTabs[0]?.id]?.today ?? 0
+  const travail_week_min = by_tab[todoTabs[0]?.id]?.week ?? 0
+  const travail_month_min = by_tab[todoTabs[0]?.id]?.month ?? 0
+  const personnel_today_min = by_tab[todoTabs[1]?.id]?.today ?? 0
+  const personnel_week_min = by_tab[todoTabs[1]?.id]?.week ?? 0
+  const personnel_month_min = by_tab[todoTabs[1]?.id]?.month ?? 0
 
   // Total = active done + all archived
   const archiveTotal = archive.reduce((sum, a) => sum + (a.stats?.total_minutes ?? 0), 0)
   const activeTotal = doneTodos.reduce((sum, t) => sum + (t.completed_min ?? 0), 0)
   const total_minutes = activeTotal + archiveTotal
 
-  // ─── Streaks ──────────────────────────────────────────────────────────────
-  const computeStreak = (group: CategoryGroup): number => {
+  // ─── Streaks per tab ──────────────────────────────────────────────────────
+  const streaks_by_tab: Record<string, number> = {}
+  for (const tab of todoTabs) {
+    const cats = tab.categoryFilter?.length ? new Set(tab.categoryFilter) : null
     const dates = new Set(
-      doneTodos.filter(t => categoryGroup(t.category, state.meta?.custom_categories) === group).map(t => t.completed_at!)
+      doneTodos.filter(t => !cats || cats.has(t.category)).map(t => t.completed_at!)
     )
     let streak = 0
     let cursor = today
-    while (dates.has(cursor)) {
-      streak += 1
-      cursor = addDays(cursor, -1)
-    }
-    return streak
+    while (dates.has(cursor)) { streak += 1; cursor = addDays(cursor, -1) }
+    streaks_by_tab[tab.id] = streak
   }
+
+  // Legacy
+  const streak_travail = streaks_by_tab[todoTabs[0]?.id] ?? 0
+  const streak_personnel = streaks_by_tab[todoTabs[1]?.id] ?? 0
 
   // ─── By category ──────────────────────────────────────────────────────────
   const { CATEGORY_LIST } = getActiveCategories(state.meta?.custom_categories)
@@ -64,43 +81,39 @@ export const computeStats = (state: AppState): Stats => {
     CATEGORY_LIST.map((c: string) => [c, { total: 0, open: 0, done: 0, minutes: 0 }])
   ) as Record<string, { total: number; open: number; done: number; minutes: number }>
 
-  const by_group: Record<CategoryGroup, { total: number; open: number; done: number; minutes: number }> = {
-    travail: { total: 0, open: 0, done: 0, minutes: 0 },
-    personnel: { total: 0, open: 0, done: 0, minutes: 0 },
-  }
+  const by_group: Record<string, { total: number; open: number; done: number; minutes: number }> = {}
+  for (const tab of todoTabs) by_group[tab.id] = { total: 0, open: 0, done: 0, minutes: 0 }
 
   for (const t of todos) {
-    if (!by_category[t.category]) {
-      by_category[t.category] = { total: 0, open: 0, done: 0, minutes: 0 }
-    }
+    if (!by_category[t.category]) by_category[t.category] = { total: 0, open: 0, done: 0, minutes: 0 }
     const cat = by_category[t.category]
     cat.total += 1
     if (t.status !== 'done') cat.open += 1
     if (t.status === 'done') { cat.done += 1; cat.minutes += t.completed_min ?? 0 }
 
-    const grpStr = categoryGroup(t.category, state.meta?.custom_categories)
-    const grp = by_group[grpStr as CategoryGroup] || by_group.travail
-    grp.total += 1
-    if (t.status !== 'done') grp.open += 1
-    if (t.status === 'done') { grp.done += 1; grp.minutes += t.completed_min ?? 0 }
+    // Assign to tab group
+    for (const tab of todoTabs) {
+      if (!tab.categoryFilter?.length || tab.categoryFilter.includes(t.category)) {
+        const grp = by_group[tab.id]
+        if (grp) {
+          grp.total += 1
+          if (t.status !== 'done') grp.open += 1
+          if (t.status === 'done') { grp.done += 1; grp.minutes += t.completed_min ?? 0 }
+        }
+        break // assign to first matching tab only
+      }
+    }
   }
 
   return {
     tracking: {
-      today_minutes,
-      week_minutes,
-      month_minutes,
-      total_minutes,
-      travail_today_min,
-      travail_week_min,
-      travail_month_min,
-      personnel_today_min,
-      personnel_week_min,
-      personnel_month_min,
-      streak_travail: computeStreak('travail'),
-      streak_personnel: computeStreak('personnel'),
-      by_category,
-      by_group,
+      today_minutes, week_minutes, month_minutes, total_minutes,
+      travail_today_min, travail_week_min, travail_month_min,
+      personnel_today_min, personnel_week_min, personnel_month_min,
+      streak_travail, streak_personnel,
+      streaks_by_tab,
+      by_tab,
+      by_category, by_group,
     },
     todos: { total, open, done, urgent, completion_rate },
   }
