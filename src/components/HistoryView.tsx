@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { ChevronDown, ChevronRight, Calendar, Clock, TrendingUp, Award } from 'lucide-react'
-import type { AppState, ArchiveMonth, TodoCategory, CategoryConfig } from '@/types'
+import type { AppState, ArchiveMonth, Todo, TodoCategory, CategoryConfig } from '@/types'
 import { cn, formatMinutes, categoryGroup, todayISO, getActiveCategories } from '@/lib/utils'
 
 interface HistoryViewProps { state: AppState }
@@ -14,6 +14,7 @@ const fmtMonth = (m: string): string => {
 
 export const HistoryView = ({ state }: HistoryViewProps) => {
   const [openMonth, setOpenMonth] = useState<string | null>(null)
+  const [currentMonthOpen, setCurrentMonthOpen] = useState(false)
   const archive = useMemo(() => [...(state.archive ?? [])].sort((a, b) => b.month.localeCompare(a.month)), [state.archive])
 
   // ── Current month progress ──────────────────────────────────────────────
@@ -27,37 +28,38 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
     return { dayOfMonth, daysInMonth, daysLeft, pct, monthStr }
   }, [])
 
-  // ── Current month category breakdown (same visual as old mini bar) ──────
+  // ── Current month data ──────────────────────────────────────────────────
   const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(state.meta.custom_categories)
-  const currentMonthCats = useMemo(() => {
+  const currentMonthData = useMemo(() => {
     const currentMonth = todayISO().slice(0, 7)
     const doneTodos = state.todos.filter(t => t.status === 'done' && t.completed_at?.startsWith(currentMonth))
-    const byCategory: Record<string, { minutes: number; open: number }> = {}
-    for (const cat of CATEGORY_LIST) byCategory[cat] = { minutes: 0, open: 0 }
+    const byCategory: Record<string, { minutes: number; count: number; open: number; todos: Todo[] }> = {}
+    for (const cat of CATEGORY_LIST) byCategory[cat] = { minutes: 0, count: 0, open: 0, todos: [] }
     for (const t of doneTodos) {
-      if (!byCategory[t.category]) byCategory[t.category] = { minutes: 0, open: 0 }
+      if (!byCategory[t.category]) byCategory[t.category] = { minutes: 0, count: 0, open: 0, todos: [] }
       byCategory[t.category].minutes += t.completed_min ?? 0
+      byCategory[t.category].count += 1
+      byCategory[t.category].todos.push(t)
     }
     for (const t of state.todos) {
       if (t.status !== 'done' && byCategory[t.category]) byCategory[t.category].open += 1
     }
-    return byCategory
+    const totalMin = doneTodos.reduce((s, t) => s + (t.completed_min ?? 0), 0)
+    return { byCategory, totalMin, doneCount: doneTodos.length }
   }, [state.todos, CATEGORY_LIST])
 
+  // ── 30-day chart ────────────────────────────────────────────────────────
   const last30Days = useMemo(() => {
     const todayStr = todayISO()
     const todayDate = new Date(todayStr + 'T12:00:00')
     const days: { date: string; travail: number; personnel: number }[] = []
-    
     for (let i = 29; i >= 0; i--) {
       const d = new Date(todayDate)
       d.setDate(d.getDate() - i)
       const iso = d.toISOString().split('T')[0]
       days.push({ date: iso, travail: 0, personnel: 0 })
     }
-    
     const map = new Map(days.map(d => [d.date, d]))
-    
     const processTodo = (t: any) => {
       if (!t.completed_at || !t.completed_min) return
       const iso = t.completed_at.slice(0, 10)
@@ -67,10 +69,8 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
         else day.personnel += t.completed_min
       }
     }
-    
     state.todos.forEach(t => { if (t.status === 'done') processTodo(t) })
     state.archive?.forEach(a => { a.todos.forEach(processTodo) })
-
     return days
   }, [state.todos, state.archive])
 
@@ -78,37 +78,42 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Month progress bar */}
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            <h3 className="text-sm font-bold text-zinc-200">{monthProgress.monthStr}</h3>
-            <p className="text-[10px] text-zinc-500">Jour {monthProgress.dayOfMonth}/{monthProgress.daysInMonth} — {monthProgress.daysLeft}j restants avant archivage</p>
+      {/* Current month — collapsible */}
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 overflow-hidden">
+        <button onClick={() => setCurrentMonthOpen(o => !o)} className="w-full p-4 flex items-center gap-3 hover:bg-zinc-900/70 transition-all">
+          {currentMonthOpen ? <ChevronDown size={16} className="text-zinc-400" /> : <ChevronRight size={16} className="text-zinc-400" />}
+          <div className="flex-1 text-left">
+            <p className="text-sm font-bold text-zinc-200">{monthProgress.monthStr} <span className="text-zinc-500 font-normal text-[10px]">— mois en cours</span></p>
+            <p className="text-[10px] text-zinc-500 mt-0.5">Jour {monthProgress.dayOfMonth}/{monthProgress.daysInMonth} — {monthProgress.daysLeft}j restants</p>
           </div>
           <span className="text-xl font-extrabold text-zinc-200">{monthProgress.pct}%</span>
+        </button>
+        {/* Progress bar always visible */}
+        <div className="px-4 pb-3">
+          <div className="h-2 rounded-full bg-zinc-800 overflow-hidden">
+            <div className="h-full rounded-full bg-gradient-to-r from-violet-500 via-cyan-500 to-emerald-500 transition-all duration-500"
+              style={{ width: `${monthProgress.pct}%` }} />
+          </div>
+          <p className="text-[9px] text-zinc-600 mt-1">Archivage automatique au 1er du mois suivant.</p>
         </div>
-        <div className="h-2.5 rounded-full bg-zinc-800 overflow-hidden">
-          <div className="h-full rounded-full bg-gradient-to-r from-violet-500 via-cyan-500 to-emerald-500 transition-all duration-500"
-            style={{ width: `${monthProgress.pct}%` }} />
-        </div>
-        <p className="text-[9px] text-zinc-600 mt-1.5">Les tâches terminées seront archivées au 1er du mois suivant. Les tâches ouvertes restent.</p>
+
+        {/* Expanded: categories with % + collapsible tasks */}
+        {currentMonthOpen && (
+          <div className="px-4 pb-4 border-t border-zinc-800 pt-3 space-y-2">
+            {CATEGORY_LIST.map(cat => {
+              const cfg = CATEGORY_CONFIG[cat]; const data = currentMonthData.byCategory[cat]
+              if (!data) return null
+              const pct = currentMonthData.totalMin > 0 ? Math.round((data.minutes / currentMonthData.totalMin) * 100) : 0
+              return (
+                <CategoryAccordion key={cat} cfg={cfg} pct={pct} minutes={data.minutes} count={data.count} open={data.open} todos={data.todos} />
+              )
+            })}
+            {currentMonthData.doneCount === 0 && <p className="text-[10px] text-zinc-600 italic text-center py-2">Aucune tâche terminée ce mois-ci.</p>}
+          </div>
+        )}
       </div>
 
-      {/* Current month — category breakdown */}
-      <div className="grid grid-cols-4 gap-1.5">
-        {CATEGORY_LIST.map(c => {
-          const cat = CATEGORY_CONFIG[c]; const bucket = currentMonthCats[c]
-          return (
-            <div key={c} className={cn('rounded-xl border bg-zinc-900/50 p-2 text-center', cat.bg)}>
-              <span className="text-sm">{cat.emoji}</span>
-              <p className={cn('text-xs font-bold mt-0.5', cat.color)}>{formatMinutes(bucket?.minutes ?? 0) || '—'}</p>
-              <p className="text-[8px] text-zinc-500">{bucket?.open ?? 0} ouv.</p>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Summary stats across all archived months */}
+      {/* Summary stats */}
       {archive.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <HistStat label="Mois archivés" value={String(archive.length)} icon={<Calendar size={14} />} />
@@ -118,7 +123,7 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
         </div>
       )}
 
-      {/* 30-Day Activity Chart — always visible */}
+      {/* 30-Day Activity Chart */}
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[12px] font-bold uppercase tracking-wider text-zinc-400">Activité des 30 derniers jours</h3>
@@ -127,7 +132,6 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
             <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-cyan-500"></span> Personnel</span>
           </div>
         </div>
-        
         <div className="flex items-end gap-1 h-32 pt-2">
           {last30Days.map((day, i) => {
             const hT = (day.travail / maxDayMin) * 100
@@ -137,12 +141,10 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
               <div key={day.date} className="flex-1 flex flex-col justify-end gap-0.5 group relative" title={`${day.date}: ${day.travail}m travail / ${day.personnel}m perso`}>
                 <div className="w-full bg-cyan-500/80 rounded-t-sm transition-all group-hover:bg-cyan-400" style={{ height: `${hP}%` }} />
                 <div className={cn("w-full bg-violet-500/80 rounded-b-sm transition-all group-hover:bg-violet-400", isToday && 'ring-1 ring-emerald-500 ring-offset-1 ring-offset-zinc-900')} style={{ height: `${hT}%` }} />
-                
-                {/* Tooltip */}
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max bg-zinc-800 border border-zinc-700 text-[10px] p-2 rounded shadow-xl whitespace-nowrap">
                   <p className="font-bold text-zinc-300 mb-1">{day.date.split('-').reverse().join('/')}</p>
                   <p className="text-violet-300 font-mono">Travail: {formatMinutes(day.travail) || '0'}</p>
-                  <p className="text-cyan-300 font-mono">Perso:   {formatMinutes(day.personnel) || '0'}</p>
+                  <p className="text-cyan-300 font-mono">Perso: {formatMinutes(day.personnel) || '0'}</p>
                 </div>
               </div>
             )
@@ -154,40 +156,78 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
         </div>
       </div>
 
-      {/* Monthly cards */}
+      {/* Archived months */}
       {archive.map((entry, idx) => {
-        const isOpen = openMonth === entry.month
         const prev = idx + 1 < archive.length ? archive[idx + 1] : null
         return (
-          <MonthCard key={entry.month} entry={entry} prev={prev} isOpen={isOpen}
-            onToggle={() => setOpenMonth(isOpen ? null : entry.month)} customCategories={state.meta.custom_categories} />
+          <MonthCard key={entry.month} entry={entry} prev={prev}
+            isOpen={openMonth === entry.month}
+            onToggle={() => setOpenMonth(openMonth === entry.month ? null : entry.month)}
+            customCategories={state.meta.custom_categories} />
         )
       })}
     </div>
   )
 }
 
-// ─── Month card ─────────────────────────────────────────────────────────────
+// ─── Category accordion (reused in current month + archive months) ─────────
+const CategoryAccordion = ({ cfg, pct, minutes, count, open, todos }: {
+  cfg: CategoryConfig; pct: number; minutes: number; count: number; open: number; todos: Todo[]
+}) => {
+  const [expanded, setExpanded] = useState(false)
+  const hasTodos = todos.length > 0
+
+  return (
+    <div className={cn('rounded-xl border overflow-hidden', minutes > 0 ? 'bg-zinc-900/70' : 'bg-zinc-900/30')}
+      style={{ borderColor: minutes > 0 ? cfg.hex + '50' : '#27272a' }}>
+      <button onClick={() => hasTodos && setExpanded(o => !o)}
+        className={cn('w-full px-3 py-2.5 flex items-center justify-between gap-2 transition-all', hasTodos && 'hover:bg-zinc-800/50')}>
+        <span className="flex items-center gap-1.5">
+          {hasTodos && (expanded ? <ChevronDown size={10} className="text-zinc-500" /> : <ChevronRight size={10} className="text-zinc-500" />)}
+          <span>{cfg.emoji}</span>
+          {pct > 0 && <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold border" style={{ color: cfg.hex, borderColor: cfg.hex + '40', backgroundColor: cfg.hex + '15' }}>{pct}%</span>}
+          <span className="text-[11px] font-semibold text-zinc-300">{cfg.label}</span>
+          {open > 0 && <span className="text-[9px] text-zinc-500">{open} ouv.</span>}
+        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          {count > 0 && <span className="text-[9px] text-zinc-500">{count}x</span>}
+          <span className="text-xs font-mono font-bold" style={{ color: minutes > 0 ? cfg.hex : '#71717a' }}>
+            {formatMinutes(minutes) || '—'}
+          </span>
+        </div>
+      </button>
+      {/* Mini progress bar */}
+      {minutes > 0 && (
+        <div className="h-1 bg-zinc-800">
+          <div className="h-full transition-all duration-300" style={{ width: `${pct}%`, backgroundColor: cfg.hex }} />
+        </div>
+      )}
+      {/* Expanded: individual tasks */}
+      {expanded && todos.length > 0 && (
+        <div className="px-3 pb-2 pt-1 space-y-0.5">
+          {todos.sort((a, b) => (a.completed_at ?? '').localeCompare(b.completed_at ?? '')).map(t => (
+            <div key={t.id} className="flex items-center gap-2 px-2 py-1 rounded-lg bg-zinc-900/50 text-[10px]">
+              <span className="text-zinc-500 w-14 shrink-0 font-mono">{t.completed_at?.split('-').reverse().join('/') ?? ''}</span>
+              <span className="flex-1 text-zinc-300 truncate">{t.text}</span>
+              {t.completed_min ? <span className="text-emerald-400 font-mono shrink-0">{formatMinutes(t.completed_min)}</span> : null}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Month card (archived months) ──────────────────────────────────────────
 const MonthCard = ({ entry, prev, isOpen, onToggle, customCategories }: {
   entry: ArchiveMonth; prev: ArchiveMonth | null; isOpen: boolean; onToggle: () => void; customCategories?: CategoryConfig[]
 }) => {
-  const { CATEGORY_CONFIG, CATEGORY_LIST, TRAVAIL_CATEGORIES, PERSONNEL_CATEGORIES } = getActiveCategories(customCategories)
+  const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(customCategories)
   const s = entry.stats
-  const ratio = s.total_minutes > 0 ? Math.round((s.travail_minutes / s.total_minutes) * 100) : 0
-
-  // Delta vs previous month
-  const deltaTravail = prev ? s.travail_minutes - (prev.stats?.travail_minutes ?? 0) : 0
-  const deltaPersonnel = prev ? s.personnel_minutes - (prev.stats?.personnel_minutes ?? 0) : 0
-
-  // Best category
-  const bestCat = CATEGORY_LIST.reduce<{ cat: TodoCategory; min: number } | null>((best, cat) => {
-    const m = s.by_category?.[cat]?.minutes ?? 0
-    return (!best || m > best.min) ? { cat, min: m } : best
-  }, null)
 
   return (
     <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 overflow-hidden">
-      {/* Header */}
+      {/* Header — always visible */}
       <button onClick={onToggle} className="w-full p-4 flex items-center gap-3 hover:bg-zinc-900/70 transition-all">
         {isOpen ? <ChevronDown size={16} className="text-zinc-400" /> : <ChevronRight size={16} className="text-zinc-400" />}
         <div className="flex-1 text-left">
@@ -206,71 +246,31 @@ const MonthCard = ({ entry, prev, isOpen, onToggle, customCategories }: {
         </div>
       </button>
 
-      {/* Expanded content */}
+      {/* Expanded: category accordions */}
       {isOpen && (
-        <div className="px-4 pb-4 space-y-4 border-t border-zinc-800 pt-4">
-          {/* Cross stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <MiniStat label="Ratio Travail" value={`${ratio}%`} />
+        <div className="px-4 pb-4 border-t border-zinc-800 pt-3 space-y-2">
+          {/* Quick stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
+            <MiniStat label="Ratio Travail" value={s.total_minutes > 0 ? `${Math.round((s.travail_minutes / s.total_minutes) * 100)}%` : '—'} />
             <MiniStat label="Jour top" value={s.best_day ? `${s.best_day.date.split('-').reverse().join('/')} (${formatMinutes(s.best_day.minutes)})` : '—'} />
-            <MiniStat label="Delta Travail" value={deltaTravail === 0 ? '=' : `${deltaTravail > 0 ? '+' : ''}${formatMinutes(deltaTravail)}`}
-              color={deltaTravail > 0 ? 'text-emerald-400' : deltaTravail < 0 ? 'text-rose-400' : undefined} />
-            <MiniStat label="Delta Personnel" value={deltaPersonnel === 0 ? '=' : `${deltaPersonnel > 0 ? '+' : ''}${formatMinutes(deltaPersonnel)}`}
-              color={deltaPersonnel > 0 ? 'text-emerald-400' : deltaPersonnel < 0 ? 'text-rose-400' : undefined} />
+            {prev && <MiniStat label="Delta Travail" value={`${(s.travail_minutes - (prev.stats?.travail_minutes ?? 0)) >= 0 ? '+' : ''}${formatMinutes(s.travail_minutes - (prev.stats?.travail_minutes ?? 0))}`}
+              color={(s.travail_minutes - (prev.stats?.travail_minutes ?? 0)) > 0 ? 'text-emerald-400' : (s.travail_minutes - (prev.stats?.travail_minutes ?? 0)) < 0 ? 'text-rose-400' : undefined} />}
+            {prev && <MiniStat label="Delta Personnel" value={`${(s.personnel_minutes - (prev.stats?.personnel_minutes ?? 0)) >= 0 ? '+' : ''}${formatMinutes(s.personnel_minutes - (prev.stats?.personnel_minutes ?? 0))}`}
+              color={(s.personnel_minutes - (prev.stats?.personnel_minutes ?? 0)) > 0 ? 'text-emerald-400' : (s.personnel_minutes - (prev.stats?.personnel_minutes ?? 0)) < 0 ? 'text-rose-400' : undefined} />}
           </div>
 
-          {/* Category bars */}
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">Heures par catégorie</p>
-            <div className="space-y-1.5">
-              {CATEGORY_LIST.map(cat => {
-                const cfg = CATEGORY_CONFIG[cat]
-                const data = s.by_category?.[cat]
-                const min = data?.minutes ?? 0
-                const count = data?.count ?? 0
-                const maxMin = Math.max(1, ...CATEGORY_LIST.map(c => s.by_category?.[c]?.minutes ?? 0))
-                const barPct = (min / maxMin) * 100
-                const totalPct = s.total_minutes > 0 ? Math.round((min / s.total_minutes) * 100) : 0
-                return (
-                  <div key={cat} className="flex items-center gap-2">
-                    <span className="text-sm w-5 text-center">{cfg.emoji}</span>
-                    <span className="text-[10px] text-zinc-400 w-24 truncate">{cfg.label}</span>
-                    <div className="flex-1 h-2 rounded-full bg-zinc-800 overflow-hidden">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${barPct}%`, backgroundColor: cfg.hex }} />
-                    </div>
-                    <span className="text-[9px] font-mono text-zinc-500 w-8 text-right">{totalPct > 0 ? `${totalPct}%` : ''}</span>
-                    <span className="text-[10px] font-mono text-zinc-400 w-12 text-right">{formatMinutes(min) || '—'}</span>
-                    <span className="text-[9px] text-zinc-600 w-8 text-right">{count}x</span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* Todos by category */}
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-2">Détail des tâches</p>
-            {[...TRAVAIL_CATEGORIES, ...PERSONNEL_CATEGORIES].map(cat => {
-              const cfg = CATEGORY_CONFIG[cat]
-              const catTodos = entry.todos.filter(t => t.category === cat).sort((a, b) => (a.completed_at ?? '').localeCompare(b.completed_at ?? ''))
-              if (catTodos.length === 0) return null
-              return (
-                <div key={cat} className="mb-3">
-                  <p className={cn('text-[10px] font-semibold mb-1', cfg.color)}>{cfg.emoji} {cfg.label} ({catTodos.length})</p>
-                  <div className="space-y-0.5">
-                    {catTodos.map(t => (
-                      <div key={t.id} className="flex items-center gap-2 px-2 py-1 rounded-lg bg-zinc-900/50 text-[10px]">
-                        <span className="text-zinc-500 w-16 shrink-0 font-mono">{t.completed_at?.split('-').reverse().join('/') ?? ''}</span>
-                        <span className="flex-1 text-zinc-300 truncate">{t.text}</span>
-                        {t.completed_min ? <span className="text-emerald-400 font-mono shrink-0">{formatMinutes(t.completed_min)}</span> : null}
-                        {t.priority === 'urgent' && <span className="text-[8px] text-rose-400">URGENT</span>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+          {/* Per-category accordions */}
+          {CATEGORY_LIST.map(cat => {
+            const cfg = CATEGORY_CONFIG[cat]
+            const data = s.by_category?.[cat]
+            const min = data?.minutes ?? 0
+            const count = data?.count ?? 0
+            const pct = s.total_minutes > 0 ? Math.round((min / s.total_minutes) * 100) : 0
+            const catTodos = entry.todos.filter(t => t.category === cat)
+            return (
+              <CategoryAccordion key={cat} cfg={cfg} pct={pct} minutes={min} count={count} open={0} todos={catTodos} />
+            )
+          })}
         </div>
       )}
     </div>
