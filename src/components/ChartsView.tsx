@@ -91,14 +91,17 @@ export const ChartsView = ({ state, stats }: ChartsViewProps) => {
         {todoTabs.slice(0, 3).map((tab, i) => {
           const grp = stats.tracking.by_group[tab.id]
           const hex = TAB_COLORS[i % TAB_COLORS.length]
+          const daysActive = new Set(state.todos.filter(td => td.status === 'done' && td.completed_at && (!tab.categoryFilter?.length || tab.categoryFilter.includes(td.category))).map(td => td.completed_at!)).size
+          const avg = daysActive > 0 ? Math.round((grp?.minutes ?? 0) / daysActive) : 0
+          const doneCount = state.todos.filter(td => td.status === 'done' && (!tab.categoryFilter?.length || tab.categoryFilter.includes(td.category))).length
           return [
-            <div key={`${tab.id}-total`} className="rounded-xl p-2.5 border bg-zinc-900/50" style={{ borderColor: hex + '30' }}>
-              <p className="text-[9px] uppercase tracking-wider text-zinc-500 font-semibold">{tab.emoji} Total</p>
-              <p className="text-lg font-extrabold" style={{ color: hex }}>{formatMinutes(grp?.minutes ?? 0) || '0'}</p>
+            <div key={`${tab.id}-avg`} className="rounded-xl p-2.5 border bg-zinc-900/50" style={{ borderColor: hex + '30' }}>
+              <p className="text-[9px] uppercase tracking-wider text-zinc-500 font-semibold">{tab.emoji} Moy/jour</p>
+              <p className="text-lg font-extrabold" style={{ color: hex }}>{formatMinutes(avg) || '0'}</p>
             </div>,
-            <div key={`${tab.id}-streak`} className="rounded-xl p-2.5 border bg-zinc-900/50" style={{ borderColor: hex + '30' }}>
-              <p className="text-[9px] uppercase tracking-wider text-zinc-500 font-semibold">🔥 Streak</p>
-              <p className="text-lg font-extrabold" style={{ color: hex }}>{stats.tracking.streaks_by_tab?.[tab.id] ?? 0}j</p>
+            <div key={`${tab.id}-done`} className="rounded-xl p-2.5 border bg-zinc-900/50" style={{ borderColor: hex + '30' }}>
+              <p className="text-[9px] uppercase tracking-wider text-zinc-500 font-semibold">✅ Terminées</p>
+              <p className="text-lg font-extrabold" style={{ color: hex }}>{doneCount}</p>
             </div>,
           ]
         })}

@@ -130,7 +130,7 @@ export const HistoryView = ({ state, onEditArchived, onDeleteArchived }: History
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <HistStat label="Mois archivés" value={String(archive.length)} icon={<Calendar size={14} />} />
           <HistStat label="Todos archivées" value={String(archive.reduce((s, a) => s + a.todos.length, 0))} icon={<TrendingUp size={14} />} />
-          <HistStat label="Heures totales" value={formatMinutes(archive.reduce((s, a) => s + (a.stats?.total_minutes ?? 0), 0)) || '0'} icon={<Clock size={14} />} />
+          <HistStat label="Moyenne / jour" value={(() => { const totalMin = archive.reduce((s, a) => s + (a.stats?.total_minutes ?? 0), 0); const totalDays = archive.reduce((s, a) => s + (a.stats?.days_active ?? 0), 0); return formatMinutes(totalDays > 0 ? Math.round(totalMin / totalDays) : 0) || '0' })()} icon={<Clock size={14} />} />
           <HistStat label="Travail / Personnel" value={`${formatMinutes(archive.reduce((s, a) => s + (a.stats?.travail_minutes ?? 0), 0)) || '0'} / ${formatMinutes(archive.reduce((s, a) => s + (a.stats?.personnel_minutes ?? 0), 0)) || '0'}`} icon={<Award size={14} />} />
         </div>
       )}
