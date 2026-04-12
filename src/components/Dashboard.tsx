@@ -18,14 +18,14 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
         <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 mb-1">Aujourd'hui</p>
-            <div className="flex items-baseline gap-3 flex-wrap">
-              <span className="text-4xl sm:text-5xl font-extrabold bg-gradient-to-br from-violet-300 via-white to-cyan-300 bg-clip-text text-transparent">
-                {formatMinutes(t.today_minutes) || '0min'}
-              </span>
-              <span className="text-xs text-zinc-500">
-                travail <span className="text-violet-400 font-semibold">{formatMinutes(t.travail_today_min) || '0'}</span> ·
-                personnel <span className="text-cyan-400 font-semibold">{formatMinutes(t.personnel_today_min) || '0'}</span>
-              </span>
+            <p className="text-5xl sm:text-6xl font-black tracking-tight bg-gradient-to-r from-violet-400 via-white to-cyan-400 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(139,92,246,0.25)]"
+              style={{ letterSpacing: '-0.02em' }}>
+              {formatMinutes(t.today_minutes) || '0min'}
+            </p>
+            <div className="flex items-center gap-2 mt-1.5 text-[11px]">
+              <span className="text-violet-400 font-semibold">{formatMinutes(t.travail_today_min) || '0'} travail</span>
+              <span className="text-zinc-600">·</span>
+              <span className="text-cyan-400 font-semibold">{formatMinutes(t.personnel_today_min) || '0'} perso</span>
             </div>
           </div>
           <div className="flex gap-3">
