@@ -63,12 +63,21 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
         </div>
       </div>
 
-      {/* Stats grid — tab semaine only */}
+      {/* Stats grid — tab semaine only, colored per tab */}
       <div className={cn('grid gap-3', `grid-cols-${Math.min(todoTabs.length, 3)}`)}>
         {todoTabs.slice(0, 3).map((tab, i) => {
           const tabStats = t.by_tab[tab.id]
+          const hex = TAB_COLORS[i % TAB_COLORS.length]
           return (
-            <StatCard key={tab.id} label={`${tab.emoji} ${tab.label} — semaine`} value={formatMinutes(tabStats?.week ?? 0) || '0'} sub={`${formatMinutes(tabStats?.month ?? 0) || '0'} ce mois`} accent="vault" icon={<Clock size={14} />} />
+            <div key={tab.id} className="relative rounded-2xl border bg-zinc-900/60 p-4 transition-all hover:-translate-y-0.5"
+              style={{ borderColor: hex + '30' }}>
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">{tab.emoji} {tab.label} — semaine</p>
+                <Clock size={14} style={{ color: hex }} />
+              </div>
+              <p className="text-2xl font-extrabold" style={{ color: hex }}>{formatMinutes(tabStats?.week ?? 0) || '0'}</p>
+              <p className="text-[10px] text-zinc-500 mt-1 font-medium">{formatMinutes(tabStats?.month ?? 0) || '0'} ce mois</p>
+            </div>
           )
         })}
       </div>
