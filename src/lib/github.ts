@@ -53,11 +53,13 @@ export const mergeStates = (local: AppState, remote: AppState): AppState => {
   const otherMeta = localNewer ? remote.meta : local.meta
 
   // For arrays: keep the longer/more complete side (prevents losing added tabs/categories)
-  const pickBest = <T,>(a?: T[], b?: T[]): T[] | undefined => {
-    if (!a && !b) return undefined
-    if (!a) return b
-    if (!b) return a
-    return a.length >= b.length ? a : b
+  const pickBest = <T,>(a?: T[] | null, b?: T[] | null): T[] | undefined => {
+    const aa = a && a.length > 0 ? a : null
+    const bb = b && b.length > 0 ? b : null
+    if (!aa && !bb) return undefined
+    if (!aa) return bb!
+    if (!bb) return aa
+    return aa.length >= bb.length ? aa : bb
   }
 
   const mergedMeta = {
@@ -137,9 +139,12 @@ export const writeState = async (state: AppState, previousSha: string | null, re
     meta: { ...state.meta, updated_at: new Date().toISOString(), updated_by: 'web', version: (state.meta.version ?? 0) + 1 },
   }
 
+  // JSON.stringify replacer: convert undefined to null so keys are preserved on remote
+  const jsonReplacer = (_key: string, value: unknown) => value === undefined ? null : value
+
   const body = {
     message: `[web] sync state — ${new Date().toISOString()}`,
-    content: toBase64(JSON.stringify(stamped, null, 2) + '\n'),
+    content: toBase64(JSON.stringify(stamped, jsonReplacer, 2) + '\n'),
     branch: GITHUB_BRANCH,
     ...(previousSha ? { sha: previousSha } : {}),
   }
