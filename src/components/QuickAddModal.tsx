@@ -55,7 +55,7 @@ const STATUS_CHOICES: Array<{ id: StatusChoice; label: string; emoji: string; bo
 
 const TodoForm = ({ onAdd, onClose, cats }: { onAdd: (t: Omit<Todo, 'id' | 'created'>) => void; onClose: () => void; cats: ReturnType<typeof getActiveCategories> }) => {
   const [text, setText] = useState('')
-  const [category, setCategory] = useState<TodoCategory>('pro')
+  const [category, setCategory] = useState<TodoCategory>(cats.CATEGORY_LIST[0] ?? 'pro')
   const [statusChoice, setStatusChoice] = useState<StatusChoice>('open')
   const [durationMin, setDurationMin] = useState('')
   const [due, setDue] = useState('')
@@ -129,7 +129,7 @@ const DoneForm = ({ onAdd, onClose, cats }: {
   cats: ReturnType<typeof getActiveCategories>
 }) => {
   const [text, setText] = useState('')
-  const [category, setCategory] = useState<TodoCategory>('pro')
+  const [category, setCategory] = useState<TodoCategory>(cats.CATEGORY_LIST[0] ?? 'pro')
   const [minutes, setMinutes] = useState('')
   const [date, setDate] = useState('')
 

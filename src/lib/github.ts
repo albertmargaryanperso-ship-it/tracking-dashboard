@@ -47,8 +47,15 @@ export const mergeStates = (local: AppState, remote: AppState): AppState => {
   const travail = (local.travail?.length ?? 0) >= (remote.travail?.length ?? 0) ? local.travail : remote.travail
   const routine = (local.routine?.length ?? 0) >= (remote.routine?.length ?? 0) ? local.routine : remote.routine
 
+  // Meta — take the newer side so custom_categories aren't lost
+  const localNewer = (local.meta.updated_at ?? '') >= (remote.meta.updated_at ?? '')
+  const mergedMeta = {
+    ...(localNewer ? local.meta : remote.meta),
+    version: Math.max(local.meta.version ?? 0, remote.meta.version ?? 0),
+  }
+
   return {
-    meta: { ...local.meta },
+    meta: mergedMeta,
     todos: mergedTodos,
     todos_next_id: nextId,
     archive: mergedArchive,

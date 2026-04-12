@@ -48,30 +48,19 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
 
   const maxDayMin = Math.max(1, ...last30Days.map(d => d.travail + d.personnel))
 
-  if (archive.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <div className="w-16 h-16 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-2xl mb-4">📜</div>
-        <h2 className="text-sm font-semibold text-zinc-300 mb-2">Aucun historique</h2>
-        <p className="text-[11px] text-zinc-500 max-w-sm">
-          Les todos terminées sont archivées automatiquement au début de chaque mois.
-          Complète des tâches ce mois-ci — elles apparaîtront ici le mois prochain.
-        </p>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-4">
       {/* Summary stats across all archived months */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <HistStat label="Mois archivés" value={String(archive.length)} icon={<Calendar size={14} />} />
-        <HistStat label="Todos archivées" value={String(archive.reduce((s, a) => s + a.todos.length, 0))} icon={<TrendingUp size={14} />} />
-        <HistStat label="Heures totales" value={formatMinutes(archive.reduce((s, a) => s + (a.stats?.total_minutes ?? 0), 0)) || '0'} icon={<Clock size={14} />} />
-        <HistStat label="Travail / Personnel" value={`${formatMinutes(archive.reduce((s, a) => s + (a.stats?.travail_minutes ?? 0), 0)) || '0'} / ${formatMinutes(archive.reduce((s, a) => s + (a.stats?.personnel_minutes ?? 0), 0)) || '0'}`} icon={<Award size={14} />} />
-      </div>
+      {archive.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <HistStat label="Mois archivés" value={String(archive.length)} icon={<Calendar size={14} />} />
+          <HistStat label="Todos archivées" value={String(archive.reduce((s, a) => s + a.todos.length, 0))} icon={<TrendingUp size={14} />} />
+          <HistStat label="Heures totales" value={formatMinutes(archive.reduce((s, a) => s + (a.stats?.total_minutes ?? 0), 0)) || '0'} icon={<Clock size={14} />} />
+          <HistStat label="Travail / Personnel" value={`${formatMinutes(archive.reduce((s, a) => s + (a.stats?.travail_minutes ?? 0), 0)) || '0'} / ${formatMinutes(archive.reduce((s, a) => s + (a.stats?.personnel_minutes ?? 0), 0)) || '0'}`} icon={<Award size={14} />} />
+        </div>
+      )}
 
-      {/* 30-Day Activity Chart */}
+      {/* 30-Day Activity Chart — always visible */}
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[12px] font-bold uppercase tracking-wider text-zinc-400">Activité des 30 derniers jours</h3>

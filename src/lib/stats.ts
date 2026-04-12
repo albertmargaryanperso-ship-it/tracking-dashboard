@@ -75,13 +75,13 @@ export const computeStats = (state: AppState): Stats => {
     }
     const cat = by_category[t.category]
     cat.total += 1
-    if (t.status === 'open') cat.open += 1
+    if (t.status !== 'done') cat.open += 1
     if (t.status === 'done') { cat.done += 1; cat.minutes += t.completed_min ?? 0 }
 
     const grpStr = categoryGroup(t.category, state.meta?.custom_categories)
     const grp = by_group[grpStr as CategoryGroup] || by_group.travail
     grp.total += 1
-    if (t.status === 'open') grp.open += 1
+    if (t.status !== 'done') grp.open += 1
     if (t.status === 'done') { grp.done += 1; grp.minutes += t.completed_min ?? 0 }
   }
 

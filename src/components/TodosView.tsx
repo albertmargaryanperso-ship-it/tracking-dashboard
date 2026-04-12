@@ -93,8 +93,35 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
     setDragId(null); setDragOverCol(null); setDragOverId(null)
   }
 
+  // ── Global subtask progress ─────────────────────────────────────────────
+  const subtaskProgress = useMemo(() => {
+    const openTodos = filteredTodos.filter(t => t.status !== 'done')
+    let total = 0, doneCount = 0
+    for (const t of openTodos) {
+      const subs = t.subtasks ?? []
+      total += subs.length
+      doneCount += subs.filter(s => s.done).length
+    }
+    return { total, done: doneCount, pct: total > 0 ? Math.round((doneCount / total) * 100) : 0 }
+  }, [filteredTodos])
+
   return (
     <div className="space-y-5">
+      {/* Global subtask progress bar */}
+      {subtaskProgress.total > 0 && (
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Progression sous-tâches</span>
+            <span className="text-[11px] font-bold text-zinc-200">{subtaskProgress.pct}% <span className="text-zinc-500 font-normal">({subtaskProgress.done}/{subtaskProgress.total})</span></span>
+          </div>
+          <div className="h-2 rounded-full bg-zinc-800 overflow-hidden">
+            <div className={cn('h-full rounded-full transition-all duration-500',
+              subtaskProgress.pct === 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-violet-500 to-cyan-500')}
+              style={{ width: `${subtaskProgress.pct}%` }} />
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <TodoStat label="Ouverts" value={filteredStats.open} sub={`${filteredStats.urgent} urgent${filteredStats.urgent > 1 ? 's' : ''}`} color="emerald" />
@@ -159,7 +186,19 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
                     elapsedMinutes={activeTodoId === t.id ? elapsedMinutes : 0}
                     isDragOver={dragOverId === t.id}
                     config={CATEGORY_CONFIG}
-                    onStartTimer={() => startTimer(t.id)}
+                    onStartTimer={() => {
+                      if (activeTodoId !== null && activeTodoId !== t.id) {
+                        const prevTodo = state.todos.find(td => td.id === activeTodoId)
+                        if (!window.confirm(`Timer actif sur "${prevTodo?.text ?? '?'}". L'arrêter pour démarrer celui-ci ?`)) return
+                        const elapsed = stopTimer()
+                        const raw = window.prompt(`Temps écoulé pour "${prevTodo?.text ?? '?'}" : ${elapsed} min. Valider ?`, String(elapsed))
+                        if (raw !== null) {
+                          const parsed = parseInt(raw.trim(), 10)
+                          onToggle(activeTodoId, isNaN(parsed) ? elapsed : Math.max(0, parsed))
+                        }
+                      }
+                      startTimer(t.id)
+                    }}
                     onStopTimer={() => {
                       const min = stopTimer()
                       const raw = window.prompt(`Temps écoulé pour "${t.text}" : ${min} min. Ajuster si besoin ?`, String(min))
@@ -308,6 +347,17 @@ const TodoCard = ({ todo, dragging, isDragOver, isActive, elapsedMinutes, config
           </button>
         </div>
       </div>
+      {/* Subtask progress bar — always visible */}
+      {subtasks.length > 0 && (
+        <button onClick={(e) => { e.stopPropagation(); onEditSubtasks() }}
+          className="w-full mt-1.5 group/bar" title={`${subtasksDoneCount}/${subtasks.length} sous-tâches`}>
+          <div className="h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+            <div className={cn('h-full rounded-full transition-all duration-300',
+              subtasksDoneCount === subtasks.length ? 'bg-emerald-500' : 'bg-amber-500')}
+              style={{ width: `${Math.round((subtasksDoneCount / subtasks.length) * 100)}%` }} />
+          </div>
+        </button>
+      )}
     </div>
   )
 }

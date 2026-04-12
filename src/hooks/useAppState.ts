@@ -41,7 +41,7 @@ const migrateState = (state: AppState): AppState => {
 
   const migratedTodos = (state.todos ?? []).map((t: any) => ({
     ...t,
-    category: validCategories.includes(t.category) ? t.category : 'admin',
+    category: validCategories.includes(t.category) ? t.category : (validCategories[0] ?? 'admin'),
     duration_min: t.duration_min ?? null,
     completed_min: t.completed_min ?? null,
     updated_at: t.updated_at ?? t.completed_at ?? t.created ?? new Date().toISOString(),

@@ -17,7 +17,7 @@ export function useActiveTimer() {
     }
   })
 
-  // To force re-render every minute
+  // Force re-render every second for live countdown
   const [now, setNow] = useState(Date.now())
 
   const syncState = useCallback(() => {
@@ -38,11 +38,13 @@ export function useActiveTimer() {
     if (!activeTimer) {
       return
     }
-    const interval = setInterval(() => setNow(Date.now()), 60000)
+    const interval = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(interval)
   }, [activeTimer])
 
-  const elapsedMinutes = activeTimer ? Math.floor((now - activeTimer.startTime) / 60000) : 0
+  const elapsedMs = activeTimer ? now - activeTimer.startTime : 0
+  const elapsedSeconds = activeTimer ? Math.floor(elapsedMs / 1000) : 0
+  const elapsedMinutes = activeTimer ? Math.floor(elapsedMs / 60000) : 0
 
   const startTimer = (todoId: number) => {
     const newState = { todoId, startTime: Date.now() }
@@ -66,5 +68,5 @@ export function useActiveTimer() {
     window.dispatchEvent(new Event('timer_update'))
   }
 
-  return { activeTodoId: activeTimer?.todoId ?? null, elapsedMinutes, startTimer, stopTimer, cancelTimer }
+  return { activeTodoId: activeTimer?.todoId ?? null, elapsedMinutes, elapsedSeconds, startTimer, stopTimer, cancelTimer }
 }

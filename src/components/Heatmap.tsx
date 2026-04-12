@@ -1,9 +1,11 @@
 import { useMemo } from 'react'
-import type { Todo } from '@/types'
+import type { Todo, ArchiveMonth, CategoryConfig } from '@/types'
 import { todayISO, addDays, cn, categoryGroup } from '@/lib/utils'
 
 interface HeatmapProps {
   todos: Todo[]
+  archive?: ArchiveMonth[]
+  customCategories?: CategoryConfig[]
   days?: number
   mode: 'travail' | 'personnel' | 'combined'
 }
@@ -11,7 +13,7 @@ interface HeatmapProps {
 const MONTH_LABELS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
 const DAY_LABELS = ['', 'L', '', 'M', '', 'V', '']
 
-export const Heatmap = ({ todos, days = 182, mode }: HeatmapProps) => {
+export const Heatmap = ({ todos, archive, customCategories, days = 182, mode }: HeatmapProps) => {
   const { cells, months } = useMemo(() => {
     const today = todayISO()
     const start = addDays(today, -(days - 1))
@@ -20,16 +22,18 @@ export const Heatmap = ({ todos, days = 182, mode }: HeatmapProps) => {
     const diff = dow === 0 ? -6 : 1 - dow
     startDate.setDate(startDate.getDate() + diff)
 
-    // Build per-day hours from completed todos
+    // Build per-day hours from completed todos + archived todos
     const byDate: Record<string, { travail: number; personnel: number }> = {}
-    const doneTodos = todos.filter(t => t.status === 'done' && t.completed_at && t.completed_min)
-    for (const t of doneTodos) {
-      const d = t.completed_at!
+    const addTodo = (t: Todo) => {
+      if (!t.completed_at || !t.completed_min) return
+      const d = t.completed_at
       if (!byDate[d]) byDate[d] = { travail: 0, personnel: 0 }
       const hours = (t.completed_min ?? 0) / 60
-      if (categoryGroup(t.category) === 'travail') byDate[d].travail += hours
+      if (categoryGroup(t.category, customCategories) === 'travail') byDate[d].travail += hours
       else byDate[d].personnel += hours
     }
+    todos.filter(t => t.status === 'done' && t.completed_at && t.completed_min).forEach(addTodo)
+    archive?.forEach(a => a.todos.forEach(addTodo))
 
     const cellList: Array<{ date: string; travail: number; personnel: number; future: boolean }> = []
     const monthPositions: Array<{ label: string; col: number }> = []
@@ -57,7 +61,7 @@ export const Heatmap = ({ todos, days = 182, mode }: HeatmapProps) => {
       cursor.setDate(cursor.getDate() + 1)
     }
     return { cells: cellList, months: monthPositions }
-  }, [todos, days])
+  }, [todos, archive, customCategories, days])
 
   const color = (cell: typeof cells[number]): string => {
     if (cell.future) return 'bg-zinc-900/30'

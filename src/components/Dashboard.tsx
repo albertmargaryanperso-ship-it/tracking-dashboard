@@ -65,7 +65,7 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
             </div>
             <span className="text-[10px] text-zinc-500 font-mono">{formatMinutes(t.by_group.travail.minutes) || '0'} total</span>
           </div>
-          <Heatmap todos={state.todos} mode="travail" days={182} />
+          <Heatmap todos={state.todos} archive={state.archive} customCategories={state.meta.custom_categories} mode="travail" days={182} />
         </div>
         <div className="rounded-2xl border border-cyan-500/20 bg-zinc-900/50 p-5">
           <div className="flex items-center justify-between mb-4">
@@ -75,7 +75,7 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
             </div>
             <span className="text-[10px] text-zinc-500 font-mono">{t.streak_personnel}j streak</span>
           </div>
-          <Heatmap todos={state.todos} mode="personnel" days={182} />
+          <Heatmap todos={state.todos} archive={state.archive} customCategories={state.meta.custom_categories} mode="personnel" days={182} />
         </div>
       </div>
 

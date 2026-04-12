@@ -10,7 +10,7 @@ interface DeepWorkModalProps {
 }
 
 export const DeepWorkModal = ({ state, onToggleTodo }: DeepWorkModalProps) => {
-  const { activeTodoId, elapsedMinutes, stopTimer } = useActiveTimer()
+  const { activeTodoId, elapsedMinutes, elapsedSeconds, stopTimer } = useActiveTimer()
   const [isOpen, setIsOpen] = useState(false)
 
   if (!activeTodoId) return null
@@ -31,13 +31,27 @@ export const DeepWorkModal = ({ state, onToggleTodo }: DeepWorkModalProps) => {
     setIsOpen(false)
   }
 
+  // Format for floating button (compact: Xm or Xh Ym)
+  const floatingTime = elapsedMinutes < 60
+    ? `${elapsedMinutes}m`
+    : `${Math.floor(elapsedMinutes / 60)}h${String(elapsedMinutes % 60).padStart(2, '0')}`
+
+  // Format for zen mode (MM:SS or HH:MM:SS)
+  const totalSec = elapsedSeconds
+  const hrs = Math.floor(totalSec / 3600)
+  const mins = Math.floor((totalSec % 3600) / 60)
+  const secs = totalSec % 60
+  const zenTime = hrs > 0
+    ? `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+    : `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+
   if (!isOpen) {
     return (
       <button onClick={() => setIsOpen(true)}
         className="fixed top-20 right-4 sm:top-24 sm:right-8 z-40 px-3 py-2 sm:px-4 sm:py-2.5 rounded-full bg-zinc-900 border border-zinc-700 shadow-2xl flex items-center gap-2 sm:gap-3 hover:scale-105 transition-all group animate-slide-in">
         <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
         <span className="text-[10px] sm:text-[11px] font-bold text-zinc-200 truncate max-w-[100px] sm:max-w-[200px]">{activeTodo.text}</span>
-        <span className="text-[10px] text-cyan-400 font-mono font-semibold">{String(Math.floor(elapsedMinutes / 60)).padStart(2, '0')}:{String(elapsedMinutes % 60).padStart(2, '0')}</span>
+        <span className="text-[10px] text-cyan-400 font-mono font-semibold">{floatingTime}</span>
       </button>
     )
   }
@@ -64,7 +78,7 @@ export const DeepWorkModal = ({ state, onToggleTodo }: DeepWorkModalProps) => {
         <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-12 lg:mb-20 min-h-[80px] flex items-center justify-center">{activeTodo.text}</h1>
 
         <div className="font-mono text-7xl sm:text-[120px] lg:text-[180px] font-light text-cyan-400 drop-shadow-[0_0_30px_rgba(34,211,238,0.2)] mb-12 lg:mb-20">
-          {String(Math.floor(elapsedMinutes / 60)).padStart(2, '0')}:{String(elapsedMinutes % 60).padStart(2, '0')}
+          {zenTime}
         </div>
 
         <button onClick={handleStop} className="group relative overflow-hidden rounded-full p-1 bg-gradient-to-r from-cyan-500 to-violet-500 hover:scale-[1.02] transition-transform active:scale-95 shadow-[0_0_40px_rgba(34,211,238,0.2)]">
