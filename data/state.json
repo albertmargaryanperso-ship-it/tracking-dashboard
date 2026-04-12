@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 312,
-    "updated_at": "2026-04-12T00:18:15.271Z",
+    "updated_at": "2026-04-12T00:19:06.443Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -772,8 +772,22 @@
       "id": 10037,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:18:14.915Z"
+    },
+    {
+      "text": "Réclamer le bon de commande et paiement sogetrel",
+      "category": "finance",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": "2026-04-14",
+      "completed_at": null,
+      "duration_min": 120,
+      "completed_min": null,
+      "id": 10038,
+      "created": "2026-04-12",
+      "updated_at": "2026-04-12T00:19:06.086Z"
     }
   ],
-  "todos_next_id": 10038,
+  "todos_next_id": 10039,
   "archive": []
 }
