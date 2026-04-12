@@ -134,34 +134,42 @@ export const HistoryView = ({ state }: HistoryViewProps) => {
         </div>
       )}
 
-      {/* 30-Day Chart */}
+      {/* 30-Day Heatmap compact */}
       <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[12px] font-bold uppercase tracking-wider text-zinc-400">Activité des 30 derniers jours</h3>
-          <div className="flex gap-3 text-[10px] font-semibold">
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-violet-500" /> Travail</span>
-            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-cyan-500" /> Personnel</span>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-[12px] font-bold uppercase tracking-wider text-zinc-400">30 derniers jours</h3>
+          <div className="flex items-center gap-1.5">
+            <span className="text-[9px] text-zinc-500">Moins</span>
+            <span className="w-3 h-3 rounded-[3px] bg-zinc-800/60" />
+            <span className="w-3 h-3 rounded-[3px] bg-violet-500/30" />
+            <span className="w-3 h-3 rounded-[3px] bg-violet-500/60" />
+            <span className="w-3 h-3 rounded-[3px] bg-violet-500" />
+            <span className="w-3 h-3 rounded-[3px] bg-amber-500" />
+            <span className="text-[9px] text-zinc-500">Plus</span>
           </div>
         </div>
-        <div className="flex items-end gap-1 h-32 pt-2">
+        <div className="flex gap-[3px] flex-wrap">
           {last30Days.map((day, i) => {
-            const hT = (day.travail / maxDayMin) * 100; const hP = (day.personnel / maxDayMin) * 100
+            const total = day.travail + day.personnel
+            const hours = total / 60
+            const isToday = i === last30Days.length - 1
+            const bg = total === 0 ? 'bg-zinc-800/60'
+              : hours < 0.5 ? 'bg-violet-500/20'
+              : hours < 1.5 ? 'bg-violet-500/40'
+              : hours < 3 ? 'bg-violet-500/70'
+              : hours < 5 ? 'bg-violet-500'
+              : 'bg-amber-500'
             return (
-              <div key={day.date} className="flex-1 flex flex-col justify-end gap-0.5 group relative">
-                <div className="w-full bg-cyan-500/80 rounded-t-sm group-hover:bg-cyan-400" style={{ height: `${hP}%` }} />
-                <div className={cn("w-full bg-violet-500/80 rounded-b-sm group-hover:bg-violet-400", i === 29 && 'ring-1 ring-emerald-500 ring-offset-1 ring-offset-zinc-900')} style={{ height: `${hT}%` }} />
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10 w-max bg-zinc-800 border border-zinc-700 text-[10px] p-2 rounded shadow-xl">
-                  <p className="font-bold text-zinc-300 mb-1">{day.date.split('-').reverse().join('/')}</p>
-                  <p className="text-violet-300 font-mono">Travail: {formatMinutes(day.travail) || '0'}</p>
-                  <p className="text-cyan-300 font-mono">Perso: {formatMinutes(day.personnel) || '0'}</p>
+              <div key={day.date} className={cn('w-[calc((100%-87px)/30)] aspect-square min-w-[10px] rounded-[3px] group relative transition-all hover:scale-150 hover:z-10', bg, isToday && 'ring-1 ring-emerald-400')}
+                title={`${day.date.split('-').reverse().join('/')}: ${formatMinutes(total) || '0'}`}>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-20 w-max bg-zinc-800 border border-zinc-700 text-[10px] p-2 rounded shadow-xl">
+                  <p className="font-bold text-zinc-300">{day.date.split('-').reverse().join('/')}</p>
+                  <p className="text-violet-300 font-mono">{formatMinutes(day.travail) || '0'} travail</p>
+                  <p className="text-cyan-300 font-mono">{formatMinutes(day.personnel) || '0'} perso</p>
                 </div>
               </div>
             )
           })}
-        </div>
-        <div className="flex justify-between mt-2 text-[9px] text-zinc-500 font-mono">
-          <span>{last30Days[0].date.split('-').reverse().slice(0, 2).join('/')}</span>
-          <span>Aujourd'hui</span>
         </div>
       </div>
 

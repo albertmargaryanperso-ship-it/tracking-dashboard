@@ -123,44 +123,27 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
   )
 }
 
-// ─── Streak flame component (SVG flame) ────────────────────────────────────
+// ─── Streak flame component (emoji + glow) ─────────────────────────────────
 const StreakFlame = ({ streak, label, color }: { streak: number; label: string; color: 'violet' | 'cyan' }) => {
   const intensity = streak === 0 ? 0 : streak <= 2 ? 1 : streak <= 6 ? 2 : streak <= 13 ? 3 : 4
-  const speed = [0, 3, 2, 1.3, 0.6][intensity]
-  const scale = [0.8, 0.9, 1, 1.15, 1.35][intensity]
-  const glow = [0, 0, 10, 20, 35][intensity]
+  const glowSize = [0, 8, 15, 25, 40][intensity]
+  const pulseSpeed = [0, 4, 2.5, 1.5, 0.8][intensity]
+  const emojiSize = ['text-xl', 'text-2xl', 'text-3xl', 'text-4xl', 'text-5xl'][intensity]
 
   const c = color === 'violet'
-    ? { main: '#8b5cf6', tip: '#c084fc', inner: '#ddd6fe', glow: 'rgba(139,92,246,', grad: 'from-violet-500/10 to-violet-500/5', border: 'border-violet-500/20', text: 'text-violet-300', sub: 'text-violet-400/80' }
-    : { main: '#06b6d4', tip: '#67e8f9', inner: '#cffafe', glow: 'rgba(6,182,212,', grad: 'from-cyan-500/10 to-cyan-500/5', border: 'border-cyan-500/20', text: 'text-cyan-300', sub: 'text-cyan-400/80' }
+    ? { hex: '#8b5cf6', glow: 'rgba(139,92,246,', grad: 'from-violet-500/10 to-violet-500/5', border: 'border-violet-500/20', text: 'text-violet-300', sub: 'text-violet-400/80' }
+    : { hex: '#06b6d4', glow: 'rgba(6,182,212,', grad: 'from-cyan-500/10 to-cyan-500/5', border: 'border-cyan-500/20', text: 'text-cyan-300', sub: 'text-cyan-400/80' }
 
   return (
     <div className={cn('flex items-center gap-2.5 px-4 py-3 rounded-2xl border transition-all bg-gradient-to-br', c.grad, c.border)}
-      style={{ boxShadow: glow > 0 ? `0 0 ${glow}px ${c.glow}0.35)` : undefined }}>
-      <svg width={28} height={32} viewBox="0 0 24 32" style={{ transform: `scale(${scale})`, filter: glow > 10 ? `drop-shadow(0 0 ${glow / 3}px ${c.main})` : undefined }}>
-        <defs>
-          <linearGradient id={`fg-${color}`} x1="0" y1="1" x2="0" y2="0">
-            <stop offset="0%" stopColor={c.main} />
-            <stop offset="60%" stopColor={c.tip} />
-            <stop offset="100%" stopColor={c.inner} />
-          </linearGradient>
-        </defs>
-        {/* Outer flame */}
-        <path d="M12 2C12 2 4 14 4 20C4 24.5 7.5 28 12 28C16.5 28 20 24.5 20 20C20 14 12 2 12 2Z"
-          fill={`url(#fg-${color})`} opacity={streak === 0 ? 0.25 : 0.9}
-          style={speed > 0 ? { animation: `flicker ${speed}s ease-in-out infinite` } : undefined} />
-        {/* Inner flame */}
-        {intensity >= 2 && (
-          <path d="M12 10C12 10 8 18 8 22C8 24.2 9.8 26 12 26C14.2 26 16 24.2 16 22C16 18 12 10 12 10Z"
-            fill={c.inner} opacity={0.5}
-            style={{ animation: `flicker ${speed * 0.8}s ease-in-out infinite`, animationDelay: '0.2s' }} />
-        )}
-        {/* Core glow for high streaks */}
-        {intensity >= 3 && (
-          <ellipse cx="12" cy="23" rx="3" ry="2.5" fill="white" opacity={0.3}
-            style={{ animation: `flicker ${speed * 0.6}s ease-in-out infinite`, animationDelay: '0.1s' }} />
-        )}
-      </svg>
+      style={{ boxShadow: glowSize > 0 ? `0 0 ${glowSize}px ${c.glow}0.4)` : undefined }}>
+      <span className={cn(emojiSize, 'transition-all')}
+        style={pulseSpeed > 0 ? {
+          animation: `flicker ${pulseSpeed}s ease-in-out infinite`,
+          filter: glowSize > 10 ? `drop-shadow(0 0 ${glowSize / 2}px ${c.hex})` : undefined,
+        } : { opacity: 0.3 }}>
+        🔥
+      </span>
       <div>
         <p className={cn('text-2xl font-extrabold', c.text)}>{streak}</p>
         <p className={cn('text-[9px] uppercase tracking-wider font-semibold', c.sub)}>
