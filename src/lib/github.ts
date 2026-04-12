@@ -143,14 +143,22 @@ export const writeState = async (state: AppState, previousSha: string | null, re
     }
   } catch { /* ignore — will write local as-is */ }
 
+  // Pick the longer/richer array (prevents losing user-added tabs)
+  const best = <T,>(a?: T[] | null, b?: T[] | null): T[] | undefined => {
+    const aa = a && a.length > 0 ? a : null
+    const bb = b && b.length > 0 ? b : null
+    if (!aa) return bb ?? undefined
+    if (!bb) return aa
+    return aa.length >= bb.length ? aa : bb
+  }
+
   const mergedMeta = {
     ...state.meta,
     updated_at: new Date().toISOString(),
     updated_by: 'web' as const,
     version: (state.meta.version ?? 0) + 1,
-    // Preserve remote custom fields if local doesn't have them
-    custom_tabs: state.meta.custom_tabs ?? remoteMeta?.custom_tabs,
-    custom_categories: state.meta.custom_categories ?? remoteMeta?.custom_categories,
+    custom_tabs: best(state.meta.custom_tabs, remoteMeta?.custom_tabs),
+    custom_categories: best(state.meta.custom_categories, remoteMeta?.custom_categories),
     app_name: state.meta.app_name ?? remoteMeta?.app_name,
     app_emoji: state.meta.app_emoji ?? remoteMeta?.app_emoji,
   }

@@ -107,50 +107,57 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
 
   return (
     <div className="space-y-5">
-      {/* Global subtask progress bar */}
-      {subtaskProgress.total > 0 && (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-3">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">Progression sous-tâches</span>
-            <span className="text-[11px] font-bold text-zinc-200">{subtaskProgress.pct}% <span className="text-zinc-500 font-normal">({subtaskProgress.done}/{subtaskProgress.total})</span></span>
+      {/* Fixed panel: stats + subtask progress + nav buttons */}
+      <div className="fixed left-0 right-0 z-10 px-3 sm:px-6 pt-1 pb-2 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/50 space-y-1.5" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 40px)' }}>
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5">
+            <div>
+              <p className="text-[9px] text-zinc-500 font-semibold uppercase">Restant</p>
+              <p className="text-sm font-extrabold text-rose-300">{formatMinutes(filteredStats.remainingMin) || '0'}</p>
+            </div>
+            <Hourglass size={12} className="text-rose-400" />
           </div>
-          <div className="h-2 rounded-full bg-zinc-800 overflow-hidden">
-            <div className={cn('h-full rounded-full transition-all duration-500',
-              subtaskProgress.pct === 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-violet-500 to-cyan-500')}
-              style={{ width: `${subtaskProgress.pct}%` }} />
+          <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-blue-500/20 bg-blue-500/5">
+            <div>
+              <p className="text-[9px] text-zinc-500 font-semibold uppercase">Cumulé</p>
+              <p className="text-sm font-extrabold text-blue-300">{formatMinutes(filteredStats.minutes) || '0'}</p>
+            </div>
+            <Clock size={12} className="text-blue-400" />
           </div>
         </div>
-      )}
-
-      {/* Stats — 2 cards */}
-      <div className="grid grid-cols-2 gap-3">
-        <TodoStat label="Temps restant" value={formatMinutes(filteredStats.remainingMin) || '0min'} sub={`${filteredStats.open} tâches ouvertes`} color="rose" icon={<Hourglass size={14} className="text-rose-400" />} />
-        <TodoStat label="Temps cumulé" value={formatMinutes(filteredStats.minutes) || '0min'} sub={`${filteredStats.done} terminés`} color="blue" icon={<Clock size={14} className="text-blue-400" />} />
-      </div>
-
-      {/* Navigation buttons — fixed bar below header */}
-      <div className="fixed left-0 right-0 z-10 px-4 sm:px-6 py-2 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/50" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 40px)' }}>
-        <div className="grid grid-cols-4 gap-1.5">
+        {/* Subtask progress */}
+        {subtaskProgress.total > 0 && (
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+              <div className={cn('h-full rounded-full', subtaskProgress.pct === 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-violet-500 to-cyan-500')}
+                style={{ width: `${subtaskProgress.pct}%` }} />
+            </div>
+            <span className="text-[9px] font-bold text-zinc-400">{subtaskProgress.pct}%</span>
+          </div>
+        )}
+        {/* Nav buttons */}
+        <div className="grid grid-cols-4 gap-1">
           <button onClick={() => document.getElementById('kanban-board')?.scrollIntoView({ behavior: 'smooth' })}
-            className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-2 sm:p-2.5 text-center hover:bg-emerald-500/10 transition-all">
-            <p className="text-base sm:text-lg font-extrabold text-emerald-400">{filteredStats.open}</p>
-            <p className="text-[8px] sm:text-[9px] font-semibold text-emerald-300/70 uppercase tracking-wider">Ouverts</p>
+            className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 py-1.5 text-center">
+            <p className="text-sm font-extrabold text-emerald-400">{filteredStats.open}</p>
+            <p className="text-[7px] font-semibold text-emerald-300/70 uppercase">Ouverts</p>
           </button>
           {([
-            { id: 'col-todo', label: 'À faire', count: byColumn.todo.length, border: 'border-amber-500/30', bg: 'bg-amber-500/5 hover:bg-amber-500/10', text: 'text-amber-400', sub: 'text-amber-300/70' },
-            { id: 'col-delegated', label: 'Délégué', count: byColumn.delegated.length, border: 'border-violet-500/30', bg: 'bg-violet-500/5 hover:bg-violet-500/10', text: 'text-violet-400', sub: 'text-violet-300/70' },
-            { id: 'col-waiting', label: 'En attente', count: byColumn.waiting.length, border: 'border-sky-500/30', bg: 'bg-sky-500/5 hover:bg-sky-500/10', text: 'text-sky-400', sub: 'text-sky-300/70' },
+            { id: 'col-todo', label: 'À faire', count: byColumn.todo.length, border: 'border-amber-500/30', bg: 'bg-amber-500/5', text: 'text-amber-400', sub: 'text-amber-300/70' },
+            { id: 'col-delegated', label: 'Délégué', count: byColumn.delegated.length, border: 'border-violet-500/30', bg: 'bg-violet-500/5', text: 'text-violet-400', sub: 'text-violet-300/70' },
+            { id: 'col-waiting', label: 'Attente', count: byColumn.waiting.length, border: 'border-sky-500/30', bg: 'bg-sky-500/5', text: 'text-sky-400', sub: 'text-sky-300/70' },
           ] as const).map(btn => (
             <button key={btn.id} onClick={() => document.getElementById(btn.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-              className={cn('rounded-xl border p-2 sm:p-2.5 text-center transition-all', btn.border, btn.bg)}>
-              <p className={cn('text-base sm:text-lg font-extrabold', btn.text)}>{btn.count}</p>
-              <p className={cn('text-[8px] sm:text-[9px] font-semibold uppercase tracking-wider', btn.sub)}>{btn.label}</p>
+              className={cn('rounded-lg border py-1.5 text-center', btn.border, btn.bg)}>
+              <p className={cn('text-sm font-extrabold', btn.text)}>{btn.count}</p>
+              <p className={cn('text-[7px] font-semibold uppercase', btn.sub)}>{btn.label}</p>
             </button>
           ))}
         </div>
       </div>
-      {/* Spacer for fixed nav */}
-      <div className="h-16" />
+      {/* Spacer for fixed panel */}
+      <div className="h-32" />
 
       {/* Log done todo button */}
       <div className="flex justify-end">
