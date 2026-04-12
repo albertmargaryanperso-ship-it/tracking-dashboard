@@ -47,17 +47,26 @@ export const mergeStates = (local: AppState, remote: AppState): AppState => {
   const travail = (local.travail?.length ?? 0) >= (remote.travail?.length ?? 0) ? local.travail : remote.travail
   const routine = (local.routine?.length ?? 0) >= (remote.routine?.length ?? 0) ? local.routine : remote.routine
 
-  // Meta — take the newer side, but ALWAYS preserve non-null custom_tabs/custom_categories
+  // Meta — take the newer side for base, but merge custom fields intelligently
   const localNewer = (local.meta.updated_at ?? '') >= (remote.meta.updated_at ?? '')
   const baseMeta = localNewer ? local.meta : remote.meta
+  const otherMeta = localNewer ? remote.meta : local.meta
+
+  // For arrays: keep the longer/more complete side (prevents losing added tabs/categories)
+  const pickBest = <T,>(a?: T[], b?: T[]): T[] | undefined => {
+    if (!a && !b) return undefined
+    if (!a) return b
+    if (!b) return a
+    return a.length >= b.length ? a : b
+  }
+
   const mergedMeta = {
     ...baseMeta,
     version: Math.max(local.meta.version ?? 0, remote.meta.version ?? 0),
-    // Always keep the non-null side for these — prevents loss during merge
-    custom_categories: local.meta.custom_categories ?? remote.meta.custom_categories ?? baseMeta.custom_categories,
-    custom_tabs: local.meta.custom_tabs ?? remote.meta.custom_tabs ?? baseMeta.custom_tabs,
-    app_name: local.meta.app_name ?? remote.meta.app_name ?? baseMeta.app_name,
-    app_emoji: local.meta.app_emoji ?? remote.meta.app_emoji ?? baseMeta.app_emoji,
+    custom_categories: pickBest(local.meta.custom_categories, remote.meta.custom_categories),
+    custom_tabs: pickBest(local.meta.custom_tabs, remote.meta.custom_tabs),
+    app_name: baseMeta.app_name ?? otherMeta.app_name,
+    app_emoji: baseMeta.app_emoji ?? otherMeta.app_emoji,
   }
 
   return {
