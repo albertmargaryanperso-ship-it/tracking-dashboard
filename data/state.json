@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 347,
-    "updated_at": "2026-04-12T16:05:19.270Z",
+    "updated_at": "2026-04-12T16:05:22.870Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -931,12 +931,12 @@
       "completed_min": null,
       "id": 10053,
       "created": "2026-04-12",
-      "updated_at": "2026-04-12T16:05:18.917Z",
+      "updated_at": "2026-04-12T16:05:22.517Z",
       "subtasks": [
         {
           "id": "st_1776009916600_lo4eo",
           "text": "jhhoi",
-          "done": false
+          "done": true
         },
         {
           "id": "st_1776009918916_mw3i4",
