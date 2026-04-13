@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 586,
-    "updated_at": "2026-04-13T21:00:27.437Z",
+    "version": 587,
+    "updated_at": "2026-04-13T21:07:39.231Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -645,9 +645,23 @@
       "id": 10086,
       "created": "2026-04-13",
       "updated_at": "2026-04-13T21:00:27.379Z"
+    },
+    {
+      "text": "Appeler Cyril Charmois à 9H pour Rachid et Khaled",
+      "category": "pro",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": "2026-04-14",
+      "completed_at": null,
+      "duration_min": 30,
+      "completed_min": null,
+      "id": 10087,
+      "created": "2026-04-13",
+      "updated_at": "2026-04-13T21:07:38.876Z"
     }
   ],
-  "todos_next_id": 10087,
+  "todos_next_id": 10088,
   "archive": [
     {
       "month": "2026-03",
