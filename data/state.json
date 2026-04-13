@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 560,
-    "updated_at": "2026-04-13T20:50:59.329Z",
+    "version": 561,
+    "updated_at": "2026-04-13T20:51:11.736Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -669,7 +669,7 @@
       "completed_min": null,
       "id": 10079,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:50:56.506Z",
+      "updated_at": "2026-04-13T20:51:11.383Z",
       "subtasks": [
         {
           "id": "st_1776113438018_htv9h",
@@ -684,6 +684,11 @@
         {
           "id": "st_1776113456506_jlzex",
           "text": "Kader Bouziane",
+          "done": false
+        },
+        {
+          "id": "st_1776113471383_w53mh",
+          "text": "Aiman pour Feriel, Sabrina, Maroua, Karima",
           "done": false
         }
       ]
