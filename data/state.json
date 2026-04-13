@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 579,
-    "updated_at": "2026-04-13T20:55:06.420Z",
+    "version": 580,
+    "updated_at": "2026-04-13T20:55:08.703Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -647,20 +647,6 @@
       "status": "done",
       "done": true,
       "updated_at": "2026-04-13T20:54:20.601Z"
-    },
-    {
-      "text": "Acheter chaussures",
-      "category": "sport",
-      "priority": "normal",
-      "status": "waiting",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10084,
-      "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:55:06.067Z"
     }
   ],
   "todos_next_id": 10085,
