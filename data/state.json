@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 546,
-    "updated_at": "2026-04-13T20:47:59.809Z",
+    "version": 547,
+    "updated_at": "2026-04-13T20:48:03.264Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -663,7 +663,7 @@
       "completed_min": null,
       "id": 10074,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:47:59.455Z",
+      "updated_at": "2026-04-13T20:48:02.911Z",
       "subtasks": [
         {
           "id": "st_1776113066262_copnk",
@@ -688,6 +688,11 @@
         {
           "id": "st_1776113279455_hi3wi",
           "text": "Docs Ziane",
+          "done": false
+        },
+        {
+          "id": "st_1776113282911_fl270",
+          "text": "Docs Amazigh",
           "done": false
         }
       ]
