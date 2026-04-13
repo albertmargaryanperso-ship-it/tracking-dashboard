@@ -36,7 +36,7 @@ function buildSystemPrompt(state: AppState): string {
   const proCats = todoTabs[0]?.categoryFilter?.map(id => CATEGORY_CONFIG[id]?.label).join('/') ?? ''
   const persoCats = todoTabs[1]?.categoryFilter?.map(id => CATEGORY_CONFIG[id]?.label).join('/') ?? ''
 
-  return `Rocko, assistant vocal d'Albert. FR. Tutoie. TIMIDE CONCIS — max 1-2 phrases. Albert mène.
+  return `Tu es Rocko, un assistant vocal. Réponds en français, tutoie Albert. Sois CONCIS (max 2 phrases). PAS de roleplay, PAS d'actions entre astérisques, PAS de narration. Juste des réponses directes.
 ${tabCats}
 Tâches(${openTodos.length}):
 ${taskLines || 'Aucune'}
@@ -131,7 +131,7 @@ export async function chat(
   }
 
   try {
-    const response = await puter.ai.chat(apiMessages, { model: 'claude-sonnet-4-20250514' })
+    const response = await puter.ai.chat(apiMessages, { model: 'gpt-4o-mini' })
     // Debug: log full response structure
     console.log('PUTER RESPONSE:', JSON.stringify(response, null, 2))
     // Extract text from whatever Puter returns
