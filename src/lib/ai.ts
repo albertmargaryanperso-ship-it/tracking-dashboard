@@ -120,13 +120,14 @@ ${taskList}
 
 STATS : ${urgentCount} urgent(es), ${overdueCount} en retard. Date : ${today}
 
-RÈGLES :
+RÈGLES ABSOLUES :
 1. Ta réponse sera lue à haute voix. Phrases naturelles, concises (2-4 phrases max).
-2. Quand tu agis : décris ce que tu fais ET exécute la fonction. Ex: "J'ajoute la tâche X en urgent."
-3. Analyse sur demande : priorités, retards, charge, recommandations.
-4. Trouve les tâches par nom approximatif. Cite le nom complet.
-5. Catégorie par défaut = première de la liste.
-6. Priorité par défaut = normal.`
+2. OBLIGATION : quand l'utilisateur veut ajouter/supprimer/terminer une tâche, tu DOIS appeler la fonction correspondante (add_task, delete_task, complete_task, add_subtask). NE DÉCRIS PAS l'action sans appeler la fonction.
+3. Appelle TOUJOURS la fonction ET réponds avec du texte de confirmation.
+4. Analyse sur demande : priorités, retards, charge, recommandations.
+5. Trouve les tâches par nom approximatif. Cite le nom complet.
+6. Catégorie par défaut = première de la liste ("${CATEGORY_LIST[0]}").
+7. Priorité par défaut = normal.`
 }
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -225,6 +226,25 @@ export async function chat(
         default: return 'Action effectuée.'
       }
     }).join(' ')
+  }
+
+  // FALLBACK: if model described an add action in text but didn't call the tool
+  if (functionCalls.length === 0 && text) {
+    const lastUserMsg = messages[messages.length - 1]?.content?.toLowerCase() ?? ''
+    const addMatch = text.match(/(?:j'ajoute|ajouté|ajouter|créé|je crée).*?[«""](.+?)[»""]/i)
+      || text.match(/(?:tâche|task)\s*[:\-]\s*(.+?)(?:\.|$)/i)
+
+    if (addMatch && (lastUserMsg.includes('ajoute') || lastUserMsg.includes('créer') || lastUserMsg.includes('crée') || lastUserMsg.includes('note') || lastUserMsg.includes('tâche'))) {
+      const { CATEGORY_LIST: cats } = getActiveCategories(state.meta.custom_categories)
+      functionCalls.push({
+        name: 'add_task',
+        arguments: {
+          text: addMatch[1].trim(),
+          category: cats[0] || 'admin',
+          priority: lastUserMsg.includes('urgent') ? 'urgent' : 'normal',
+        },
+      })
+    }
   }
 
   return { text, functionCalls }
