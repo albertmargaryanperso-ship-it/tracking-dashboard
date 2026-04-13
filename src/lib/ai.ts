@@ -312,46 +312,55 @@ export async function chat(
     })
   }
 
-  // Try models in order (fallback on rate limit)
+  // Try with retry on rate limit (wait 5s between attempts)
   let data: any = null
   let lastError = ''
 
-  for (const model of MODELS) {
-    const res = await fetch(GROQ_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: apiMessages,
-        max_tokens: 800,
-        temperature: 0.7,
-      }),
-    })
+  for (let attempt = 0; attempt < 3; attempt++) {
+    for (const model of MODELS) {
+      const res = await fetch(GROQ_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: apiMessages,
+          max_tokens: 800,
+          temperature: 0.7,
+        }),
+      })
 
-    if (res.ok) {
-      data = await res.json()
+      if (res.ok) {
+        data = await res.json()
+        break
+      }
+
+      if (res.status === 429) {
+        lastError = 'Rate limit'
+        continue
+      }
+
+      const errBody = await res.text().catch(() => '')
+      try {
+        const parsed = JSON.parse(errBody)
+        lastError = `[${res.status}] ${parsed?.error?.message?.slice(0, 100) || ''}`
+      } catch {
+        lastError = `[${res.status}] ${errBody.slice(0, 100)}`
+      }
       break
     }
 
-    if (res.status === 429) {
-      lastError = `Rate limit ${model}`
-      continue // try next model
-    }
-
-    const errBody = await res.text().catch(() => '')
-    try {
-      const parsed = JSON.parse(errBody)
-      lastError = `[${res.status}] ${parsed?.error?.message?.slice(0, 100) || ''}`
-    } catch {
-      lastError = `[${res.status}] ${errBody.slice(0, 100)}`
+    if (data) break
+    if (lastError === 'Rate limit' && attempt < 2) {
+      await new Promise(r => setTimeout(r, 5000))
+      continue
     }
     break
   }
 
-  if (!data) throw new Error(lastError || 'Erreur')
+  if (!data) throw new Error(lastError === 'Rate limit' ? 'Trop de requêtes, réessaie dans quelques secondes' : lastError || 'Erreur')
   const rawText = data.choices?.[0]?.message?.content ?? ''
 
   // Parse action tags
