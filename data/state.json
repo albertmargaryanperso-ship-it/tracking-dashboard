@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 550,
-    "updated_at": "2026-04-13T20:48:32.114Z",
+    "updated_at": "2026-04-13T20:48:40.080Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -635,7 +635,7 @@
       "completed_min": null,
       "id": 10074,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:48:08.210Z",
+      "updated_at": "2026-04-13T20:48:39.727Z",
       "subtasks": [
         {
           "id": "st_1776113066262_copnk",
@@ -675,6 +675,11 @@
         {
           "id": "st_1776113288210_tzbkv",
           "text": "Factures Amazigh",
+          "done": false
+        },
+        {
+          "id": "st_1776113319727_owlom",
+          "text": "Docs Massi Ferradj",
           "done": false
         }
       ]
