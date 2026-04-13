@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 584,
-    "updated_at": "2026-04-13T20:55:51.102Z",
+    "version": 585,
+    "updated_at": "2026-04-13T20:59:50.016Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -165,20 +165,6 @@
     "app_emoji": "💎"
   },
   "todos": [
-    {
-      "text": "S’inscrire à pole emploi",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": 30,
-      "completed_min": null,
-      "id": 10003,
-      "created": "2026-04-09",
-      "updated_at": "2026-04-09"
-    },
     {
       "text": "Amélioration de l’application",
       "category": "automatisation",
