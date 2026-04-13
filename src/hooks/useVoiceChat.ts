@@ -35,16 +35,13 @@ export function useVoiceChat(
   const isSupported = !!SpeechRecognition
   const ttsUnlockedRef = useRef(false)
 
-  // iOS: speak a short phrase immediately on user gesture to unlock TTS
+  // iOS: speak a silent utterance on user gesture to unlock TTS
   const unlockTTS = useCallback(() => {
     if (!synthRef.current) return
     synthRef.current.cancel()
-    const u = new SpeechSynthesisUtterance('Un instant.')
+    const u = new SpeechSynthesisUtterance(' ')
     u.lang = 'fr-FR'
-    u.rate = 1.2
-    const voices = synthRef.current.getVoices()
-    const fr = voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith('fr'))
-    if (fr) u.voice = fr
+    u.volume = 0.01
     synthRef.current.speak(u)
     ttsUnlockedRef.current = true
   }, [])
