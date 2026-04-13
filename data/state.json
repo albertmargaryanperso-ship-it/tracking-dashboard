@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 519,
-    "updated_at": "2026-04-13T20:41:39.958Z",
+    "version": 520,
+    "updated_at": "2026-04-13T20:41:47.327Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -785,11 +785,16 @@
       "completed_min": null,
       "id": 10072,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:41:39.603Z",
+      "updated_at": "2026-04-13T20:41:46.973Z",
       "subtasks": [
         {
           "id": "st_1776112899603_igm9j",
           "text": "Sogetrel: demander à Xavier",
+          "done": false
+        },
+        {
+          "id": "st_1776112906973_odsjn",
+          "text": "Sogetrel: recevoir de Xavier",
           "done": false
         }
       ]
