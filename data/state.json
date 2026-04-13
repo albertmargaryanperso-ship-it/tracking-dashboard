@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 524,
-    "updated_at": "2026-04-13T20:42:35.519Z",
+    "version": 525,
+    "updated_at": "2026-04-13T20:42:47.390Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -807,7 +807,14 @@
       "completed_min": null,
       "id": 10073,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:42:35.165Z"
+      "updated_at": "2026-04-13T20:42:47.036Z",
+      "subtasks": [
+        {
+          "id": "st_1776112967035_tbgof",
+          "text": "Sogetrel novembre",
+          "done": false
+        }
+      ]
     }
   ],
   "todos_next_id": 10074,
