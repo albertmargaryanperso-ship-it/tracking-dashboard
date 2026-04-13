@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 554,
-    "updated_at": "2026-04-13T20:49:35.394Z",
+    "updated_at": "2026-04-13T20:49:38.927Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -689,7 +689,7 @@
       "completed_min": null,
       "id": 10077,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:49:35.040Z",
+      "updated_at": "2026-04-13T20:49:38.573Z",
       "subtasks": [
         {
           "id": "st_1776113367310_io38a",
@@ -704,6 +704,11 @@
         {
           "id": "st_1776113375040_7fpjm",
           "text": "Karen Margaryan",
+          "done": false
+        },
+        {
+          "id": "st_1776113378573_zyygp",
+          "text": "Any Lobato",
           "done": false
         }
       ]
