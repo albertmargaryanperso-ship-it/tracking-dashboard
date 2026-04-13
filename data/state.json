@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 545,
-    "updated_at": "2026-04-13T20:47:36.348Z",
+    "version": 546,
+    "updated_at": "2026-04-13T20:47:51.147Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -178,20 +178,6 @@
       "id": 10003,
       "created": "2026-04-09",
       "updated_at": "2026-04-09"
-    },
-    {
-      "text": "Récupérer factures et documents Ziane amazigh décembre et voir pour le reste des virements",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10009,
-      "created": "2026-04-10",
-      "updated_at": "2026-04-10"
     },
     {
       "text": "Les montants versés Ziane et amazigh sont à recalculer sur facture de janvier car décembre mauvais montants verses",
