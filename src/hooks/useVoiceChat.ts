@@ -14,6 +14,7 @@ interface UseVoiceChatReturn {
   stopAndSend: () => void
   speak: (text: string) => Promise<void>
   stopSpeaking: () => void
+  unlockTTS: () => void
   isSupported: boolean
 }
 
@@ -32,6 +33,16 @@ export function useVoiceChat(
     ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     : null
   const isSupported = !!SpeechRecognition
+  const ttsUnlockedRef = useRef(false)
+
+  // iOS requires speechSynthesis to be triggered from a user gesture first
+  const unlockTTS = useCallback(() => {
+    if (ttsUnlockedRef.current || !synthRef.current) return
+    const u = new SpeechSynthesisUtterance('')
+    u.volume = 0
+    synthRef.current.speak(u)
+    ttsUnlockedRef.current = true
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -42,6 +53,9 @@ export function useVoiceChat(
 
   const startListening = useCallback(() => {
     if (!SpeechRecognition) return
+
+    // Unlock TTS on user gesture (iOS requirement)
+    unlockTTS()
 
     // Stop TTS
     synthRef.current?.cancel()
@@ -103,6 +117,7 @@ export function useVoiceChat(
   }, [SpeechRecognition, isListening])
 
   const stopAndSend = useCallback(() => {
+    unlockTTS()
     const recognition = recognitionRef.current
     recognitionRef.current = null // prevent auto-restart in onend
     recognition?.stop()
@@ -149,7 +164,7 @@ export function useVoiceChat(
   return {
     isListening, isSpeaking, interim, transcript,
     startListening, stopAndSend,
-    speak, stopSpeaking,
+    speak, stopSpeaking, unlockTTS,
     isSupported,
   }
 }

@@ -162,7 +162,7 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
   }, [chatHistory, state, executeFunctions])
 
   // Voice hook
-  const { isListening, isSpeaking, interim, transcript, startListening, stopAndSend, speak, stopSpeaking, isSupported } = useVoiceChat(processInput)
+  const { isListening, isSpeaking, interim, transcript, startListening, stopAndSend, speak, stopSpeaking, unlockTTS, isSupported } = useVoiceChat(processInput)
 
   // Sync status
   useEffect(() => {
@@ -184,6 +184,7 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
   const handleTextSubmit = () => {
     const t = textInput.trim()
     if (!t || status === 'thinking') return
+    unlockTTS() // iOS: unlock speech on user tap
     setTextInput('')
     processInput(t)
   }
