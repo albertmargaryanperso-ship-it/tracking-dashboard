@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 551,
-    "updated_at": "2026-04-13T20:48:42.613Z",
+    "updated_at": "2026-04-13T20:48:49.448Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -266,20 +266,6 @@
       "id": 10028,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:12:35.042Z"
-    },
-    {
-      "text": "Facture + calcul + appel Amazigh",
-      "category": "finance",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-13",
-      "completed_at": null,
-      "duration_min": 60,
-      "completed_min": null,
-      "id": 10029,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T00:13:21.400Z"
     },
     {
       "text": "Virement et facture Aiman pour Sabrina Karima Feriel Maroua",
