@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 529,
-    "updated_at": "2026-04-13T20:44:01.903Z",
+    "version": 530,
+    "updated_at": "2026-04-13T20:44:19.201Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -807,7 +807,7 @@
       "completed_min": null,
       "id": 10073,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:43:40.070Z",
+      "updated_at": "2026-04-13T20:44:18.848Z",
       "subtasks": [
         {
           "id": "st_1776112967035_tbgof",
@@ -832,6 +832,11 @@
         {
           "id": "st_1776113020070_qv95k",
           "text": "Sogetrel reliquats 2024 et une partie 2025",
+          "done": false
+        },
+        {
+          "id": "st_1776113058847_xkqng",
+          "text": "Circet Sabri 1ère partie",
           "done": false
         }
       ]
