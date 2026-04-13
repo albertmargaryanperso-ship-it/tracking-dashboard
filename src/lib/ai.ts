@@ -6,8 +6,8 @@ import type { Todo, AppState, Stats } from '@/types'
 import { getActiveCategories, getActiveTabs, todayISO } from '@/lib/utils'
 
 export const AI_KEY_STORAGE = 'tracking-ai-key-v1'
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
-const MODEL = 'llama-3.1-8b-instant' // smallest = highest free tier quota
+const API_URL = 'https://openrouter.ai/api/v1/chat/completions'
+const MODEL = 'meta-llama/llama-3.1-8b-instruct:free'
 
 export const getAiKey = (): string | null => {
   try { return localStorage.getItem(AI_KEY_STORAGE) } catch { return null }
@@ -142,7 +142,7 @@ export async function chat(
   let lastError = ''
 
   for (let attempt = 0; attempt < 3; attempt++) {
-    const res = await fetch(GROQ_URL, {
+    const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
       body: JSON.stringify({ model: MODEL, messages: apiMessages, max_tokens: 200, temperature: 0.7 }),
