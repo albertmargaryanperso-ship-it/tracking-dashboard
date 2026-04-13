@@ -116,25 +116,25 @@ export const SettingsView = ({ state, onUpdateCategories, onUpdateTabs }: Settin
             <Mic className="text-white" size={18} />
           </div>
           <div>
-            <h2 className="text-sm font-bold">Assistant vocal (Gemini)</h2>
+            <h2 className="text-sm font-bold">Assistant vocal (Groq)</h2>
             <p className="text-[10px] text-zinc-500">Parle pour gérer tes tâches + capture photo → tâches</p>
           </div>
         </div>
 
         <div className="rounded-xl bg-zinc-900/60 border border-zinc-800 p-4 text-[11px] text-zinc-400 leading-relaxed">
-          <p className="font-semibold text-zinc-200 mb-1.5">Clé API Google AI Studio (gratuite)</p>
+          <p className="font-semibold text-zinc-200 mb-1.5">Clé API Groq (100% gratuite)</p>
           <ol className="space-y-0.5 list-decimal list-inside">
-            <li>Va sur <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" className="text-cyan-400 underline">aistudio.google.com/apikey</a></li>
-            <li>Crée une clé API</li>
-            <li>Copie-la et colle-la ci-dessous</li>
+            <li>Va sur <a href="https://console.groq.com/keys" target="_blank" rel="noopener" className="text-cyan-400 underline">console.groq.com/keys</a></li>
+            <li>Crée un compte (gratuit, pas de carte bancaire)</li>
+            <li>Crée une clé API et copie-la ci-dessous</li>
           </ol>
-          <p className="mt-2 text-[10px] text-zinc-500">Gemini 2.0 Flash — gratuit, 1500 requêtes/jour.</p>
+          <p className="mt-2 text-[10px] text-zinc-500">Llama 3.3 70B — gratuit, ultra-rapide.</p>
         </div>
 
         <div>
           <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">API Key</label>
           <input type="password" value={aiKey} onChange={e => setAiKeyLocal(e.target.value)}
-            placeholder="AIzaSy..."
+            placeholder="gsk_..."
             className="w-full mt-1.5 px-3 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-mono focus:outline-none focus:border-cyan-500" />
           {hasAiKey && !aiKey && (
             <p className="text-[10px] text-emerald-400 mt-1.5 flex items-center gap-1">

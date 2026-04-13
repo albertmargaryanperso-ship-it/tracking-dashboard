@@ -1,12 +1,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// AI — Google Gemini API for voice agent
+// AI — Groq API (free, fast) for voice agent
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { Todo, AppState } from '@/types'
 import { getActiveCategories, todayISO } from '@/lib/utils'
 
 export const AI_KEY_STORAGE = 'tracking-ai-key-v1'
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
+const MODEL = 'llama-3.3-70b-versatile'
 
 export const getAiKey = (): string | null => {
   try { return localStorage.getItem(AI_KEY_STORAGE) } catch { return null }
@@ -18,57 +19,69 @@ export const setAiKey = (key: string | null): void => {
   } catch { /* */ }
 }
 
-// ─── Tool declarations (Gemini format) ─────────────────────────────────────
+// ─── Tool definitions (OpenAI format — Groq compatible) ────────────────────
 
-const TOOL_DECLARATIONS = [
+const TOOLS = [
   {
-    name: 'add_task',
-    description: "Ajouter une nouvelle tâche.",
-    parameters: {
-      type: 'OBJECT',
-      properties: {
-        text: { type: 'STRING', description: 'Texte de la tâche' },
-        category: { type: 'STRING', description: 'Catégorie (ID)' },
-        priority: { type: 'STRING', enum: ['urgent', 'normal', 'faible'], description: 'Priorité' },
-        due: { type: 'STRING', description: "Date d'échéance YYYY-MM-DD" },
-        duration_min: { type: 'NUMBER', description: 'Durée estimée en minutes' },
+    type: 'function' as const,
+    function: {
+      name: 'add_task',
+      description: "Ajouter une nouvelle tâche.",
+      parameters: {
+        type: 'object',
+        properties: {
+          text: { type: 'string', description: 'Texte de la tâche' },
+          category: { type: 'string', description: 'Catégorie (ID)' },
+          priority: { type: 'string', enum: ['urgent', 'normal', 'faible'], description: 'Priorité' },
+          due: { type: 'string', description: "Date d'échéance YYYY-MM-DD" },
+          duration_min: { type: 'number', description: 'Durée estimée en minutes' },
+        },
+        required: ['text', 'category'],
       },
-      required: ['text', 'category'],
     },
   },
   {
-    name: 'complete_task',
-    description: "Marquer une tâche comme terminée.",
-    parameters: {
-      type: 'OBJECT',
-      properties: {
-        task_id: { type: 'NUMBER', description: 'ID de la tâche' },
-        completed_min: { type: 'NUMBER', description: 'Temps réel en minutes' },
+    type: 'function' as const,
+    function: {
+      name: 'complete_task',
+      description: "Marquer une tâche comme terminée.",
+      parameters: {
+        type: 'object',
+        properties: {
+          task_id: { type: 'number', description: 'ID de la tâche' },
+          completed_min: { type: 'number', description: 'Temps réel en minutes' },
+        },
+        required: ['task_id'],
       },
-      required: ['task_id'],
     },
   },
   {
-    name: 'delete_task',
-    description: "Supprimer une tâche.",
-    parameters: {
-      type: 'OBJECT',
-      properties: {
-        task_id: { type: 'NUMBER', description: 'ID de la tâche' },
+    type: 'function' as const,
+    function: {
+      name: 'delete_task',
+      description: "Supprimer une tâche.",
+      parameters: {
+        type: 'object',
+        properties: {
+          task_id: { type: 'number', description: 'ID de la tâche' },
+        },
+        required: ['task_id'],
       },
-      required: ['task_id'],
     },
   },
   {
-    name: 'add_subtask',
-    description: "Ajouter une sous-tâche à une tâche existante.",
-    parameters: {
-      type: 'OBJECT',
-      properties: {
-        task_id: { type: 'NUMBER', description: 'ID de la tâche parent' },
-        text: { type: 'STRING', description: 'Texte de la sous-tâche' },
+    type: 'function' as const,
+    function: {
+      name: 'add_subtask',
+      description: "Ajouter une sous-tâche à une tâche existante.",
+      parameters: {
+        type: 'object',
+        properties: {
+          task_id: { type: 'number', description: 'ID de la tâche parent' },
+          text: { type: 'string', description: 'Texte de la sous-tâche' },
+        },
+        required: ['task_id', 'text'],
       },
-      required: ['task_id', 'text'],
     },
   },
 ]
@@ -90,7 +103,7 @@ function buildSystemPrompt(state: AppState): string {
     : openTodos.map(t => {
         const c = CATEGORY_CONFIG[t.category]
         const sub = t.subtasks?.length ? ` [${t.subtasks.filter(s => s.done).length}/${t.subtasks.length} sous-tâches]` : ''
-        const due = t.due ? ` (échéance: ${t.due}${t.due < today ? ' ⚠️EN RETARD' : t.due === today ? ' ⚠️AUJOURD\'HUI' : ''})` : ''
+        const due = t.due ? ` (échéance: ${t.due}${t.due < today ? ' EN RETARD' : t.due === today ? ' AUJOURD\'HUI' : ''})` : ''
         return `- [#${t.id}] ${c?.emoji ?? ''} ${t.text} | ${t.status} | ${t.priority}${due}${sub}`
       }).join('\n')
 
@@ -108,12 +121,12 @@ ${taskList}
 STATS : ${urgentCount} urgent(es), ${overdueCount} en retard. Date : ${today}
 
 RÈGLES :
-1. Ta réponse sera lue à haute voix. Phrases naturelles et orales, concises (2-4 phrases max).
+1. Ta réponse sera lue à haute voix. Phrases naturelles, concises (2-4 phrases max).
 2. Quand tu agis : décris ce que tu fais ET exécute la fonction. Ex: "J'ajoute la tâche X en urgent."
 3. Analyse sur demande : priorités, retards, charge, recommandations.
 4. Trouve les tâches par nom approximatif. Cite le nom complet.
 5. Catégorie par défaut = première de la liste.
-6. Image → analyse et ajoute les tâches trouvées via add_task.`
+6. Priorité par défaut = normal.`
 }
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -134,76 +147,43 @@ export interface AiResponse {
   functionCalls: FunctionCall[]
 }
 
-// ─── API call with retry on 429 ────────────────────────────────────────────
+// ─── API call ──────────────────────────────────────────────────────────────
 
 export async function chat(
   messages: ChatMessage[],
   state: AppState,
-  image?: string,
+  _image?: string,
 ): Promise<AiResponse> {
   const apiKey = getAiKey()
   if (!apiKey) throw new Error('Clé API non configurée')
 
   const systemPrompt = buildSystemPrompt(state)
 
-  // Build contents — system prompt as first turn (most compatible)
-  const contents: any[] = [
-    { role: 'user', parts: [{ text: systemPrompt }] },
-    { role: 'model', parts: [{ text: 'Compris, je suis prêt.' }] },
+  const apiMessages: any[] = [
+    { role: 'system', content: systemPrompt },
   ]
 
   for (const msg of messages) {
-    const parts: any[] = []
-    if (msg.content) parts.push({ text: msg.content })
-    if (msg.image) {
-      const match = msg.image.match(/^data:([^;]+);base64,(.+)$/)
-      if (match) parts.push({ inlineData: { mimeType: match[1], data: match[2] } })
-    }
-    contents.push({ role: msg.role === 'assistant' ? 'model' : 'user', parts })
+    apiMessages.push({ role: msg.role, content: msg.content })
   }
 
-  if (image && !messages.some(m => m.image)) {
-    const match = image.match(/^data:([^;]+);base64,(.+)$/)
-    if (match) {
-      contents.push({
-        role: 'user',
-        parts: [
-          { text: "Analyse cette image et crée les tâches que tu vois." },
-          { inlineData: { mimeType: match[1], data: match[2] } },
-        ],
-      })
-    }
-  }
+  const res = await fetch(GROQ_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: apiMessages,
+      tools: TOOLS,
+      tool_choice: 'auto',
+      max_tokens: 400,
+      temperature: 0.7,
+    }),
+  })
 
-  const body = {
-    contents,
-    tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
-    generationConfig: { maxOutputTokens: 500, temperature: 0.7 },
-  }
-
-  const url = `${GEMINI_URL}?key=${apiKey}`
-
-  // Retry once on 429
-  let data: any = null
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-
-    if (res.ok) {
-      data = await res.json()
-      break
-    }
-
-    if (res.status === 429 && attempt < 2) {
-      // Wait 5s then retry
-      await new Promise(r => setTimeout(r, 5000))
-      continue
-    }
-
-    // Other error — extract message
+  if (!res.ok) {
     const errBody = await res.text().catch(() => '')
     let msg = `[${res.status}]`
     try {
@@ -215,23 +195,26 @@ export async function chat(
     throw new Error(msg)
   }
 
-  if (!data) throw new Error('Erreur après 3 tentatives')
+  const data = await res.json()
+  const choice = data.choices?.[0]
 
-  // Parse response
-  const parts = data.candidates?.[0]?.content?.parts ?? []
   const functionCalls: FunctionCall[] = []
-  let text = ''
+  let text = choice?.message?.content ?? ''
 
-  for (const part of parts) {
-    if (part.text) text += part.text
-    if (part.functionCall) {
-      functionCalls.push({
-        name: part.functionCall.name,
-        arguments: part.functionCall.args ?? {},
-      })
+  if (choice?.message?.tool_calls) {
+    for (const tc of choice.message.tool_calls) {
+      if (tc.type === 'function') {
+        try {
+          functionCalls.push({
+            name: tc.function.name,
+            arguments: JSON.parse(tc.function.arguments),
+          })
+        } catch { /* skip malformed */ }
+      }
     }
   }
 
+  // Auto-generate spoken confirmation if only tool calls
   if (functionCalls.length > 0 && !text.trim()) {
     text = functionCalls.map(fc => {
       switch (fc.name) {
