@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 521,
-    "updated_at": "2026-04-13T20:42:00.700Z",
+    "version": 522,
+    "updated_at": "2026-04-13T20:42:12.021Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -785,7 +785,7 @@
       "completed_min": null,
       "id": 10072,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:42:00.541Z",
+      "updated_at": "2026-04-13T20:42:11.667Z",
       "subtasks": [
         {
           "id": "st_1776112899603_igm9j",
@@ -800,6 +800,11 @@
         {
           "id": "st_1776112920541_72be4",
           "text": "Constructel: demander à Claudio et service facturation",
+          "done": false
+        },
+        {
+          "id": "st_1776112931667_xn8x6",
+          "text": "Constructel: recevoir de service facturation",
           "done": false
         }
       ]
