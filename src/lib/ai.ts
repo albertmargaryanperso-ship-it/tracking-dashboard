@@ -6,8 +6,8 @@ import type { Todo, AppState } from '@/types'
 import { getActiveCategories, todayISO } from '@/lib/utils'
 
 export const AI_KEY_STORAGE = 'tracking-ai-key-v1'
-// Try models in order — 2.0 Flash Lite has separate quotas
-const GEMINI_MODELS = ['gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash']
+// Try models in order on quota errors
+const GEMINI_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-latest']
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models'
 
 export const getAiKey = (): string | null => {
@@ -233,12 +233,13 @@ export async function chat(
         data = await res.json()
         break
       }
-      if (res.status === 429) {
-        lastError = `Quota dépassé sur ${model}`
+      if (res.status === 429 || res.status === 404) {
+        lastError = res.status === 429 ? `Quota dépassé sur ${model}` : `Modèle ${model} non trouvé`
         continue // try next model
       }
-      lastError = `Erreur ${res.status}`
-      break // non-429 error, don't retry
+      const errBody = await res.text().catch(() => '')
+      lastError = `Erreur ${res.status}${errBody ? ` — ${errBody.slice(0, 100)}` : ''}`
+      break // non-retryable error
     } catch (e: any) {
       lastError = e.message
       continue
