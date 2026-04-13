@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 530,
-    "updated_at": "2026-04-13T20:44:19.201Z",
+    "version": 531,
+    "updated_at": "2026-04-13T20:44:26.616Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -853,7 +853,14 @@
       "completed_min": null,
       "id": 10074,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:44:01.547Z"
+      "updated_at": "2026-04-13T20:44:26.262Z",
+      "subtasks": [
+        {
+          "id": "st_1776113066262_copnk",
+          "text": "Facture Luca",
+          "done": false
+        }
+      ]
     }
   ],
   "todos_next_id": 10075,
