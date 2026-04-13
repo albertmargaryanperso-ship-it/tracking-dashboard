@@ -144,7 +144,12 @@ export async function chat(
   for (let attempt = 0; attempt < 3; attempt++) {
     const res = await fetch(API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'Rocko Assistant',
+      },
       body: JSON.stringify({ model: MODEL, messages: apiMessages, max_tokens: 200, temperature: 0.7 }),
     })
 
