@@ -299,17 +299,11 @@ export async function chat(
   const apiMessages: any[] = [
     { role: 'system', content: systemPrompt },
   ]
-  for (const msg of messages) {
-    apiMessages.push({ role: msg.role, content: msg.content })
-  }
 
-  // Inject conversation summary to prevent context loss on long flows
-  if (messages.length >= 4) {
-    const allText = messages.map(m => `${m.role}: ${m.content}`).join('\n')
-    apiMessages.push({
-      role: 'system',
-      content: `RAPPEL — voici les infos collectées dans cette conversation. Quand tu crées un tag [ADD] ou [LOG], utilise ces valeurs exactes :\n${allText}`,
-    })
+  // Keep only last 8 messages to avoid rate limits
+  const recentMessages = messages.slice(-8)
+  for (const msg of recentMessages) {
+    apiMessages.push({ role: msg.role, content: msg.content })
   }
 
   // Try with retry on rate limit (wait 5s between attempts)
@@ -354,7 +348,7 @@ export async function chat(
 
     if (data) break
     if (lastError === 'Rate limit' && attempt < 2) {
-      await new Promise(r => setTimeout(r, 5000))
+      await new Promise(r => setTimeout(r, 10000))
       continue
     }
     break
