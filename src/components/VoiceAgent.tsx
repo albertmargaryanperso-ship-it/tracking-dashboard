@@ -103,7 +103,7 @@ export const VoiceAgent = ({ open, onClose, state, onAddTodo, onToggleTodo, onDe
   }, [chatHistory, state, executeFunctions])
 
   // Voice hook
-  const { isListening, isSpeaking, interim, startListening, stopListening, speak, stopSpeaking, isSupported } = useVoiceChat(processInput)
+  const { isListening, isSpeaking, interim, transcript, startListening, stopAndSend, speak, stopSpeaking, isSupported } = useVoiceChat(processInput)
 
   // Sync status
   useEffect(() => {
@@ -131,10 +131,10 @@ export const VoiceAgent = ({ open, onClose, state, onAddTodo, onToggleTodo, onDe
 
   const handleMicTap = () => {
     if (status === 'speaking') { stopSpeaking(); setStatus('idle'); return }
-    if (status === 'listening') { stopListening(); return }
+    if (status === 'listening') { stopAndSend(); return } // 2nd tap = send
     if (status === 'thinking') return
     setError('')
-    startListening()
+    startListening() // 1st tap = start listening
   }
 
   if (!open) return null
@@ -143,7 +143,7 @@ export const VoiceAgent = ({ open, onClose, state, onAddTodo, onToggleTodo, onDe
 
   const STATUS_CONFIG = {
     idle: { label: isSupported ? 'Appuie pour parler' : 'Écris ta demande ci-dessous', color: 'from-violet-600 to-cyan-600', icon: Mic },
-    listening: { label: 'Écoute...', color: 'from-rose-500 to-pink-600', icon: MicOff },
+    listening: { label: 'Appuie pour envoyer', color: 'from-rose-500 to-pink-600', icon: Send },
     thinking: { label: 'Réflexion...', color: 'from-amber-500 to-orange-600', icon: Loader2 },
     speaking: { label: 'Réponse...', color: 'from-cyan-500 to-blue-600', icon: Volume2 },
   }
@@ -163,7 +163,7 @@ export const VoiceAgent = ({ open, onClose, state, onAddTodo, onToggleTodo, onDe
           Effacer
         </button>
         <p className="text-[10px] text-zinc-500 font-mono">🎙️ Assistant</p>
-        <button onClick={() => { stopSpeaking(); stopListening(); onClose() }}
+        <button onClick={() => { stopSpeaking(); stopAndSend(); onClose() }}
           className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900">
           <X size={18} />
         </button>
@@ -189,8 +189,12 @@ export const VoiceAgent = ({ open, onClose, state, onAddTodo, onToggleTodo, onDe
               <p className="text-rose-400 text-sm font-medium break-words">{error}</p>
               <p className="text-[10px] text-zinc-600">Si "quota dépassé" → crée une nouvelle clé dans un <b>nouveau projet</b> sur AI Studio</p>
             </div>
-          ) : interim ? (
-            <p className="text-violet-300 text-lg italic animate-pulse">{interim}...</p>
+          ) : (transcript || interim) && status === 'listening' ? (
+            <div className="space-y-2">
+              {transcript && <p className="text-zinc-200 text-base">{transcript}</p>}
+              {interim && <p className="text-violet-300 text-sm italic animate-pulse">{interim}...</p>}
+              <p className="text-[10px] text-violet-400 mt-2">Appuie sur le micro quand tu as fini ↓</p>
+            </div>
           ) : lastResponse ? (
             <p className="text-zinc-200 text-base leading-relaxed">{lastResponse}</p>
           ) : lastTranscript ? (

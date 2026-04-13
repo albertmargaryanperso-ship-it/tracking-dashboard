@@ -1,25 +1,19 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // useVoiceChat — Web Speech API (STT + TTS)
+// Mode: continuous listening — tap to start, tap again to send
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 
 interface UseVoiceChatReturn {
-  /** Whether the browser is currently listening to speech */
   isListening: boolean
-  /** Whether TTS is currently speaking */
   isSpeaking: boolean
-  /** Interim transcript (partial recognition) */
   interim: string
-  /** Start listening */
+  transcript: string
   startListening: () => void
-  /** Stop listening */
-  stopListening: () => void
-  /** Speak text aloud */
+  stopAndSend: () => void
   speak: (text: string) => Promise<void>
-  /** Stop speaking */
   stopSpeaking: () => void
-  /** Whether speech recognition is supported */
   isSupported: boolean
 }
 
@@ -29,16 +23,16 @@ export function useVoiceChat(
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [interim, setInterim] = useState('')
+  const [transcript, setTranscript] = useState('')
   const recognitionRef = useRef<any>(null)
+  const transcriptRef = useRef('')
   const synthRef = useRef(typeof window !== 'undefined' ? window.speechSynthesis : null)
 
-  // Check support
   const SpeechRecognition = typeof window !== 'undefined'
     ? (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
     : null
   const isSupported = !!SpeechRecognition
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       recognitionRef.current?.abort()
@@ -49,67 +43,83 @@ export function useVoiceChat(
   const startListening = useCallback(() => {
     if (!SpeechRecognition) return
 
-    // Stop TTS if playing
+    // Stop TTS
     synthRef.current?.cancel()
     setIsSpeaking(false)
+
+    // Reset
+    transcriptRef.current = ''
+    setTranscript('')
+    setInterim('')
 
     const recognition = new SpeechRecognition()
     recognition.lang = 'fr-FR'
     recognition.interimResults = true
-    recognition.continuous = false
+    recognition.continuous = true
     recognition.maxAlternatives = 1
 
     recognition.onstart = () => {
       setIsListening(true)
-      setInterim('')
     }
 
     recognition.onresult = (event: any) => {
-      let final = ''
+      let finalText = ''
       let interimText = ''
+
       for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i]
         if (result.isFinal) {
-          final += result[0].transcript
+          finalText += result[0].transcript + ' '
         } else {
           interimText += result[0].transcript
         }
       }
 
-      if (final) {
-        setInterim('')
-        setIsListening(false)
-        onResult(final.trim())
-      } else {
-        setInterim(interimText)
+      if (finalText) {
+        transcriptRef.current = finalText.trim()
+        setTranscript(finalText.trim())
       }
+      setInterim(interimText)
     }
 
     recognition.onerror = (event: any) => {
-      console.warn('Speech recognition error:', event.error)
+      if (event.error === 'no-speech') return // Ignore, keep listening
+      console.warn('Speech error:', event.error)
       setIsListening(false)
       setInterim('')
     }
 
     recognition.onend = () => {
+      // If still supposed to be listening, restart (iOS kills it sometimes)
+      if (isListening && recognitionRef.current) {
+        try { recognition.start() } catch { setIsListening(false) }
+        return
+      }
       setIsListening(false)
     }
 
     recognitionRef.current = recognition
     recognition.start()
-  }, [SpeechRecognition, onResult])
+  }, [SpeechRecognition, isListening])
 
-  const stopListening = useCallback(() => {
-    recognitionRef.current?.stop()
+  const stopAndSend = useCallback(() => {
+    const recognition = recognitionRef.current
+    recognitionRef.current = null // prevent auto-restart in onend
+    recognition?.stop()
     setIsListening(false)
     setInterim('')
-  }, [])
+
+    const text = transcriptRef.current.trim()
+    if (text) {
+      onResult(text)
+      transcriptRef.current = ''
+      setTranscript('')
+    }
+  }, [onResult])
 
   const speak = useCallback((text: string): Promise<void> => {
     return new Promise((resolve) => {
       if (!synthRef.current) { resolve(); return }
-
-      // Cancel any ongoing speech
       synthRef.current.cancel()
 
       const utterance = new SpeechSynthesisUtterance(text)
@@ -117,7 +127,6 @@ export function useVoiceChat(
       utterance.rate = 1.1
       utterance.pitch = 1.0
 
-      // Try to find a French voice
       const voices = synthRef.current.getVoices()
       const frVoice = voices.find((v: SpeechSynthesisVoice) =>
         v.lang.startsWith('fr') && v.localService
@@ -138,8 +147,8 @@ export function useVoiceChat(
   }, [])
 
   return {
-    isListening, isSpeaking, interim,
-    startListening, stopListening,
+    isListening, isSpeaking, interim, transcript,
+    startListening, stopAndSend,
     speak, stopSpeaking,
     isSupported,
   }
