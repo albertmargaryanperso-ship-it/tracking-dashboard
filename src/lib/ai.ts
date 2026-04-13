@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// AI — Groq API (free, fast) for voice agent
+// AI — Groq API (free) — text-based action parsing (no native tool calling)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { Todo, AppState } from '@/types'
@@ -19,73 +19,6 @@ export const setAiKey = (key: string | null): void => {
   } catch { /* */ }
 }
 
-// ─── Tool definitions (OpenAI format — Groq compatible) ────────────────────
-
-const TOOLS = [
-  {
-    type: 'function' as const,
-    function: {
-      name: 'add_task',
-      description: "Ajouter une nouvelle tâche.",
-      parameters: {
-        type: 'object',
-        properties: {
-          text: { type: 'string', description: 'Texte de la tâche' },
-          category: { type: 'string', description: 'Catégorie (ID)' },
-          priority: { type: 'string', enum: ['urgent', 'normal', 'faible'], description: 'Priorité' },
-          due: { type: 'string', description: "Date d'échéance YYYY-MM-DD" },
-          duration_min: { type: 'number', description: 'Durée estimée en minutes' },
-        },
-        required: ['text', 'category'],
-      },
-    },
-  },
-  {
-    type: 'function' as const,
-    function: {
-      name: 'complete_task',
-      description: "Marquer une tâche comme terminée.",
-      parameters: {
-        type: 'object',
-        properties: {
-          task_id: { type: 'number', description: 'ID de la tâche' },
-          completed_min: { type: 'number', description: 'Temps réel en minutes' },
-        },
-        required: ['task_id'],
-      },
-    },
-  },
-  {
-    type: 'function' as const,
-    function: {
-      name: 'delete_task',
-      description: "Supprimer une tâche.",
-      parameters: {
-        type: 'object',
-        properties: {
-          task_id: { type: 'number', description: 'ID de la tâche' },
-        },
-        required: ['task_id'],
-      },
-    },
-  },
-  {
-    type: 'function' as const,
-    function: {
-      name: 'add_subtask',
-      description: "Ajouter une sous-tâche à une tâche existante.",
-      parameters: {
-        type: 'object',
-        properties: {
-          task_id: { type: 'number', description: 'ID de la tâche parent' },
-          text: { type: 'string', description: 'Texte de la sous-tâche' },
-        },
-        required: ['task_id', 'text'],
-      },
-    },
-  },
-]
-
 // ─── System prompt ─────────────────────────────────────────────────────────
 
 function buildSystemPrompt(state: AppState): string {
@@ -95,56 +28,52 @@ function buildSystemPrompt(state: AppState): string {
 
   const catList = CATEGORY_LIST.map(id => {
     const c = CATEGORY_CONFIG[id]
-    return `- ${c.emoji} ${c.label} (id: "${id}")`
-  }).join('\n')
+    return `${c.emoji} ${c.label} (id="${id}")`
+  }).join(', ')
 
   const taskList = openTodos.length === 0
     ? 'Aucune tâche en cours.'
     : openTodos.map(t => {
         const c = CATEGORY_CONFIG[t.category]
         const sub = t.subtasks?.length ? ` [${t.subtasks.filter(s => s.done).length}/${t.subtasks.length} sous-tâches]` : ''
-        const due = t.due ? ` (échéance: ${t.due}${t.due < today ? ' EN RETARD' : t.due === today ? ' AUJOURD\'HUI' : ''})` : ''
-        return `- [#${t.id}] ${c?.emoji ?? ''} ${t.text} | ${t.status} | ${t.priority}${due}${sub}`
+        const due = t.due ? ` (éch: ${t.due}${t.due < today ? ' RETARD' : ''})` : ''
+        const dur = t.duration_min ? ` ~${t.duration_min}min` : ''
+        return `#${t.id} ${c?.emoji ?? ''} ${t.text} | ${t.priority}${due}${dur}${sub}`
       }).join('\n')
 
   const urgentCount = openTodos.filter(t => t.priority === 'urgent').length
   const overdueCount = openTodos.filter(t => t.due && t.due < today).length
 
-  return `Tu es l'assistant vocal personnel d'Albert. Tu parles TOUJOURS en français, tu es direct et bienveillant.
+  return `Tu es l'assistant vocal d'Albert. Français uniquement, concis (voix).
 
-CATÉGORIES :
-${catList}
-
-TÂCHES OUVERTES (${openTodos.length}) :
+CATÉGORIES : ${catList}
+TÂCHES (${openTodos.length}, ${urgentCount} urgentes, ${overdueCount} en retard) :
 ${taskList}
+Date : ${today}
 
-STATS : ${urgentCount} urgent(es), ${overdueCount} en retard. Date : ${today}
+ACTIONS — quand tu veux agir, inclus UN tag par action dans ta réponse :
+- Ajouter : [ADD text="${'la tâche'}" cat="${CATEGORY_LIST[0]}" pri="normal" dur="30"]
+- Sous-tâche : [SUB id=TASK_ID text="la sous-tâche"]
+- Terminer : [DONE id=TASK_ID min=TEMPS_REEL]
+- Supprimer : [DEL id=TASK_ID]
 
-RÈGLES ABSOLUES :
-1. Ta réponse sera lue à haute voix. Phrases naturelles, concises.
-2. OBLIGATION : quand l'utilisateur veut ajouter/supprimer/terminer une tâche, tu DOIS appeler la fonction correspondante (add_task, delete_task, complete_task, add_subtask). NE DÉCRIS PAS l'action sans appeler la fonction.
-3. Appelle TOUJOURS la fonction ET réponds avec du texte de confirmation.
-4. Analyse sur demande : priorités, retards, charge, recommandations.
-5. Trouve les tâches par nom approximatif. Cite le nom complet.
-6. Catégorie par défaut = première de la liste ("${CATEGORY_LIST[0]}").
-7. Priorité par défaut = normal.
+EXEMPLES de réponse correcte :
+"J'ajoute la tâche en pro urgent. [ADD text="Appeler le comptable" cat="pro" pri="urgent" dur="15"] Tu veux des sous-tâches ?"
+"Sous-tâche ajoutée. [SUB id=42 text="Retrouver le numéro"] Autre sous-tâche ?"
+"Tâche terminée. [DONE id=42 min=20]"
 
-FLOW D'AJOUT DE TÂCHE (conversation guidée, étape par étape) :
-1. L'utilisateur dit "ajoute une tâche X" → tu NE crées PAS encore. D'abord tu demandes :
-   "Dans quelle catégorie ? [liste les catégories disponibles avec emoji]"
-2. L'utilisateur répond la catégorie → tu demandes :
-   "C'est urgent, normal ou faible priorité ?"
-3. L'utilisateur répond → tu ESTIMES un temps réaliste et demandes :
-   "Je dirais environ X minutes, ça te va ?"
-4. L'utilisateur confirme ou corrige le temps → tu appelles add_task avec tous les paramètres.
-5. Puis tu PROPOSES des sous-tâches pertinentes :
-   "Tu veux des sous-tâches ? Par exemple : [2-3 suggestions contextuelles]"
-6. Si oui → appelle add_subtask, puis demande "Autre sous-tâche ?"
-7. Si non → "C'est noté, la tâche est prête."
+FLOW AJOUT :
+1. L'utilisateur veut ajouter → demande catégorie (si pas précisée)
+2. Demande priorité (si pas précisée)
+3. Estime un temps et demande confirmation
+4. Crée avec le tag [ADD ...]
+5. Propose 2-3 sous-tâches pertinentes
+6. Si oui → [SUB ...] puis "Autre sous-tâche ?"
+7. Si non → "C'est noté."
 
-RACCOURCI : Si l'utilisateur donne déjà la catégorie/priorité/temps dans sa demande, saute les étapes correspondantes et passe directement à la création.
-
-Tu gardes le contexte : si on vient d'ajouter la tâche #42, les sous-tâches suivantes vont dessus sans redemander.`
+RACCOURCI : si tout est précisé d'emblée, crée directement.
+Garde le contexte : après un ADD, les SUB suivants utilisent l'ID de cette tâche.
+Pour analyse/discussion : réponds normalement sans tag.`
 }
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -165,6 +94,65 @@ export interface AiResponse {
   functionCalls: FunctionCall[]
 }
 
+// ─── Parse action tags from text ───────────────────────────────────────────
+
+function parseActions(text: string): { cleanText: string; calls: FunctionCall[] } {
+  const calls: FunctionCall[] = []
+
+  // [ADD text="..." cat="..." pri="..." dur="..."]
+  const addRe = /\[ADD\s+text="([^"]+)"\s*cat="([^"]+)"\s*pri="([^"]+)"\s*dur="(\d+)"\s*\]/gi
+  let match
+  while ((match = addRe.exec(text)) !== null) {
+    calls.push({
+      name: 'add_task',
+      arguments: {
+        text: match[1],
+        category: match[2],
+        priority: match[3],
+        duration_min: parseInt(match[4], 10),
+      },
+    })
+  }
+
+  // [SUB id=N text="..."]
+  const subRe = /\[SUB\s+id=(\d+)\s+text="([^"]+)"\s*\]/gi
+  while ((match = subRe.exec(text)) !== null) {
+    calls.push({
+      name: 'add_subtask',
+      arguments: { task_id: parseInt(match[1], 10), text: match[2] },
+    })
+  }
+
+  // [DONE id=N min=N]
+  const doneRe = /\[DONE\s+id=(\d+)(?:\s+min=(\d+))?\s*\]/gi
+  while ((match = doneRe.exec(text)) !== null) {
+    calls.push({
+      name: 'complete_task',
+      arguments: { task_id: parseInt(match[1], 10), completed_min: match[2] ? parseInt(match[2], 10) : undefined },
+    })
+  }
+
+  // [DEL id=N]
+  const delRe = /\[DEL\s+id=(\d+)\s*\]/gi
+  while ((match = delRe.exec(text)) !== null) {
+    calls.push({
+      name: 'delete_task',
+      arguments: { task_id: parseInt(match[1], 10) },
+    })
+  }
+
+  // Remove tags from spoken text
+  const cleanText = text
+    .replace(/\[ADD[^\]]*\]/gi, '')
+    .replace(/\[SUB[^\]]*\]/gi, '')
+    .replace(/\[DONE[^\]]*\]/gi, '')
+    .replace(/\[DEL[^\]]*\]/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+
+  return { cleanText, calls }
+}
+
 // ─── API call ──────────────────────────────────────────────────────────────
 
 export async function chat(
@@ -180,7 +168,6 @@ export async function chat(
   const apiMessages: any[] = [
     { role: 'system', content: systemPrompt },
   ]
-
   for (const msg of messages) {
     apiMessages.push({ role: msg.role, content: msg.content })
   }
@@ -194,9 +181,7 @@ export async function chat(
     body: JSON.stringify({
       model: MODEL,
       messages: apiMessages,
-      tools: TOOLS,
-      tool_choice: 'auto',
-      max_tokens: 400,
+      max_tokens: 800,
       temperature: 0.7,
     }),
   })
@@ -214,55 +199,10 @@ export async function chat(
   }
 
   const data = await res.json()
-  const choice = data.choices?.[0]
+  const rawText = data.choices?.[0]?.message?.content ?? ''
 
-  const functionCalls: FunctionCall[] = []
-  let text = choice?.message?.content ?? ''
+  // Parse action tags
+  const { cleanText, calls } = parseActions(rawText)
 
-  if (choice?.message?.tool_calls) {
-    for (const tc of choice.message.tool_calls) {
-      if (tc.type === 'function') {
-        try {
-          functionCalls.push({
-            name: tc.function.name,
-            arguments: JSON.parse(tc.function.arguments),
-          })
-        } catch { /* skip malformed */ }
-      }
-    }
-  }
-
-  // Auto-generate spoken confirmation if only tool calls
-  if (functionCalls.length > 0 && !text.trim()) {
-    text = functionCalls.map(fc => {
-      switch (fc.name) {
-        case 'add_task': return `J'ajoute la tâche "${fc.arguments.text}".`
-        case 'complete_task': return 'Tâche terminée.'
-        case 'delete_task': return 'Tâche supprimée.'
-        case 'add_subtask': return `Sous-tâche ajoutée : "${fc.arguments.text}".`
-        default: return 'Action effectuée.'
-      }
-    }).join(' ')
-  }
-
-  // FALLBACK: if model described an add action in text but didn't call the tool
-  if (functionCalls.length === 0 && text) {
-    const lastUserMsg = messages[messages.length - 1]?.content?.toLowerCase() ?? ''
-    const addMatch = text.match(/(?:j'ajoute|ajouté|ajouter|créé|je crée).*?[«""](.+?)[»""]/i)
-      || text.match(/(?:tâche|task)\s*[:\-]\s*(.+?)(?:\.|$)/i)
-
-    if (addMatch && (lastUserMsg.includes('ajoute') || lastUserMsg.includes('créer') || lastUserMsg.includes('crée') || lastUserMsg.includes('note') || lastUserMsg.includes('tâche'))) {
-      const { CATEGORY_LIST: cats } = getActiveCategories(state.meta.custom_categories)
-      functionCalls.push({
-        name: 'add_task',
-        arguments: {
-          text: addMatch[1].trim(),
-          category: cats[0] || 'admin',
-          priority: lastUserMsg.includes('urgent') ? 'urgent' : 'normal',
-        },
-      })
-    }
-  }
-
-  return { text, functionCalls }
+  return { text: cleanText, functionCalls: calls }
 }

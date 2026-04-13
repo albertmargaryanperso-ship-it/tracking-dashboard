@@ -29,6 +29,9 @@ export const VoiceAgent = ({ open, onClose, state, onAddTodo, onToggleTodo, onDe
 
   const hasKey = !!getAiKey()
 
+  // Track last created task ID for subtask follow-ups
+  const [lastCreatedId, setLastCreatedId] = useState<number | null>(null)
+
   // Execute function calls
   const executeFunctions = useCallback((calls: FunctionCall[]) => {
     for (const fc of calls) {
@@ -45,6 +48,8 @@ export const VoiceAgent = ({ open, onClose, state, onAddTodo, onToggleTodo, onDe
             duration_min: a.duration_min || null,
             completed_at: null,
           })
+          // Track the ID (will be todos_next_id since it just got incremented)
+          setLastCreatedId(state.todos_next_id)
           break
         case 'complete_task':
           if (a.task_id) onToggleTodo(a.task_id, a.completed_min ?? null)
@@ -84,7 +89,14 @@ export const VoiceAgent = ({ open, onClose, state, onAddTodo, onToggleTodo, onDe
       const response = await chat(newHistory, state, image)
 
       if (response.functionCalls.length > 0) {
-        executeFunctions(response.functionCalls)
+        // Fix subtask IDs: if model used a placeholder, replace with real last created ID
+        const fixedCalls = response.functionCalls.map(fc => {
+          if (fc.name === 'add_subtask' && lastCreatedId && (!fc.arguments.task_id || fc.arguments.task_id === 0)) {
+            return { ...fc, arguments: { ...fc.arguments, task_id: lastCreatedId } }
+          }
+          return fc
+        })
+        executeFunctions(fixedCalls)
       }
 
       setChatHistory(prev => [...prev, { role: 'assistant', content: response.text }])
