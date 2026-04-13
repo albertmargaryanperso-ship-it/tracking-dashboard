@@ -137,20 +137,14 @@ export function useVoiceChat(
   const speak = useCallback((text: string): Promise<void> => {
     return new Promise((resolve) => {
       if (!synthRef.current) { resolve(); return }
-      synthRef.current.cancel()
+      // DON'T cancel — iOS needs the speech queue alive to stay unlocked
 
       const utterance = new SpeechSynthesisUtterance(text)
       utterance.lang = 'fr-FR'
-      utterance.rate = 0.95  // Légèrement plus lent = plus naturel
+      utterance.rate = 0.95
       utterance.pitch = 1.05
 
-      // Use the system's preferred French voice (respects user's iPhone/Mac settings)
-      const voices = synthRef.current.getVoices()
-      const frVoices = voices.filter((v: SpeechSynthesisVoice) => v.lang.startsWith('fr'))
-      // Just pick the first French voice — iOS returns the user's preferred voice first
-      if (frVoices.length > 0) utterance.voice = frVoices[0]
-
-      // Safari bug: speech stops after ~15s. Workaround: pause/resume periodically.
+      // Safari bug: speech stops after ~15s. Workaround: pause/resume.
       let keepAlive: ReturnType<typeof setInterval> | null = null
 
       utterance.onstart = () => {
@@ -166,8 +160,9 @@ export function useVoiceChat(
         if (keepAlive) clearInterval(keepAlive)
         setIsSpeaking(false); resolve()
       }
-      utterance.onerror = () => {
+      utterance.onerror = (e) => {
         if (keepAlive) clearInterval(keepAlive)
+        console.warn('TTS error:', e)
         setIsSpeaking(false); resolve()
       }
 

@@ -148,6 +148,16 @@ export const SettingsView = ({ state, onUpdateCategories, onUpdateTabs }: Settin
             className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 text-white text-xs font-bold disabled:opacity-40 transition-all">
             {aiSaved ? '✓ Enregistré' : 'Enregistrer'}
           </button>
+          <button onClick={() => {
+            const u = new SpeechSynthesisUtterance('Salut Albert, c\'est Rocko. La voix fonctionne !')
+            u.lang = 'fr-FR'
+            u.rate = 0.95
+            window.speechSynthesis.cancel()
+            window.speechSynthesis.speak(u)
+          }}
+            className="px-3 py-2.5 rounded-xl border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10 text-[11px] font-semibold">
+            🔊 Test
+          </button>
           {hasAiKey && (
             <button onClick={clearAiKey}
               className="px-3 py-2.5 rounded-xl border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 text-[11px]">

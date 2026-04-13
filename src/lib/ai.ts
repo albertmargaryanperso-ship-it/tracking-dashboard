@@ -7,7 +7,7 @@ import { getActiveCategories, getActiveTabs, todayISO } from '@/lib/utils'
 
 export const AI_KEY_STORAGE = 'tracking-ai-key-v1'
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
-const MODEL = 'llama-3.3-70b-versatile'
+const MODELS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'gemma2-9b-it']
 
 export const getAiKey = (): string | null => {
   try { return localStorage.getItem(AI_KEY_STORAGE) } catch { return null }
@@ -312,33 +312,46 @@ export async function chat(
     })
   }
 
-  const res = await fetch(GROQ_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: apiMessages,
-      max_tokens: 800,
-      temperature: 0.7,
-    }),
-  })
+  // Try models in order (fallback on rate limit)
+  let data: any = null
+  let lastError = ''
 
-  if (!res.ok) {
+  for (const model of MODELS) {
+    const res = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: apiMessages,
+        max_tokens: 800,
+        temperature: 0.7,
+      }),
+    })
+
+    if (res.ok) {
+      data = await res.json()
+      break
+    }
+
+    if (res.status === 429) {
+      lastError = `Rate limit ${model}`
+      continue // try next model
+    }
+
     const errBody = await res.text().catch(() => '')
-    let msg = `[${res.status}]`
     try {
       const parsed = JSON.parse(errBody)
-      msg += ` ${parsed?.error?.message?.slice(0, 150) || ''}`
+      lastError = `[${res.status}] ${parsed?.error?.message?.slice(0, 100) || ''}`
     } catch {
-      msg += ` ${errBody.slice(0, 150)}`
+      lastError = `[${res.status}] ${errBody.slice(0, 100)}`
     }
-    throw new Error(msg)
+    break
   }
 
-  const data = await res.json()
+  if (!data) throw new Error(lastError || 'Erreur')
   const rawText = data.choices?.[0]?.message?.content ?? ''
 
   // Parse action tags
