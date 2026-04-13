@@ -127,19 +127,11 @@ export function useVoiceChat(
       utterance.rate = 0.95  // Légèrement plus lent = plus naturel
       utterance.pitch = 1.05
 
-      // Pick the best French voice available
+      // Use the system's preferred French voice (respects user's iPhone/Mac settings)
       const voices = synthRef.current.getVoices()
       const frVoices = voices.filter((v: SpeechSynthesisVoice) => v.lang.startsWith('fr'))
-
-      // Prefer premium/enhanced voices (iOS "Thomas Premium", macOS "Audrey Enhanced", etc.)
-      const premium = frVoices.find((v: SpeechSynthesisVoice) =>
-        /premium|enhanced|natural|neural/i.test(v.name)
-      )
-      // Then local voices (better quality than remote)
-      const local = frVoices.find((v: SpeechSynthesisVoice) => v.localService)
-      // Then any French voice
-      const best = premium || local || frVoices[0]
-      if (best) utterance.voice = best
+      // Just pick the first French voice — iOS returns the user's preferred voice first
+      if (frVoices.length > 0) utterance.voice = frVoices[0]
 
       utterance.onstart = () => setIsSpeaking(true)
       utterance.onend = () => { setIsSpeaking(false); resolve() }
