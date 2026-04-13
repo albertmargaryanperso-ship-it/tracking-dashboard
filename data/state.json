@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 549,
-    "updated_at": "2026-04-13T20:48:23.647Z",
+    "version": 550,
+    "updated_at": "2026-04-13T20:48:32.114Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -178,20 +178,6 @@
       "id": 10003,
       "created": "2026-04-09",
       "updated_at": "2026-04-09"
-    },
-    {
-      "text": "Demander facture Smail EZZAHI CCT",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10011,
-      "created": "2026-04-10",
-      "updated_at": "2026-04-10"
     },
     {
       "text": "Demander les documents de Massinissa Ferradj",
