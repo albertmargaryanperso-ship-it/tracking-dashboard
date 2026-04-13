@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 576,
-    "updated_at": "2026-04-13T20:54:20.955Z",
+    "version": 577,
+    "updated_at": "2026-04-13T20:54:48.207Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -271,15 +271,16 @@
       "text": "Voir vidéos de création agent ia onoff téléphone",
       "category": "lecture",
       "priority": "normal",
-      "status": "waiting",
+      "status": "done",
       "delegated_to": null,
       "due": null,
-      "completed_at": null,
+      "completed_at": "2026-04-13",
       "duration_min": 30,
-      "completed_min": null,
+      "completed_min": 30,
       "id": 10040,
       "created": "2026-04-12",
-      "updated_at": "2026-04-12T00:22:31.494Z"
+      "updated_at": "2026-04-13T20:54:48.201Z",
+      "done": true
     },
     {
       "text": "Acheter chaussures blanches beige dans la liste d’achat",
