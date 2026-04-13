@@ -35,11 +35,16 @@ export function useVoiceChat(
   const isSupported = !!SpeechRecognition
   const ttsUnlockedRef = useRef(false)
 
-  // iOS requires speechSynthesis to be triggered from a user gesture first
+  // iOS: speak a short phrase immediately on user gesture to unlock TTS
   const unlockTTS = useCallback(() => {
-    if (ttsUnlockedRef.current || !synthRef.current) return
-    const u = new SpeechSynthesisUtterance('')
-    u.volume = 0
+    if (!synthRef.current) return
+    synthRef.current.cancel()
+    const u = new SpeechSynthesisUtterance('Un instant.')
+    u.lang = 'fr-FR'
+    u.rate = 1.2
+    const voices = synthRef.current.getVoices()
+    const fr = voices.find((v: SpeechSynthesisVoice) => v.lang.startsWith('fr'))
+    if (fr) u.voice = fr
     synthRef.current.speak(u)
     ttsUnlockedRef.current = true
   }, [])
@@ -53,9 +58,6 @@ export function useVoiceChat(
 
   const startListening = useCallback(() => {
     if (!SpeechRecognition) return
-
-    // Unlock TTS on user gesture (iOS requirement)
-    unlockTTS()
 
     // Stop TTS
     synthRef.current?.cancel()
@@ -148,9 +150,26 @@ export function useVoiceChat(
       // Just pick the first French voice — iOS returns the user's preferred voice first
       if (frVoices.length > 0) utterance.voice = frVoices[0]
 
-      utterance.onstart = () => setIsSpeaking(true)
-      utterance.onend = () => { setIsSpeaking(false); resolve() }
-      utterance.onerror = () => { setIsSpeaking(false); resolve() }
+      // Safari bug: speech stops after ~15s. Workaround: pause/resume periodically.
+      let keepAlive: ReturnType<typeof setInterval> | null = null
+
+      utterance.onstart = () => {
+        setIsSpeaking(true)
+        keepAlive = setInterval(() => {
+          if (synthRef.current?.speaking) {
+            synthRef.current.pause()
+            synthRef.current.resume()
+          }
+        }, 10000)
+      }
+      utterance.onend = () => {
+        if (keepAlive) clearInterval(keepAlive)
+        setIsSpeaking(false); resolve()
+      }
+      utterance.onerror = () => {
+        if (keepAlive) clearInterval(keepAlive)
+        setIsSpeaking(false); resolve()
+      }
 
       synthRef.current.speak(utterance)
     })
