@@ -27,6 +27,7 @@ import type { SyncStatus } from '@/lib/github'
   const [quickAddOpen, setQuickAddOpen] = useState(false)
   const [tokenOpen, setTokenOpen] = useState(false)
   const [tokenPresent, setTokenPresent] = useState(hasToken())
+  const [voiceOpen, setVoiceOpen] = useState(false)
 
   // Ensure current view exists in tabs
   useEffect(() => {
@@ -173,13 +174,14 @@ import type { SyncStatus } from '@/lib/github'
       {isMobile && <LiveTracker state={state} onStop={actions.toggleTodo} />}
 
       {isMobile && (
-        <MobileNav 
-          view={view} 
-          onViewChange={setView} 
-          tabs={tabs} 
-          onSync={() => void pull()} 
+        <MobileNav
+          view={view}
+          onViewChange={setView}
+          tabs={tabs}
+          onSync={() => void pull()}
           onAdd={() => setQuickAddOpen(true)}
           onOpenToken={() => setTokenOpen(true)}
+          onOpenVoice={() => setVoiceOpen(true)}
           syncStatus={syncStatus}
           tokenPresent={tokenPresent}
         />
@@ -195,7 +197,8 @@ import type { SyncStatus } from '@/lib/github'
       <TokenModal open={tokenOpen} onClose={() => setTokenOpen(false)}
         onTokenChange={() => setTokenPresent(hasToken())} />
 
-      <VoiceAgent state={state}
+      <VoiceAgent open={voiceOpen} onClose={() => setVoiceOpen(false)}
+        state={state}
         onAddTodo={actions.addTodo}
         onToggleTodo={actions.toggleTodo}
         onDeleteTodo={actions.deleteTodo}

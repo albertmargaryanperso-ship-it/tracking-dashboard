@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils'
 import type { AppState, Todo } from '@/types'
 
 interface VoiceAgentProps {
+  open: boolean
+  onClose: () => void
   state: AppState
   onAddTodo: (t: Omit<Todo, 'id' | 'created'>) => void
   onToggleTodo: (id: number, completed_min?: number | null) => void
@@ -15,8 +17,7 @@ interface VoiceAgentProps {
 
 type AgentStatus = 'idle' | 'listening' | 'thinking' | 'speaking'
 
-export const VoiceAgent = ({ state, onAddTodo, onToggleTodo, onDeleteTodo, onUpdateTodo }: VoiceAgentProps) => {
-  const [open, setOpen] = useState(false)
+export const VoiceAgent = ({ open, onClose, state, onAddTodo, onToggleTodo, onDeleteTodo, onUpdateTodo }: VoiceAgentProps) => {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([])
   const [status, setStatus] = useState<AgentStatus>('idle')
   const [lastTranscript, setLastTranscript] = useState('')
@@ -136,20 +137,7 @@ export const VoiceAgent = ({ state, onAddTodo, onToggleTodo, onDeleteTodo, onUpd
     startListening()
   }
 
-  // ─── Floating button ──────────────────────────────────────────────────
-
-  if (!open) {
-    return (
-      <button onClick={() => setOpen(true)}
-        className={cn(
-          'fixed z-40 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all active:scale-95',
-          'bg-gradient-to-br from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500',
-          'bottom-24 right-4 sm:bottom-20 sm:right-6',
-        )}>
-        <Mic size={22} className="text-white" />
-      </button>
-    )
-  }
+  if (!open) return null
 
   // ─── Status config ────────────────────────────────────────────────────
 
@@ -175,7 +163,7 @@ export const VoiceAgent = ({ state, onAddTodo, onToggleTodo, onDeleteTodo, onUpd
           Effacer
         </button>
         <p className="text-[10px] text-zinc-500 font-mono">🎙️ Assistant</p>
-        <button onClick={() => { stopSpeaking(); stopListening(); setOpen(false) }}
+        <button onClick={() => { stopSpeaking(); stopListening(); onClose() }}
           className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900">
           <X size={18} />
         </button>
