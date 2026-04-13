@@ -1,11 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// AI — Anthropic Claude API for voice agent
+// AI — Google Gemini API for voice agent
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { Todo, AppState } from '@/types'
 import { getActiveCategories, todayISO } from '@/lib/utils'
 
 export const AI_KEY_STORAGE = 'tracking-ai-key-v1'
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 
 export const getAiKey = (): string | null => {
   try { return localStorage.getItem(AI_KEY_STORAGE) } catch { return null }
@@ -17,20 +18,20 @@ export const setAiKey = (key: string | null): void => {
   } catch { /* */ }
 }
 
-// ─── Tool definitions (Claude format) ──────────────────────────────────────
+// ─── Tool declarations (Gemini format) ─────────────────────────────────────
 
-const TOOLS = [
+const TOOL_DECLARATIONS = [
   {
     name: 'add_task',
     description: "Ajouter une nouvelle tâche.",
-    input_schema: {
-      type: 'object',
+    parameters: {
+      type: 'OBJECT',
       properties: {
-        text: { type: 'string', description: 'Texte de la tâche' },
-        category: { type: 'string', description: 'Catégorie (ID)' },
-        priority: { type: 'string', enum: ['urgent', 'normal', 'faible'], description: 'Priorité' },
-        due: { type: 'string', description: "Date d'échéance YYYY-MM-DD" },
-        duration_min: { type: 'number', description: 'Durée estimée en minutes' },
+        text: { type: 'STRING', description: 'Texte de la tâche' },
+        category: { type: 'STRING', description: 'Catégorie (ID)' },
+        priority: { type: 'STRING', enum: ['urgent', 'normal', 'faible'], description: 'Priorité' },
+        due: { type: 'STRING', description: "Date d'échéance YYYY-MM-DD" },
+        duration_min: { type: 'NUMBER', description: 'Durée estimée en minutes' },
       },
       required: ['text', 'category'],
     },
@@ -38,11 +39,11 @@ const TOOLS = [
   {
     name: 'complete_task',
     description: "Marquer une tâche comme terminée.",
-    input_schema: {
-      type: 'object',
+    parameters: {
+      type: 'OBJECT',
       properties: {
-        task_id: { type: 'number', description: 'ID de la tâche' },
-        completed_min: { type: 'number', description: 'Temps réel en minutes' },
+        task_id: { type: 'NUMBER', description: 'ID de la tâche' },
+        completed_min: { type: 'NUMBER', description: 'Temps réel en minutes' },
       },
       required: ['task_id'],
     },
@@ -50,10 +51,10 @@ const TOOLS = [
   {
     name: 'delete_task',
     description: "Supprimer une tâche.",
-    input_schema: {
-      type: 'object',
+    parameters: {
+      type: 'OBJECT',
       properties: {
-        task_id: { type: 'number', description: 'ID de la tâche' },
+        task_id: { type: 'NUMBER', description: 'ID de la tâche' },
       },
       required: ['task_id'],
     },
@@ -61,11 +62,11 @@ const TOOLS = [
   {
     name: 'add_subtask',
     description: "Ajouter une sous-tâche à une tâche existante.",
-    input_schema: {
-      type: 'object',
+    parameters: {
+      type: 'OBJECT',
       properties: {
-        task_id: { type: 'number', description: 'ID de la tâche parent' },
-        text: { type: 'string', description: 'Texte de la sous-tâche' },
+        task_id: { type: 'NUMBER', description: 'ID de la tâche parent' },
+        text: { type: 'STRING', description: 'Texte de la sous-tâche' },
       },
       required: ['task_id', 'text'],
     },
@@ -77,7 +78,6 @@ const TOOLS = [
 function buildSystemPrompt(state: AppState): string {
   const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(state.meta.custom_categories)
   const openTodos = state.todos.filter(t => t.status !== 'done')
-  const doneTodos = state.todos.filter(t => t.status === 'done')
   const today = todayISO()
 
   const catList = CATEGORY_LIST.map(id => {
@@ -91,8 +91,7 @@ function buildSystemPrompt(state: AppState): string {
         const c = CATEGORY_CONFIG[t.category]
         const sub = t.subtasks?.length ? ` [${t.subtasks.filter(s => s.done).length}/${t.subtasks.length} sous-tâches]` : ''
         const due = t.due ? ` (échéance: ${t.due}${t.due < today ? ' ⚠️EN RETARD' : t.due === today ? ' ⚠️AUJOURD\'HUI' : ''})` : ''
-        const dur = t.duration_min ? ` ~${t.duration_min}min` : ''
-        return `- [#${t.id}] ${c?.emoji ?? ''} ${t.text} | ${t.status} | ${t.priority}${due}${dur}${sub}`
+        return `- [#${t.id}] ${c?.emoji ?? ''} ${t.text} | ${t.status} | ${t.priority}${due}${sub}`
       }).join('\n')
 
   const urgentCount = openTodos.filter(t => t.priority === 'urgent').length
@@ -114,7 +113,7 @@ RÈGLES :
 3. Analyse sur demande : priorités, retards, charge, recommandations.
 4. Trouve les tâches par nom approximatif. Cite le nom complet.
 5. Catégorie par défaut = première de la liste.
-6. Image → analyse et propose d'ajouter les tâches trouvées via add_task.`
+6. Image → analyse et ajoute les tâches trouvées via add_task.`
 }
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -135,7 +134,7 @@ export interface AiResponse {
   functionCalls: FunctionCall[]
 }
 
-// ─── API call ──────────────────────────────────────────────────────────────
+// ─── API call with retry on 429 ────────────────────────────────────────────
 
 export async function chat(
   messages: ChatMessage[],
@@ -143,90 +142,96 @@ export async function chat(
   image?: string,
 ): Promise<AiResponse> {
   const apiKey = getAiKey()
-  if (!apiKey) throw new Error('Clé API Claude non configurée')
+  if (!apiKey) throw new Error('Clé API non configurée')
 
   const systemPrompt = buildSystemPrompt(state)
 
-  // Build Claude messages
-  const apiMessages: any[] = []
+  // Build contents — system prompt as first turn (most compatible)
+  const contents: any[] = [
+    { role: 'user', parts: [{ text: systemPrompt }] },
+    { role: 'model', parts: [{ text: 'Compris, je suis prêt.' }] },
+  ]
 
   for (const msg of messages) {
-    const content: any[] = []
-
+    const parts: any[] = []
+    if (msg.content) parts.push({ text: msg.content })
     if (msg.image) {
       const match = msg.image.match(/^data:([^;]+);base64,(.+)$/)
-      if (match) {
-        content.push({
-          type: 'image',
-          source: { type: 'base64', media_type: match[1], data: match[2] },
-        })
-      }
+      if (match) parts.push({ inlineData: { mimeType: match[1], data: match[2] } })
     }
-
-    if (msg.content) {
-      content.push({ type: 'text', text: msg.content })
-    }
-
-    apiMessages.push({ role: msg.role, content })
+    contents.push({ role: msg.role === 'assistant' ? 'model' : 'user', parts })
   }
 
-  // Standalone image
   if (image && !messages.some(m => m.image)) {
     const match = image.match(/^data:([^;]+);base64,(.+)$/)
     if (match) {
-      apiMessages.push({
+      contents.push({
         role: 'user',
-        content: [
-          { type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } },
-          { type: 'text', text: "Analyse cette image et crée les tâches que tu vois." },
+        parts: [
+          { text: "Analyse cette image et crée les tâches que tu vois." },
+          { inlineData: { mimeType: match[1], data: match[2] } },
         ],
       })
     }
   }
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 400,
-      system: systemPrompt,
-      messages: apiMessages,
-      tools: TOOLS,
-    }),
-  })
+  const body = {
+    contents,
+    tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
+    generationConfig: { maxOutputTokens: 500, temperature: 0.7 },
+  }
 
-  if (!res.ok) {
+  const url = `${GEMINI_URL}?key=${apiKey}`
+
+  // Retry once on 429
+  let data: any = null
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+
+    if (res.ok) {
+      data = await res.json()
+      break
+    }
+
+    if (res.status === 429 && attempt < 2) {
+      // Wait 5s then retry
+      await new Promise(r => setTimeout(r, 5000))
+      continue
+    }
+
+    // Other error — extract message
     const errBody = await res.text().catch(() => '')
     let msg = `[${res.status}]`
     try {
       const parsed = JSON.parse(errBody)
-      msg += ` ${parsed?.error?.message || errBody.slice(0, 150)}`
+      msg += ` ${parsed?.error?.message?.slice(0, 150) || ''}`
     } catch {
       msg += ` ${errBody.slice(0, 150)}`
     }
     throw new Error(msg)
   }
 
-  const data = await res.json()
-  const blocks = data.content ?? []
+  if (!data) throw new Error('Erreur après 3 tentatives')
 
+  // Parse response
+  const parts = data.candidates?.[0]?.content?.parts ?? []
   const functionCalls: FunctionCall[] = []
   let text = ''
 
-  for (const block of blocks) {
-    if (block.type === 'text') text += block.text
-    if (block.type === 'tool_use') {
-      functionCalls.push({ name: block.name, arguments: block.input ?? {} })
+  for (const part of parts) {
+    if (part.text) text += part.text
+    if (part.functionCall) {
+      functionCalls.push({
+        name: part.functionCall.name,
+        arguments: part.functionCall.args ?? {},
+      })
     }
   }
 
-  // Auto-generate spoken confirmation if only tool calls
   if (functionCalls.length > 0 && !text.trim()) {
     text = functionCalls.map(fc => {
       switch (fc.name) {
