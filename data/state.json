@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 540,
-    "updated_at": "2026-04-13T20:47:03.966Z",
+    "updated_at": "2026-04-13T20:47:05.982Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -631,34 +631,6 @@
       "created": "2026-04-13",
       "completed_min": null,
       "updated_at": "2026-04-13T18:39:08.145Z"
-    },
-    {
-      "text": "Rendez-vous avec l'avocat",
-      "category": "pro",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "duration_min": null,
-      "completed_at": null,
-      "id": 10065,
-      "created": "2026-04-13",
-      "completed_min": null,
-      "updated_at": "2026-04-13T18:55:28.966Z"
-    },
-    {
-      "text": "Rendez-vous avec l'avocat",
-      "category": "pro",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "duration_min": null,
-      "completed_at": null,
-      "id": 10066,
-      "created": "2026-04-13",
-      "completed_min": null,
-      "updated_at": "2026-04-13T18:56:08.759Z"
     },
     {
       "text": "Réclamer récap février",
