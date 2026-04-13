@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 528,
-    "updated_at": "2026-04-13T20:43:40.424Z",
+    "version": 529,
+    "updated_at": "2026-04-13T20:44:01.903Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -835,9 +835,23 @@
           "done": false
         }
       ]
+    },
+    {
+      "text": "Documents manquants",
+      "category": "admin",
+      "priority": "normal",
+      "status": "delegated",
+      "delegated_to": "Loelia",
+      "due": "2026-04-20",
+      "completed_at": null,
+      "duration_min": 120,
+      "completed_min": null,
+      "id": 10074,
+      "created": "2026-04-13",
+      "updated_at": "2026-04-13T20:44:01.547Z"
     }
   ],
-  "todos_next_id": 10074,
+  "todos_next_id": 10075,
   "archive": [
     {
       "month": "2026-03",
