@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 532,
-    "updated_at": "2026-04-13T20:44:31.681Z",
+    "updated_at": "2026-04-13T20:44:34.884Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -225,20 +225,6 @@
       "duration_min": 30,
       "completed_min": null,
       "id": 10007,
-      "created": "2026-04-10",
-      "updated_at": "2026-04-10"
-    },
-    {
-      "text": "Facture Luca",
-      "category": "pro",
-      "priority": "normal",
-      "status": "waiting",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": 30,
-      "completed_min": null,
-      "id": 10008,
       "created": "2026-04-10",
       "updated_at": "2026-04-10"
     },
