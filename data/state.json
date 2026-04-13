@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 572,
-    "updated_at": "2026-04-13T20:52:35.439Z",
+    "version": 573,
+    "updated_at": "2026-04-13T20:53:10.888Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -585,9 +585,24 @@
       "id": 10057,
       "created": "2026-04-13",
       "updated_at": "2026-04-13T20:47:20.712Z"
+    },
+    {
+      "text": "Vibe coding",
+      "category": "cat_1776032171060",
+      "priority": "normal",
+      "delegated_to": null,
+      "due": null,
+      "duration_min": 180,
+      "completed_min": 180,
+      "completed_at": "2026-04-10",
+      "id": 10080,
+      "created": "2026-04-13",
+      "status": "done",
+      "done": true,
+      "updated_at": "2026-04-13T20:53:10.535Z"
     }
   ],
-  "todos_next_id": 10080,
+  "todos_next_id": 10081,
   "archive": [
     {
       "month": "2026-03",
