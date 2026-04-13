@@ -132,7 +132,13 @@ export async function chat(
 
   try {
     const response = await puter.ai.chat(apiMessages, { model: 'claude-sonnet-4-20250514' })
-    const rawText = typeof response === 'string' ? response : response?.message?.content ?? response?.toString() ?? ''
+    // Puter returns various formats — extract the text safely
+    let rawText = ''
+    if (typeof response === 'string') rawText = response
+    else if (response?.message?.content) rawText = String(response.message.content)
+    else if (response?.content) rawText = String(response.content)
+    else if (response?.text) rawText = String(response.text)
+    else rawText = JSON.stringify(response)
     const { cleanText, calls } = parseActions(rawText)
     return { text: cleanText, functionCalls: calls }
   } catch (e: any) {
