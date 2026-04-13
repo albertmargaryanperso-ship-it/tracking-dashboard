@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 554,
-    "updated_at": "2026-04-13T20:49:38.927Z",
+    "version": 555,
+    "updated_at": "2026-04-13T20:49:53.831Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -178,20 +178,6 @@
       "id": 10003,
       "created": "2026-04-09",
       "updated_at": "2026-04-09"
-    },
-    {
-      "text": "Fiche de paie Morand Allard à deduire",
-      "category": "pro",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": 20,
-      "completed_min": null,
-      "id": 10013,
-      "created": "2026-04-10",
-      "updated_at": "2026-04-10"
     },
     {
       "text": "Amélioration de l’application",
