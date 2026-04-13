@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 559,
-    "updated_at": "2026-04-13T20:50:41.612Z",
+    "updated_at": "2026-04-13T20:50:48.763Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -697,11 +697,16 @@
       "completed_min": null,
       "id": 10079,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:50:38.018Z",
+      "updated_at": "2026-04-13T20:50:48.410Z",
       "subtasks": [
         {
           "id": "st_1776113438018_htv9h",
           "text": "Adem Imeri",
+          "done": false
+        },
+        {
+          "id": "st_1776113448410_1zh1r",
+          "text": "Youssef Najjar",
           "done": false
         }
       ]
