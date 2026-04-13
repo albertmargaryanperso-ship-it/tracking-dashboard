@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 563,
-    "updated_at": "2026-04-13T20:51:35.762Z",
+    "version": 564,
+    "updated_at": "2026-04-13T20:51:48.345Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -223,21 +223,6 @@
       "status": "done",
       "done": true,
       "updated_at": "2026-04-11T23:33:00.387Z"
-    },
-    {
-      "text": "Faire virement",
-      "category": "finance",
-      "priority": "normal",
-      "delegated_to": null,
-      "due": null,
-      "duration_min": 45,
-      "completed_min": 45,
-      "completed_at": "2026-04-12",
-      "id": 10026,
-      "created": "2026-04-12",
-      "status": "done",
-      "done": true,
-      "updated_at": "2026-04-11T23:44:03.484Z"
     },
     {
       "text": "Virement Nadjim + facture",
