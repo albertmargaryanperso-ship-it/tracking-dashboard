@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 514,
-    "updated_at": "2026-04-13T20:00:13.856Z",
+    "version": 515,
+    "updated_at": "2026-04-13T20:35:39.856Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -178,7 +178,14 @@
       "completed_at": null,
       "duration_min": 45,
       "completed_min": null,
-      "updated_at": "2026-04-09"
+      "updated_at": "2026-04-13T20:35:39.497Z",
+      "subtasks": [
+        {
+          "id": "st_1776112539496_l64aw",
+          "text": "Demande liquidation judiciaire",
+          "done": false
+        }
+      ]
     },
     {
       "text": "S’inscrire à pole emploi",
@@ -765,9 +772,23 @@
       "created": "2026-04-13",
       "completed_min": null,
       "updated_at": "2026-04-13T18:56:08.759Z"
+    },
+    {
+      "text": "Rendez-vous avocat",
+      "category": "ID",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "duration_min": 90,
+      "completed_at": null,
+      "id": 10071,
+      "created": "2026-04-13",
+      "completed_min": null,
+      "updated_at": "2026-04-13T20:35:39.497Z"
     }
   ],
-  "todos_next_id": 10071,
+  "todos_next_id": 10072,
   "archive": [
     {
       "month": "2026-03",
