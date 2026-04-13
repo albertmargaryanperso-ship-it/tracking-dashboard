@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 505,
-    "updated_at": "2026-04-13T19:06:36.740Z",
+    "version": 506,
+    "updated_at": "2026-04-13T19:08:20.681Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -736,7 +736,14 @@
       "id": 10069,
       "created": "2026-04-13",
       "completed_min": null,
-      "updated_at": "2026-04-13T19:06:36.387Z"
+      "updated_at": "2026-04-13T19:08:20.326Z",
+      "subtasks": [
+        {
+          "id": "st_1776107300325_ylxbv",
+          "text": "Demander comment procéder pour la suite",
+          "done": false
+        }
+      ]
     }
   ],
   "todos_next_id": 10070,
