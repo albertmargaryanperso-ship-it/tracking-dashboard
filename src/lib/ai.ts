@@ -7,7 +7,7 @@ import { getActiveCategories, getActiveTabs, todayISO } from '@/lib/utils'
 
 export const AI_KEY_STORAGE = 'tracking-ai-key-v1'
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
-const MODELS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'openai/gpt-oss-20b']
+const MODEL = 'llama-3.1-8b-instant' // smallest = highest free tier quota
 
 export const getAiKey = (): string | null => {
   try { return localStorage.getItem(AI_KEY_STORAGE) } catch { return null }
@@ -142,23 +142,23 @@ export async function chat(
   let lastError = ''
 
   for (let attempt = 0; attempt < 3; attempt++) {
-    for (const model of MODELS) {
-      const res = await fetch(GROQ_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-        body: JSON.stringify({ model, messages: apiMessages, max_tokens: 300, temperature: 0.7 }),
-      })
+    const res = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: MODEL, messages: apiMessages, max_tokens: 200, temperature: 0.7 }),
+    })
 
-      if (res.ok) { data = await res.json(); break }
-      if (res.status === 429) { lastError = 'Rate limit'; continue }
+    if (res.ok) { data = await res.json(); break }
 
-      const errBody = await res.text().catch(() => '')
-      try { lastError = `[${res.status}] ${JSON.parse(errBody)?.error?.message?.slice(0, 100) || ''}` }
-      catch { lastError = `[${res.status}] ${errBody.slice(0, 100)}` }
+    if (res.status === 429) {
+      if (attempt < 2) { await new Promise(r => setTimeout(r, 15000)); continue }
+      lastError = 'Patiente quelques secondes'
       break
     }
-    if (data) break
-    if (lastError === 'Rate limit' && attempt < 2) { await new Promise(r => setTimeout(r, 10000)); continue }
+
+    const errBody = await res.text().catch(() => '')
+    try { lastError = `[${res.status}] ${JSON.parse(errBody)?.error?.message?.slice(0, 100) || ''}` }
+    catch { lastError = `[${res.status}] ${errBody.slice(0, 100)}` }
     break
   }
 
