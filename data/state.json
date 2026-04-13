@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 598,
-    "updated_at": "2026-04-13T23:19:26.559Z",
+    "version": 600,
+    "updated_at": "2026-04-13T23:19:27.774Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -722,20 +722,6 @@
       "updated_at": "2026-04-10"
     },
     {
-      "text": "Demander facture Smail EZZAHI CCT",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10011,
-      "created": "2026-04-10",
-      "updated_at": "2026-04-10"
-    },
-    {
       "text": "Demander les documents de Massinissa Ferradj",
       "category": "pro",
       "priority": "urgent",
@@ -959,20 +945,6 @@
       "done": true
     },
     {
-      "text": "Les montants versés Ziane et amazigh sont à recalculer sur facture de janvier car décembre mauvais montants verses",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10010,
-      "created": "2026-04-10",
-      "updated_at": "2026-04-10"
-    },
-    {
       "text": "Acheter chaussures blanches style airmax",
       "category": "bien-etre",
       "priority": "normal",
@@ -985,6 +957,34 @@
       "id": 10043,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T05:52:59.325Z"
+    },
+    {
+      "text": "Demander facture Smail EZZAHI CCT",
+      "category": "pro",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "completed_at": null,
+      "duration_min": null,
+      "completed_min": null,
+      "id": 10011,
+      "created": "2026-04-10",
+      "updated_at": "2026-04-10"
+    },
+    {
+      "text": "Les montants versés Ziane et amazigh sont à recalculer sur facture de janvier car décembre mauvais montants verses",
+      "category": "pro",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "completed_at": null,
+      "duration_min": null,
+      "completed_min": null,
+      "id": 10010,
+      "created": "2026-04-10",
+      "updated_at": "2026-04-10"
     },
     {
       "text": "Récupérer factures et documents Ziane amazigh décembre et voir pour le reste des virements",
