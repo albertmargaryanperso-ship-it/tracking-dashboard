@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 566,
-    "updated_at": "2026-04-13T20:52:07.892Z",
+    "version": 568,
+    "updated_at": "2026-04-13T20:52:09.528Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -332,20 +332,6 @@
       "updated_at": "2026-04-12T05:52:59.325Z"
     },
     {
-      "text": "Acheter chaussures blanches beiges dans la liste d’achats",
-      "category": "pro",
-      "priority": "normal",
-      "status": "waiting",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": 60,
-      "completed_min": null,
-      "id": 10057,
-      "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:47:20.712Z"
-    },
-    {
       "text": "jojio",
       "category": "bien-etre",
       "priority": "urgent",
@@ -639,6 +625,20 @@
           "done": false
         }
       ]
+    },
+    {
+      "text": "Acheter chaussures blanches beiges dans la liste d’achats",
+      "category": "pro",
+      "priority": "normal",
+      "status": "waiting",
+      "delegated_to": null,
+      "due": null,
+      "completed_at": null,
+      "duration_min": 60,
+      "completed_min": null,
+      "id": 10057,
+      "created": "2026-04-13",
+      "updated_at": "2026-04-13T20:47:20.712Z"
     }
   ],
   "todos_next_id": 10080,
