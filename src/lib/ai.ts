@@ -19,7 +19,7 @@ export const setAiKey = (key: string | null): void => {
   } catch { /* */ }
 }
 
-// ─── System prompt ─────────────────────────────────────────────────────────
+// ─── System prompt (COMPACT — minimize tokens) ─────────────────────────────
 
 function buildSystemPrompt(state: AppState, stats?: Stats): string {
   const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(state.meta.custom_categories)
@@ -28,155 +28,33 @@ function buildSystemPrompt(state: AppState, stats?: Stats): string {
   const openTodos = state.todos.filter(t => t.status !== 'done')
   const today = todayISO()
 
-  // Build tab → categories mapping
-  const tabInfo = todoTabs.map(tab => {
-    const cats = (tab.categoryFilter ?? [])
-      .map(id => CATEGORY_CONFIG[id])
-      .filter(Boolean)
-      .map(c => `${c.emoji} ${c.label} (id="${c.id}")`)
-    return `${tab.emoji} ${tab.label.toUpperCase()} : ${cats.join(', ')}`
+  const tabCats = todoTabs.map(tab => {
+    const cats = (tab.categoryFilter ?? []).map(id => CATEGORY_CONFIG[id]).filter(Boolean)
+    return `${tab.label}: ${cats.map(c => `${c.label}(${c.id})`).join(',')}`
+  }).join(' | ')
+
+  const taskLines = openTodos.slice(0, 12).map(t => {
+    const c = CATEGORY_CONFIG[t.category]
+    const due = t.due && t.due <= today ? '!RETARD' : ''
+    const sub = t.subtasks?.length ? ` ${t.subtasks.filter(s=>s.done).length}/${t.subtasks.length}st` : ''
+    return `#${t.id} ${c?.emoji??''}${t.text}|${t.priority}${due}${sub}`
   }).join('\n')
 
-  // Task list grouped by tab
-  const tasksByTab = todoTabs.map(tab => {
-    const tabTodos = openTodos.filter(t => tab.categoryFilter?.includes(t.category))
-    if (tabTodos.length === 0) return `${tab.emoji} ${tab.label} : aucune tâche`
-    const list = tabTodos.map(t => {
-      const c = CATEGORY_CONFIG[t.category]
-      const sub = t.subtasks?.length ? ` [${t.subtasks.filter(s => s.done).length}/${t.subtasks.length} sous-tâches]` : ''
-      const due = t.due ? ` (éch: ${t.due}${t.due < today ? ' ⚠RETARD' : t.due === today ? ' ⚠AUJOURD\'HUI' : ''})` : ''
-      const dur = t.duration_min ? ` ~${t.duration_min}min` : ''
-      const age = t.created ? ` créée ${t.created.slice(0, 10)}` : ''
-      const subDetail = t.subtasks?.length
-        ? '\n' + t.subtasks.map(s => `    ${s.done ? '✅' : '☐'} "${s.text}" (sid="${s.id}")`).join('\n')
-        : ''
-      return `  #${t.id} ${c?.emoji ?? ''} ${t.text} | ${t.priority}${due}${dur}${age}${subDetail}`
-    }).join('\n')
-    return `${tab.emoji} ${tab.label} (${tabTodos.length}) :\n${list}`
-  }).join('\n\n')
+  const proCats = todoTabs[0]?.categoryFilter?.map(id => CATEGORY_CONFIG[id]?.label).join('/') ?? ''
+  const persoCats = todoTabs[1]?.categoryFilter?.map(id => CATEGORY_CONFIG[id]?.label).join('/') ?? ''
 
-  // Stats summary for analysis
-  const fmtMin = (m: number) => m < 60 ? `${m}min` : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`
-  let statsBlock = ''
-  if (stats) {
-    const t = stats.tracking
-    const tabStats = todoTabs.map(tab => {
-      const bt = t.by_tab[tab.id]
-      const streak = t.streaks_by_tab[tab.id] ?? 0
-      return `  ${tab.emoji} ${tab.label} — aujourd'hui: ${fmtMin(bt?.today ?? 0)}, semaine: ${fmtMin(bt?.week ?? 0)}, mois: ${fmtMin(bt?.month ?? 0)}, streak: ${streak}j`
-    }).join('\n')
+  return `Rocko, assistant vocal d'Albert. FR. Tutoie. TIMIDE CONCIS — max 1-2 phrases. Albert mène.
+${tabCats}
+Tâches(${openTodos.length}):
+${taskLines || 'Aucune'}
+Date:${today}
 
-    const catStats = CATEGORY_LIST.map(id => {
-      const bc = t.by_category[id]
-      if (!bc || bc.total === 0) return null
-      const c = CATEGORY_CONFIG[id]
-      return `  ${c.emoji} ${c.label} — ${bc.open} ouvertes, ${bc.done} faites, ${fmtMin(bc.minutes)} logués`
-    }).filter(Boolean).join('\n')
+TAGS fin de réponse: [ADD text="NOM" cat="ID" pri="normal" dur="30"] [SUB id=N text="NOM"] [DONE id=N min=N] [DEL id=N] [CHECK id=N sid="SID"] [LOG text="NOM" cat="ID" pri="normal" dur="30" min="25"]
+Tous les champs=valeurs réelles de la conversation.
 
-    statsBlock = `
-PRODUCTIVITÉ :
-${tabStats}
-  Total mois : ${fmtMin(t.month_minutes)}, total global : ${fmtMin(t.total_minutes)}
-  Taux complétion : ${stats.todos.completion_rate}%
-
-PAR CATÉGORIE :
-${catStats}`
-  }
-
-  const urgentCount = openTodos.filter(t => t.priority === 'urgent').length
-  const overdueCount = openTodos.filter(t => t.due && t.due < today).length
-
-  return `Tu t'appelles Rocko. Tu es l'assistant personnel d'Albert — son bras droit, toujours motivé et de bonne humeur. Tu adores bosser sur sa to-do list. Tu le tutoies. Tu parles français naturellement, comme un pote fiable et efficace.
-
-Ta personnalité :
-- TIMIDE et CONCIS. Tu parles le MINIMUM. 5 mots quand 5 mots suffisent.
-- Tu laisses Albert mener la conversation. Tu ne prends pas d'initiative non demandée.
-- Poli, discret, efficace. "OK.", "C'est fait.", "Pro ou perso ?", "Quelle catégorie ?"
-- Jamais de bavardage, jamais de commentaire non demandé, jamais de suggestion non sollicitée.
-- Quand Albert te salue : "Salut Albert." — c'est tout. Pas de blabla.
-- Tu ne poses qu'UNE question à la fois, la plus courte possible.
-
-STYLE ORAL :
-- Phrases ULTRA-COURTES. Maximum 1-2 phrases par réponse.
-- INTERDIT : IDs techniques, guillemets, parenthèses techniques.
-- Les tags [ADD], [SUB] etc. sont INVISIBLES — en fin de réponse.
-
-ONGLETS ET CATÉGORIES :
-${tabInfo}
-
-TÂCHES OUVERTES (${openTodos.length}, ${urgentCount} urgentes, ${overdueCount} en retard) :
-${tasksByTab}
-${statsBlock}
-Date : ${today}
-
-═══ ACTIONS (tags invisibles, à mettre EN FIN de réponse) ═══
-- Ajouter : [ADD text="NOM RÉEL" cat="ID_CATEGORIE" pri="PRIORITÉ" dur="DURÉE_MINUTES"]
-  CRITIQUE : CHAQUE champ doit contenir la VRAIE valeur discutée dans la conversation.
-  text = le nom exact donné par l'utilisateur au début.
-  cat = l'ID de la catégorie choisie (pro, finance, admin, automatisation, sport, etc).
-  pri = la priorité choisie (urgent, normal, faible).
-  dur = la durée en minutes confirmée.
-  EXEMPLE de conversation complète → tag correct :
-  User: "ajoute rendez-vous avocat" → User: "pro" → User: "admin" → User: "urgent" → AI: "30 min ok?" → User: "oui"
-  → [ADD text="Rendez-vous avec l'avocat" cat="admin" pri="urgent" dur="30"]
-- Sous-tâche : [SUB id=TASK_ID text="NOM RÉEL"]
-- Terminer : [DONE id=TASK_ID min=TEMPS_REEL]
-- Supprimer : [DEL id=TASK_ID]
-- Cocher sous-tâche : [CHECK id=TASK_ID sid="SUBTASK_ID"]
-- Loguer activité déjà faite : [LOG text="NOM RÉEL" cat="ID" pri="normal" dur="30" min="25"]
-  dur = durée estimée, min = temps réellement passé
-
-═══ FLOW AJOUT — UNE SEULE QUESTION PAR RÉPONSE ═══
-RÈGLE ABSOLUE : tu poses UNE question, puis tu attends la réponse. JAMAIS deux questions dans le même message.
-
-Étape 1 (si pas précisé) : "Pro ou perso ?" — STOP.
-Étape 2 : "Quelle catégorie ?" — STOP. Si la réponse ne correspond à aucune catégorie existante, dis juste "Ça n'existe pas. Les catégories dispo c'est ${todoTabs[0]?.categoryFilter?.map(id => CATEGORY_CONFIG[id]?.label).join(', ') ?? ''} pour le pro, et ${todoTabs[1]?.categoryFilter?.map(id => CATEGORY_CONFIG[id]?.label).join(', ') ?? ''} pour le perso." — STOP.
-Étape 3 : "Urgent, normal ou faible ?" — STOP.
-Étape 4 : Tu estimes un temps et tu AFFIRMES : "Je dirais X minutes, ça te va ?" — STOP.
-Étape 5 : Confirmation → crée [ADD ...]. "Des sous-tâches ?" — STOP.
-Étape 6 : Si oui → "Dis-moi." — STOP. Ajoute [SUB ...]. "Une autre ?" — STOP.
-Étape 7 : Si non → récap (voir ci-dessous).
-
-RACCOURCI : si l'utilisateur donne TOUT d'emblée ("ajoute tâche X, pro, admin, urgent, 30 min"), crée directement et passe au récap.
-
-═══ RÉCAP OBLIGATOIRE APRÈS CRÉATION ═══
-Fais un récap naturel et court. Utilise le VRAI NOM de la tâche.
-Les onglets = ${todoTabs.map(t => t.label).join(' et ')} (PAS "onglet Pro").
-Exemple : "C'est fait. Rendez-vous avec l'avocat, onglet Travail, Admin, urgent, 1 heure 30. Deux sous-tâches : préparer les documents et envoyer les pièces. T'es bon."
-Ce récap est OBLIGATOIRE.
-
-═══ FLOW LOGUER UNE ACTIVITÉ DÉJÀ FAITE — même principe, UNE question à la fois ═══
-Quand l'utilisateur dit "j'ai fait X", "logue X", "j'ai terminé X" (et X n'est PAS une tâche existante) :
-Étape 1 : "C'est pro ou perso ?" — STOP.
-Étape 2 : Catégorie — STOP.
-Étape 3 : "Combien de temps ça t'a pris ?" — STOP.
-Étape 4 : Crée avec [LOG ...]. Puis "Tu veux des sous-tâches ?" — STOP.
-Étape 5 : Sous-tâches comme pour l'ajout, puis récap.
-Le récap précise que c'est une activité déjà réalisée : "C'est logué. Rendez-vous avec l'avocat, onglet Travail, catégorie Admin, durée 1 heure 30."
-
-═══ QUAND ON DEMANDE "QU'EST-CE QUE J'AI À FAIRE" ═══
-1. "Pro ou perso ?" (si pas précisé)
-2. Liste par priorité : urgentes d'abord, puis les retards, puis les plus anciennes
-3. Donne un résumé clair et actionnable
-
-═══ ANALYSE / PRODUCTIVITÉ ═══
-Quand on te demande un bilan, une analyse, ce que tu penses de la productivité :
-- Utilise les données de PRODUCTIVITÉ ci-dessus (temps par jour/semaine/mois, streaks, taux)
-- Compare pro vs perso
-- Identifie les tendances : progression, régression, catégories délaissées
-- Donne des recommandations concrètes et directes
-- Signale les tâches oubliées (créées depuis longtemps, jamais terminées)
-- Sois honnête et direct, pas de complaisance
-
-═══ TRAVAILLER SUR UNE TÂCHE ═══
-Quand l'utilisateur veut discuter d'une tâche précise :
-- Identifie-la par nom approximatif, affiche ses détails (sous-tâches, temps, priorité)
-- Propose des modifications : ajouter/cocher des sous-tâches, changer la priorité
-- Pour cocher une sous-tâche existante : [CHECK id=TASK_ID sid="SUBTASK_ID"]
-- Pour en ajouter : [SUB id=TASK_ID text="..."]
-- Reste focalisé sur cette tâche jusqu'à ce que l'utilisateur change de sujet
-
-Garde le contexte conversationnel.`
+AJOUT 1 question/réponse: "Pro ou perso?"→"Quelle catégorie?"→"Urgent/normal/faible?"→"Je dirais Xmin, ok?"→[ADD]→"Des sous-tâches?"→[SUB]→"Une autre?"→récap court.
+Catégories si erreur: pro=${proCats}, perso=${persoCats}. Onglets=${todoTabs.map(t=>t.label).join('/')}.
+LOG=même flow+demander temps passé. Analyse=si demandé, lister retards/urgences.`
 }
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -201,83 +79,42 @@ export interface AiResponse {
 
 function parseActions(text: string): { cleanText: string; calls: FunctionCall[] } {
   const calls: FunctionCall[] = []
-
-  // [ADD text="..." cat="..." pri="..." dur="..."]
-  const addRe = /\[ADD\s+text="([^"]+)"\s*cat="([^"]+)"\s*pri="([^"]+)"\s*dur="(\d+)"\s*\]/gi
   let match
+
+  const addRe = /\[ADD\s+text="([^"]+)"\s*cat="([^"]+)"\s*pri="([^"]+)"\s*dur="(\d+)"\s*\]/gi
   while ((match = addRe.exec(text)) !== null) {
-    calls.push({
-      name: 'add_task',
-      arguments: {
-        text: match[1],
-        category: match[2],
-        priority: match[3],
-        duration_min: parseInt(match[4], 10),
-      },
-    })
+    calls.push({ name: 'add_task', arguments: { text: match[1], category: match[2], priority: match[3], duration_min: parseInt(match[4], 10) } })
   }
 
-  // [LOG text="..." cat="..." pri="..." dur="N" min="N"]
   const logRe = /\[LOG\s+text="([^"]+)"\s*cat="([^"]+)"\s*pri="([^"]+)"\s*dur="(\d+)"\s*min="(\d+)"\s*\]/gi
   while ((match = logRe.exec(text)) !== null) {
-    calls.push({
-      name: 'log_task',
-      arguments: {
-        text: match[1],
-        category: match[2],
-        priority: match[3],
-        duration_min: parseInt(match[4], 10),
-        completed_min: parseInt(match[5], 10),
-      },
-    })
+    calls.push({ name: 'log_task', arguments: { text: match[1], category: match[2], priority: match[3], duration_min: parseInt(match[4], 10), completed_min: parseInt(match[5], 10) } })
   }
 
-  // [SUB id=N text="..."]
   const subRe = /\[SUB\s+id=(\d+)\s+text="([^"]+)"\s*\]/gi
   while ((match = subRe.exec(text)) !== null) {
-    calls.push({
-      name: 'add_subtask',
-      arguments: { task_id: parseInt(match[1], 10), text: match[2] },
-    })
+    calls.push({ name: 'add_subtask', arguments: { task_id: parseInt(match[1], 10), text: match[2] } })
   }
 
-  // [DONE id=N min=N]
   const doneRe = /\[DONE\s+id=(\d+)(?:\s+min=(\d+))?\s*\]/gi
   while ((match = doneRe.exec(text)) !== null) {
-    calls.push({
-      name: 'complete_task',
-      arguments: { task_id: parseInt(match[1], 10), completed_min: match[2] ? parseInt(match[2], 10) : undefined },
-    })
+    calls.push({ name: 'complete_task', arguments: { task_id: parseInt(match[1], 10), completed_min: match[2] ? parseInt(match[2], 10) : undefined } })
   }
 
-  // [DEL id=N]
   const delRe = /\[DEL\s+id=(\d+)\s*\]/gi
   while ((match = delRe.exec(text)) !== null) {
-    calls.push({
-      name: 'delete_task',
-      arguments: { task_id: parseInt(match[1], 10) },
-    })
+    calls.push({ name: 'delete_task', arguments: { task_id: parseInt(match[1], 10) } })
   }
 
-  // [CHECK id=N sid="..."]
   const checkRe = /\[CHECK\s+id=(\d+)\s+sid="([^"]+)"\s*\]/gi
   while ((match = checkRe.exec(text)) !== null) {
-    calls.push({
-      name: 'check_subtask',
-      arguments: { task_id: parseInt(match[1], 10), subtask_id: match[2] },
-    })
+    calls.push({ name: 'check_subtask', arguments: { task_id: parseInt(match[1], 10), subtask_id: match[2] } })
   }
 
-  // Remove tags from spoken text
   const cleanText = text
-    .replace(/\[ADD[^\]]*\]/gi, '')
-    .replace(/\[SUB[^\]]*\]/gi, '')
-    .replace(/\[DONE[^\]]*\]/gi, '')
-    .replace(/\[DEL[^\]]*\]/gi, '')
-    .replace(/\[CHECK[^\]]*\]/gi, '')
-    .replace(/\[LOG[^\]]*\]/gi, '')
-    .replace(/\s{2,}/g, ' ')
-    .trim()
+    .replace(/\[ADD[^\]]*\]/gi, '').replace(/\[SUB[^\]]*\]/gi, '').replace(/\[DONE[^\]]*\]/gi, '')
+    .replace(/\[DEL[^\]]*\]/gi, '').replace(/\[CHECK[^\]]*\]/gi, '').replace(/\[LOG[^\]]*\]/gi, '')
+    .replace(/\s{2,}/g, ' ').trim()
 
   return { cleanText, calls }
 }
@@ -295,17 +132,12 @@ export async function chat(
 
   const systemPrompt = buildSystemPrompt(state, stats)
 
-  const apiMessages: any[] = [
-    { role: 'system', content: systemPrompt },
-  ]
-
-  // Keep only last 8 messages to avoid rate limits
-  const recentMessages = messages.slice(-8)
-  for (const msg of recentMessages) {
+  const apiMessages: any[] = [{ role: 'system', content: systemPrompt }]
+  // Keep only last 6 messages
+  for (const msg of messages.slice(-6)) {
     apiMessages.push({ role: msg.role, content: msg.content })
   }
 
-  // Try with retry on rate limit (wait 5s between attempts)
   let data: any = null
   let lastError = ''
 
@@ -313,51 +145,24 @@ export async function chat(
     for (const model of MODELS) {
       const res = await fetch(GROQ_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages: apiMessages,
-          max_tokens: 800,
-          temperature: 0.7,
-        }),
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({ model, messages: apiMessages, max_tokens: 300, temperature: 0.7 }),
       })
 
-      if (res.ok) {
-        data = await res.json()
-        break
-      }
-
-      if (res.status === 429) {
-        lastError = 'Rate limit'
-        continue
-      }
+      if (res.ok) { data = await res.json(); break }
+      if (res.status === 429) { lastError = 'Rate limit'; continue }
 
       const errBody = await res.text().catch(() => '')
-      try {
-        const parsed = JSON.parse(errBody)
-        lastError = `[${res.status}] ${parsed?.error?.message?.slice(0, 100) || ''}`
-      } catch {
-        lastError = `[${res.status}] ${errBody.slice(0, 100)}`
-      }
+      try { lastError = `[${res.status}] ${JSON.parse(errBody)?.error?.message?.slice(0, 100) || ''}` }
+      catch { lastError = `[${res.status}] ${errBody.slice(0, 100)}` }
       break
     }
-
     if (data) break
-    if (lastError === 'Rate limit' && attempt < 2) {
-      await new Promise(r => setTimeout(r, 10000))
-      continue
-    }
+    if (lastError === 'Rate limit' && attempt < 2) { await new Promise(r => setTimeout(r, 10000)); continue }
     break
   }
 
-  if (!data) throw new Error(lastError === 'Rate limit' ? 'Trop de requêtes, réessaie dans quelques secondes' : lastError || 'Erreur')
-  const rawText = data.choices?.[0]?.message?.content ?? ''
-
-  // Parse action tags
-  const { cleanText, calls } = parseActions(rawText)
-
+  if (!data) throw new Error(lastError === 'Rate limit' ? 'Patiente quelques secondes' : lastError || 'Erreur')
+  const { cleanText, calls } = parseActions(data.choices?.[0]?.message?.content ?? '')
   return { text: cleanText, functionCalls: calls }
 }
