@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 593,
-    "updated_at": "2026-04-13T23:19:00.285Z",
+    "version": 594,
+    "updated_at": "2026-04-13T23:19:07.819Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -762,21 +762,6 @@
       "id": 10013,
       "created": "2026-04-10",
       "updated_at": "2026-04-10"
-    },
-    {
-      "text": "Faire virement",
-      "category": "finance",
-      "priority": "normal",
-      "delegated_to": null,
-      "due": null,
-      "duration_min": 45,
-      "completed_min": 45,
-      "completed_at": "2026-04-12",
-      "id": 10026,
-      "created": "2026-04-12",
-      "status": "done",
-      "done": true,
-      "updated_at": "2026-04-11T23:44:03.484Z"
     },
     {
       "text": "Facture + calcul + appel Amazigh",
