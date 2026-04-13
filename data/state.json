@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 558,
-    "updated_at": "2026-04-13T20:50:38.372Z",
+    "version": 559,
+    "updated_at": "2026-04-13T20:50:41.612Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -309,20 +309,6 @@
       "id": 10033,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:15:38.050Z"
-    },
-    {
-      "text": "Virement Adem",
-      "category": "finance",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-12",
-      "completed_at": null,
-      "duration_min": 15,
-      "completed_min": null,
-      "id": 10034,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T00:16:04.903Z"
     },
     {
       "text": "Voir vidéo antigravity et ce qu’on peut faire avec",
@@ -719,6 +705,20 @@
           "done": false
         }
       ]
+    },
+    {
+      "text": "Virement Adem",
+      "category": "finance",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": "2026-04-12",
+      "completed_at": null,
+      "duration_min": 15,
+      "completed_min": null,
+      "id": 10034,
+      "created": "2026-04-12",
+      "updated_at": "2026-04-12T00:16:04.903Z"
     }
   ],
   "todos_next_id": 10080,
