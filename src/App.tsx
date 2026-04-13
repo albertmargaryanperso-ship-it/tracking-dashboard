@@ -202,7 +202,7 @@ import type { SyncStatus } from '@/lib/github'
         onTokenChange={() => setTokenPresent(hasToken())} />
 
       <VoiceAgent open={voiceOpen} onClose={() => setVoiceOpen(false)}
-        state={state}
+        state={state} stats={stats}
         onAddTodo={actions.addTodo}
         onToggleTodo={actions.toggleTodo}
         onDeleteTodo={actions.deleteTodo}

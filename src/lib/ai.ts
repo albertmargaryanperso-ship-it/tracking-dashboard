@@ -2,8 +2,8 @@
 // AI — Groq API (free) — text-based action parsing (no native tool calling)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import type { Todo, AppState } from '@/types'
-import { getActiveCategories, todayISO } from '@/lib/utils'
+import type { Todo, AppState, Stats } from '@/types'
+import { getActiveCategories, getActiveTabs, todayISO } from '@/lib/utils'
 
 export const AI_KEY_STORAGE = 'tracking-ai-key-v1'
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
@@ -21,59 +21,122 @@ export const setAiKey = (key: string | null): void => {
 
 // ─── System prompt ─────────────────────────────────────────────────────────
 
-function buildSystemPrompt(state: AppState): string {
+function buildSystemPrompt(state: AppState, stats?: Stats): string {
   const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(state.meta.custom_categories)
+  const tabs = getActiveTabs(state.meta.custom_tabs)
+  const todoTabs = tabs.filter(t => t.type === 'todos')
   const openTodos = state.todos.filter(t => t.status !== 'done')
   const today = todayISO()
 
-  const catList = CATEGORY_LIST.map(id => {
-    const c = CATEGORY_CONFIG[id]
-    return `${c.emoji} ${c.label} (id="${id}")`
-  }).join(', ')
+  // Build tab → categories mapping
+  const tabInfo = todoTabs.map(tab => {
+    const cats = (tab.categoryFilter ?? [])
+      .map(id => CATEGORY_CONFIG[id])
+      .filter(Boolean)
+      .map(c => `${c.emoji} ${c.label} (id="${c.id}")`)
+    return `${tab.emoji} ${tab.label.toUpperCase()} : ${cats.join(', ')}`
+  }).join('\n')
 
-  const taskList = openTodos.length === 0
-    ? 'Aucune tâche en cours.'
-    : openTodos.map(t => {
-        const c = CATEGORY_CONFIG[t.category]
-        const sub = t.subtasks?.length ? ` [${t.subtasks.filter(s => s.done).length}/${t.subtasks.length} sous-tâches]` : ''
-        const due = t.due ? ` (éch: ${t.due}${t.due < today ? ' RETARD' : ''})` : ''
-        const dur = t.duration_min ? ` ~${t.duration_min}min` : ''
-        return `#${t.id} ${c?.emoji ?? ''} ${t.text} | ${t.priority}${due}${dur}${sub}`
-      }).join('\n')
+  // Task list grouped by tab
+  const tasksByTab = todoTabs.map(tab => {
+    const tabTodos = openTodos.filter(t => tab.categoryFilter?.includes(t.category))
+    if (tabTodos.length === 0) return `${tab.emoji} ${tab.label} : aucune tâche`
+    const list = tabTodos.map(t => {
+      const c = CATEGORY_CONFIG[t.category]
+      const sub = t.subtasks?.length ? ` [${t.subtasks.filter(s => s.done).length}/${t.subtasks.length} sous-tâches]` : ''
+      const due = t.due ? ` (éch: ${t.due}${t.due < today ? ' ⚠RETARD' : t.due === today ? ' ⚠AUJOURD\'HUI' : ''})` : ''
+      const dur = t.duration_min ? ` ~${t.duration_min}min` : ''
+      const age = t.created ? ` créée ${t.created.slice(0, 10)}` : ''
+      const subDetail = t.subtasks?.length
+        ? '\n' + t.subtasks.map(s => `    ${s.done ? '✅' : '☐'} "${s.text}" (sid="${s.id}")`).join('\n')
+        : ''
+      return `  #${t.id} ${c?.emoji ?? ''} ${t.text} | ${t.priority}${due}${dur}${age}${subDetail}`
+    }).join('\n')
+    return `${tab.emoji} ${tab.label} (${tabTodos.length}) :\n${list}`
+  }).join('\n\n')
+
+  // Stats summary for analysis
+  const fmtMin = (m: number) => m < 60 ? `${m}min` : `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}`
+  let statsBlock = ''
+  if (stats) {
+    const t = stats.tracking
+    const tabStats = todoTabs.map(tab => {
+      const bt = t.by_tab[tab.id]
+      const streak = t.streaks_by_tab[tab.id] ?? 0
+      return `  ${tab.emoji} ${tab.label} — aujourd'hui: ${fmtMin(bt?.today ?? 0)}, semaine: ${fmtMin(bt?.week ?? 0)}, mois: ${fmtMin(bt?.month ?? 0)}, streak: ${streak}j`
+    }).join('\n')
+
+    const catStats = CATEGORY_LIST.map(id => {
+      const bc = t.by_category[id]
+      if (!bc || bc.total === 0) return null
+      const c = CATEGORY_CONFIG[id]
+      return `  ${c.emoji} ${c.label} — ${bc.open} ouvertes, ${bc.done} faites, ${fmtMin(bc.minutes)} logués`
+    }).filter(Boolean).join('\n')
+
+    statsBlock = `
+PRODUCTIVITÉ :
+${tabStats}
+  Total mois : ${fmtMin(t.month_minutes)}, total global : ${fmtMin(t.total_minutes)}
+  Taux complétion : ${stats.todos.completion_rate}%
+
+PAR CATÉGORIE :
+${catStats}`
+  }
 
   const urgentCount = openTodos.filter(t => t.priority === 'urgent').length
   const overdueCount = openTodos.filter(t => t.due && t.due < today).length
 
   return `Tu es l'assistant vocal d'Albert. Français uniquement, concis (voix).
 
-CATÉGORIES : ${catList}
-TÂCHES (${openTodos.length}, ${urgentCount} urgentes, ${overdueCount} en retard) :
-${taskList}
+ONGLETS ET CATÉGORIES :
+${tabInfo}
+
+TÂCHES OUVERTES (${openTodos.length}, ${urgentCount} urgentes, ${overdueCount} en retard) :
+${tasksByTab}
+${statsBlock}
 Date : ${today}
 
-ACTIONS — quand tu veux agir, inclus UN tag par action dans ta réponse :
-- Ajouter : [ADD text="${'la tâche'}" cat="${CATEGORY_LIST[0]}" pri="normal" dur="30"]
+═══ ACTIONS ═══
+Quand tu veux agir, inclus un tag dans ta réponse :
+- Ajouter : [ADD text="la tâche" cat="ID_CATEGORIE" pri="normal" dur="30"]
 - Sous-tâche : [SUB id=TASK_ID text="la sous-tâche"]
 - Terminer : [DONE id=TASK_ID min=TEMPS_REEL]
 - Supprimer : [DEL id=TASK_ID]
+- Cocher sous-tâche : [CHECK id=TASK_ID sid="SUBTASK_ID"]
 
-EXEMPLES de réponse correcte :
-"J'ajoute la tâche en pro urgent. [ADD text="Appeler le comptable" cat="pro" pri="urgent" dur="15"] Tu veux des sous-tâches ?"
-"Sous-tâche ajoutée. [SUB id=42 text="Retrouver le numéro"] Autre sous-tâche ?"
-"Tâche terminée. [DONE id=42 min=20]"
+═══ FLOW AJOUT ═══
+1. "C'est pro ou perso ?" (si pas précisé)
+2. Si PRO → "Quelle catégorie ? ${todoTabs[0]?.categoryFilter?.map(id => CATEGORY_CONFIG[id]?.label).join(', ') ?? ''}"
+   Si PERSO → "Quelle catégorie ? ${todoTabs[1]?.categoryFilter?.map(id => CATEGORY_CONFIG[id]?.label).join(', ') ?? ''}"
+3. "Urgent, normal ou faible ?"
+4. Estime un temps réaliste → "Je dirais X minutes, ok ?"
+5. Crée avec [ADD ...]
+6. Propose 2-3 sous-tâches → si oui [SUB ...] puis "Autre ?" → si non "C'est noté."
+RACCOURCI : si tout est précisé, crée directement.
 
-FLOW AJOUT :
-1. L'utilisateur veut ajouter → demande catégorie (si pas précisée)
-2. Demande priorité (si pas précisée)
-3. Estime un temps et demande confirmation
-4. Crée avec le tag [ADD ...]
-5. Propose 2-3 sous-tâches pertinentes
-6. Si oui → [SUB ...] puis "Autre sous-tâche ?"
-7. Si non → "C'est noté."
+═══ QUAND ON DEMANDE "QU'EST-CE QUE J'AI À FAIRE" ═══
+1. "Pro ou perso ?" (si pas précisé)
+2. Liste par priorité : urgentes d'abord, puis les retards, puis les plus anciennes
+3. Donne un résumé clair et actionnable
 
-RACCOURCI : si tout est précisé d'emblée, crée directement.
-Garde le contexte : après un ADD, les SUB suivants utilisent l'ID de cette tâche.
-Pour analyse/discussion : réponds normalement sans tag.`
+═══ ANALYSE / PRODUCTIVITÉ ═══
+Quand on te demande un bilan, une analyse, ce que tu penses de la productivité :
+- Utilise les données de PRODUCTIVITÉ ci-dessus (temps par jour/semaine/mois, streaks, taux)
+- Compare pro vs perso
+- Identifie les tendances : progression, régression, catégories délaissées
+- Donne des recommandations concrètes et directes
+- Signale les tâches oubliées (créées depuis longtemps, jamais terminées)
+- Sois honnête et direct, pas de complaisance
+
+═══ TRAVAILLER SUR UNE TÂCHE ═══
+Quand l'utilisateur veut discuter d'une tâche précise :
+- Identifie-la par nom approximatif, affiche ses détails (sous-tâches, temps, priorité)
+- Propose des modifications : ajouter/cocher des sous-tâches, changer la priorité
+- Pour cocher une sous-tâche existante : [CHECK id=TASK_ID sid="SUBTASK_ID"]
+- Pour en ajouter : [SUB id=TASK_ID text="..."]
+- Reste focalisé sur cette tâche jusqu'à ce que l'utilisateur change de sujet
+
+Garde le contexte conversationnel.`
 }
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -141,12 +204,22 @@ function parseActions(text: string): { cleanText: string; calls: FunctionCall[] 
     })
   }
 
+  // [CHECK id=N sid="..."]
+  const checkRe = /\[CHECK\s+id=(\d+)\s+sid="([^"]+)"\s*\]/gi
+  while ((match = checkRe.exec(text)) !== null) {
+    calls.push({
+      name: 'check_subtask',
+      arguments: { task_id: parseInt(match[1], 10), subtask_id: match[2] },
+    })
+  }
+
   // Remove tags from spoken text
   const cleanText = text
     .replace(/\[ADD[^\]]*\]/gi, '')
     .replace(/\[SUB[^\]]*\]/gi, '')
     .replace(/\[DONE[^\]]*\]/gi, '')
     .replace(/\[DEL[^\]]*\]/gi, '')
+    .replace(/\[CHECK[^\]]*\]/gi, '')
     .replace(/\s{2,}/g, ' ')
     .trim()
 
@@ -158,12 +231,13 @@ function parseActions(text: string): { cleanText: string; calls: FunctionCall[] 
 export async function chat(
   messages: ChatMessage[],
   state: AppState,
+  stats?: Stats,
   _image?: string,
 ): Promise<AiResponse> {
   const apiKey = getAiKey()
   if (!apiKey) throw new Error('Clé API non configurée')
 
-  const systemPrompt = buildSystemPrompt(state)
+  const systemPrompt = buildSystemPrompt(state, stats)
 
   const apiMessages: any[] = [
     { role: 'system', content: systemPrompt },

@@ -5,10 +5,13 @@ import { chat, getAiKey, type ChatMessage, type FunctionCall } from '@/lib/ai'
 import { cn } from '@/lib/utils'
 import type { AppState, Todo } from '@/types'
 
+import type { Stats } from '@/types'
+
 interface VoiceAgentProps {
   open: boolean
   onClose: () => void
   state: AppState
+  stats: Stats
   onAddTodo: (t: Omit<Todo, 'id' | 'created'>) => void
   onToggleTodo: (id: number, completed_min?: number | null) => void
   onDeleteTodo: (id: number) => void
@@ -17,7 +20,7 @@ interface VoiceAgentProps {
 
 type AgentStatus = 'idle' | 'listening' | 'thinking' | 'speaking'
 
-export const VoiceAgent = ({ open, onClose, state, onAddTodo, onToggleTodo, onDeleteTodo, onUpdateTodo }: VoiceAgentProps) => {
+export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onToggleTodo, onDeleteTodo, onUpdateTodo }: VoiceAgentProps) => {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([])
   const [status, setStatus] = useState<AgentStatus>('idle')
   const [lastTranscript, setLastTranscript] = useState('')
@@ -70,6 +73,17 @@ export const VoiceAgent = ({ open, onClose, state, onAddTodo, onToggleTodo, onDe
             }
           }
           break
+        case 'check_subtask':
+          if (a.task_id && a.subtask_id) {
+            const todo = state.todos.find(t => t.id === a.task_id)
+            if (todo && todo.subtasks) {
+              const subs = todo.subtasks.map(s =>
+                s.id === a.subtask_id ? { ...s, done: !s.done } : s
+              )
+              onUpdateTodo(a.task_id, { subtasks: subs })
+            }
+          }
+          break
       }
     }
   }, [state, onAddTodo, onToggleTodo, onDeleteTodo, onUpdateTodo])
@@ -86,7 +100,7 @@ export const VoiceAgent = ({ open, onClose, state, onAddTodo, onToggleTodo, onDe
     setChatHistory(newHistory)
 
     try {
-      const response = await chat(newHistory, state, image)
+      const response = await chat(newHistory, state, stats, image)
 
       if (response.functionCalls.length > 0) {
         // Fix subtask IDs: if model used a placeholder, replace with real last created ID
