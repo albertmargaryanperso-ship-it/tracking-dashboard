@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 542,
-    "updated_at": "2026-04-13T20:47:07.855Z",
+    "version": 543,
+    "updated_at": "2026-04-13T20:47:17.865Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -539,7 +539,7 @@
       "text": "Acheter chaussures blanches style Airmax",
       "category": "pro",
       "priority": "normal",
-      "status": "open",
+      "status": "waiting",
       "delegated_to": null,
       "due": null,
       "completed_at": null,
@@ -547,7 +547,7 @@
       "completed_min": null,
       "id": 10058,
       "created": "2026-04-13",
-      "updated_at": "2026-04-12T22:37:33.569Z"
+      "updated_at": "2026-04-13T20:47:17.512Z"
     },
     {
       "text": "Apprentissage utilisation Vibe Coding",
