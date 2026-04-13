@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 560,
-    "updated_at": "2026-04-13T20:50:51.495Z",
+    "updated_at": "2026-04-13T20:50:56.860Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -683,7 +683,7 @@
       "completed_min": null,
       "id": 10079,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:50:48.410Z",
+      "updated_at": "2026-04-13T20:50:56.506Z",
       "subtasks": [
         {
           "id": "st_1776113438018_htv9h",
@@ -693,6 +693,11 @@
         {
           "id": "st_1776113448410_1zh1r",
           "text": "Youssef Najjar",
+          "done": false
+        },
+        {
+          "id": "st_1776113456506_jlzex",
+          "text": "Kader Bouziane",
           "done": false
         }
       ]
