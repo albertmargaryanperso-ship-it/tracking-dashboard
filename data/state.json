@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 543,
-    "updated_at": "2026-04-13T20:47:17.865Z",
+    "updated_at": "2026-04-13T20:47:21.067Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -525,7 +525,7 @@
       "text": "Acheter chaussures blanches beiges dans la liste d’achats",
       "category": "pro",
       "priority": "normal",
-      "status": "open",
+      "status": "waiting",
       "delegated_to": null,
       "due": null,
       "completed_at": null,
@@ -533,7 +533,7 @@
       "completed_min": null,
       "id": 10057,
       "created": "2026-04-13",
-      "updated_at": "2026-04-12T22:37:11.129Z"
+      "updated_at": "2026-04-13T20:47:20.712Z"
     },
     {
       "text": "Acheter chaussures blanches style Airmax",
