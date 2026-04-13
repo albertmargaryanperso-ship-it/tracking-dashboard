@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 600,
-    "updated_at": "2026-04-13T23:19:27.774Z",
+    "version": 602,
+    "updated_at": "2026-04-13T23:19:29.606Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -722,20 +722,6 @@
       "updated_at": "2026-04-10"
     },
     {
-      "text": "Demander les documents de Massinissa Ferradj",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10012,
-      "created": "2026-04-10",
-      "updated_at": "2026-04-10"
-    },
-    {
       "text": "Fiche de paie Morand Allard à deduire",
       "category": "pro",
       "priority": "normal",
@@ -957,6 +943,20 @@
       "id": 10043,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T05:52:59.325Z"
+    },
+    {
+      "text": "Demander les documents de Massinissa Ferradj",
+      "category": "pro",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "completed_at": null,
+      "duration_min": null,
+      "completed_min": null,
+      "id": 10012,
+      "created": "2026-04-10",
+      "updated_at": "2026-04-10"
     },
     {
       "text": "Demander facture Smail EZZAHI CCT",
