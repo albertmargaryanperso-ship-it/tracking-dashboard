@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 496,
-    "updated_at": "2026-04-13T18:50:42.306Z",
+    "version": 497,
+    "updated_at": "2026-04-13T18:51:01.459Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -730,20 +730,6 @@
       "created": "2026-04-13",
       "completed_min": null,
       "updated_at": "2026-04-13T18:39:08.145Z"
-    },
-    {
-      "text": "Rendez-vous avec l'avocat",
-      "category": "pro",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-14",
-      "duration_min": 60,
-      "completed_at": null,
-      "id": 10061,
-      "created": "2026-04-13",
-      "completed_min": null,
-      "updated_at": "2026-04-13T18:49:26.505Z"
     },
     {
       "text": "Rendez-vous avec l'avocat",
