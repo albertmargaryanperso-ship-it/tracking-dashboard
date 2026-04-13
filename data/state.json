@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 525,
-    "updated_at": "2026-04-13T20:42:50.702Z",
+    "version": 526,
+    "updated_at": "2026-04-13T20:42:57.607Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -807,7 +807,7 @@
       "completed_min": null,
       "id": 10073,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:42:50.591Z",
+      "updated_at": "2026-04-13T20:42:57.252Z",
       "subtasks": [
         {
           "id": "st_1776112967035_tbgof",
@@ -817,6 +817,11 @@
         {
           "id": "st_1776112970591_5ggwg",
           "text": "Sogetrel décembre",
+          "done": false
+        },
+        {
+          "id": "st_1776112977252_xujkw",
+          "text": "Sogetrel janvier",
           "done": false
         }
       ]
