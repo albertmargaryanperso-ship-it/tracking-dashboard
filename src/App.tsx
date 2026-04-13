@@ -204,6 +204,7 @@ import type { SyncStatus } from '@/lib/github'
       <VoiceAgent open={voiceOpen} onClose={() => setVoiceOpen(false)}
         state={state} stats={stats}
         onAddTodo={actions.addTodo}
+        onAddDoneTodo={actions.addDoneTodo}
         onToggleTodo={actions.toggleTodo}
         onDeleteTodo={actions.deleteTodo}
         onUpdateTodo={actions.updateTodo} />

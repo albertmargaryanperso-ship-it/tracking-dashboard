@@ -13,6 +13,7 @@ interface VoiceAgentProps {
   state: AppState
   stats: Stats
   onAddTodo: (t: Omit<Todo, 'id' | 'created'>) => void
+  onAddDoneTodo: (t: Omit<Todo, 'id' | 'created' | 'status' | 'completed_at'> & { completed_min: number; completed_at?: string }) => void
   onToggleTodo: (id: number, completed_min?: number | null) => void
   onDeleteTodo: (id: number) => void
   onUpdateTodo: (id: number, patch: Partial<Todo>) => void
@@ -20,7 +21,7 @@ interface VoiceAgentProps {
 
 type AgentStatus = 'idle' | 'listening' | 'thinking' | 'speaking'
 
-export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onToggleTodo, onDeleteTodo, onUpdateTodo }: VoiceAgentProps) => {
+export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTodo, onToggleTodo, onDeleteTodo, onUpdateTodo }: VoiceAgentProps) => {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([])
   const [status, setStatus] = useState<AgentStatus>('idle')
   const [lastTranscript, setLastTranscript] = useState('')
@@ -52,6 +53,19 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onToggleTod
             completed_at: null,
           })
           // Track the ID (will be todos_next_id since it just got incremented)
+          setLastCreatedId(state.todos_next_id)
+          break
+        case 'log_task':
+          onAddDoneTodo({
+            text: a.text,
+            category: a.category || state.meta.custom_categories?.[0]?.id || 'admin',
+            priority: a.priority || 'normal',
+            delegated_to: null,
+            due: null,
+            duration_min: a.duration_min || null,
+            completed_min: a.completed_min || a.duration_min || 0,
+            completed_at: a.date || new Date().toISOString(),
+          })
           setLastCreatedId(state.todos_next_id)
           break
         case 'complete_task':

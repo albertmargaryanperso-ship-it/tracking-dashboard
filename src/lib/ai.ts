@@ -109,6 +109,8 @@ Date : ${today}
 - Terminer : [DONE id=TASK_ID min=TEMPS_REEL]
 - Supprimer : [DEL id=TASK_ID]
 - Cocher sous-tâche : [CHECK id=TASK_ID sid="SUBTASK_ID"]
+- Loguer activité déjà faite : [LOG text="NOM RÉEL" cat="ID" pri="normal" dur="30" min="25"]
+  dur = durée estimée, min = temps réellement passé
 
 ═══ FLOW AJOUT — UNE SEULE QUESTION PAR RÉPONSE ═══
 RÈGLE ABSOLUE : tu poses UNE question, puis tu attends la réponse. JAMAIS deux questions dans le même message.
@@ -130,6 +132,15 @@ Utilise le VRAI NOM de la tâche donné par l'utilisateur.
 Les onglets s'appellent : ${todoTabs.map(t => `"${t.label}"`).join(' et ')} — PAS "onglet Pro" ou "onglet Perso".
 Exemple : "C'est fait. J'ai ajouté Rendez-vous avec l'avocat dans l'onglet Travail, catégorie Admin, priorité normale, estimé à 1 heure 30. Avec deux sous-tâches : préparer les documents et envoyer les pièces."
 Ce récap est OBLIGATOIRE.
+
+═══ FLOW LOGUER UNE ACTIVITÉ DÉJÀ FAITE — même principe, UNE question à la fois ═══
+Quand l'utilisateur dit "j'ai fait X", "logue X", "j'ai terminé X" (et X n'est PAS une tâche existante) :
+Étape 1 : "C'est pro ou perso ?" — STOP.
+Étape 2 : Catégorie — STOP.
+Étape 3 : "Combien de temps ça t'a pris ?" — STOP.
+Étape 4 : Crée avec [LOG ...]. Puis "Tu veux des sous-tâches ?" — STOP.
+Étape 5 : Sous-tâches comme pour l'ajout, puis récap.
+Le récap précise que c'est une activité déjà réalisée : "C'est logué. Rendez-vous avec l'avocat, onglet Travail, catégorie Admin, durée 1 heure 30."
 
 ═══ QUAND ON DEMANDE "QU'EST-CE QUE J'AI À FAIRE" ═══
 1. "Pro ou perso ?" (si pas précisé)
@@ -194,6 +205,21 @@ function parseActions(text: string): { cleanText: string; calls: FunctionCall[] 
     })
   }
 
+  // [LOG text="..." cat="..." pri="..." dur="N" min="N"]
+  const logRe = /\[LOG\s+text="([^"]+)"\s*cat="([^"]+)"\s*pri="([^"]+)"\s*dur="(\d+)"\s*min="(\d+)"\s*\]/gi
+  while ((match = logRe.exec(text)) !== null) {
+    calls.push({
+      name: 'log_task',
+      arguments: {
+        text: match[1],
+        category: match[2],
+        priority: match[3],
+        duration_min: parseInt(match[4], 10),
+        completed_min: parseInt(match[5], 10),
+      },
+    })
+  }
+
   // [SUB id=N text="..."]
   const subRe = /\[SUB\s+id=(\d+)\s+text="([^"]+)"\s*\]/gi
   while ((match = subRe.exec(text)) !== null) {
@@ -237,6 +263,7 @@ function parseActions(text: string): { cleanText: string; calls: FunctionCall[] 
     .replace(/\[DONE[^\]]*\]/gi, '')
     .replace(/\[DEL[^\]]*\]/gi, '')
     .replace(/\[CHECK[^\]]*\]/gi, '')
+    .replace(/\[LOG[^\]]*\]/gi, '')
     .replace(/\s{2,}/g, ' ')
     .trim()
 
