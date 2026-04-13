@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 591,
-    "updated_at": "2026-04-13T23:18:13.118Z",
+    "version": 592,
+    "updated_at": "2026-04-13T23:18:42.970Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -870,21 +870,6 @@
       "id": 10038,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:19:06.086Z"
-    },
-    {
-      "text": "Demander une explication à Rihab car la somme de la blo a été défalquée 2 fois 1 fois avec elle et une fois avec sabri donc rendre",
-      "category": "pro",
-      "priority": "normal",
-      "status": "delegated",
-      "delegated_to": "Loelia",
-      "due": "2026-04-16",
-      "completed_at": null,
-      "duration_min": 90,
-      "completed_min": null,
-      "id": 10041,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T16:06:27.067Z",
-      "subtasks": []
     },
     {
       "text": "Sabri demander où en est le virement",
