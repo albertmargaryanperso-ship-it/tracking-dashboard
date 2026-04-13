@@ -132,13 +132,18 @@ export async function chat(
 
   try {
     const response = await puter.ai.chat(apiMessages, { model: 'claude-sonnet-4-20250514' })
-    // Puter returns various formats — extract the text safely
+    // Debug: log full response structure
+    console.log('PUTER RESPONSE:', JSON.stringify(response, null, 2))
+    // Extract text from whatever Puter returns
     let rawText = ''
     if (typeof response === 'string') rawText = response
-    else if (response?.message?.content) rawText = String(response.message.content)
-    else if (response?.content) rawText = String(response.content)
-    else if (response?.text) rawText = String(response.text)
-    else rawText = JSON.stringify(response)
+    else if (typeof response?.message?.content === 'string') rawText = response.message.content
+    else if (Array.isArray(response?.message?.content)) rawText = response.message.content.map((b: any) => b.text || '').join('')
+    else if (typeof response?.content === 'string') rawText = response.content
+    else if (Array.isArray(response?.content)) rawText = response.content.map((b: any) => b.text || '').join('')
+    else if (typeof response?.text === 'string') rawText = response.text
+    else if (typeof response?.choices?.[0]?.message?.content === 'string') rawText = response.choices[0].message.content
+    else rawText = 'Erreur: réponse inattendue. Ouvre la console (F12) pour voir les détails.'
     const { cleanText, calls } = parseActions(rawText)
     return { text: cleanText, functionCalls: calls }
   } catch (e: any) {
