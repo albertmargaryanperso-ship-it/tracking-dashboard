@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 592,
-    "updated_at": "2026-04-13T23:18:42.970Z",
+    "version": 593,
+    "updated_at": "2026-04-13T23:18:54.105Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -446,11 +446,16 @@
       "completed_min": null,
       "id": 10075,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:46:15.150Z",
+      "updated_at": "2026-04-13T23:18:53.751Z",
       "subtasks": [
         {
           "id": "st_1776113175150_ix4as",
           "text": "Demander à Rihab régul BLO à rembourser Janvier",
+          "done": false
+        },
+        {
+          "id": "st_1776122333750_v7la8",
+          "text": "Quelques dossiers à Sabri",
           "done": false
         }
       ]
