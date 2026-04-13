@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { ExternalLink, Check, Trash2, Mic } from 'lucide-react'
 import type { AppState, CategoryConfig, TabConfig } from '@/types'
 import { getActiveCategories, getTodoTabs, getActiveTabs, cn } from '@/lib/utils'
+import { getAiKey, setAiKey } from '@/lib/ai'
 
 interface SettingsViewProps {
   state: AppState
@@ -89,8 +91,72 @@ export const SettingsView = ({ state, onUpdateCategories, onUpdateTabs }: Settin
     setCatTabMap(prev => { const next = { ...prev }; delete next[id]; return next })
   }
 
+  // ─── AI Key ──────────────────────────────────────────────────────────
+  const [aiKey, setAiKeyLocal] = useState(getAiKey() ?? '')
+  const [aiSaved, setAiSaved] = useState(false)
+  const hasAiKey = !!getAiKey()
+
+  const saveAiKey = () => {
+    setAiKey(aiKey.trim() || null)
+    setAiSaved(true)
+    setTimeout(() => setAiSaved(false), 1500)
+  }
+  const clearAiKey = () => {
+    setAiKeyLocal('')
+    setAiKey(null)
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-8">
+
+      {/* AI Key */}
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-cyan-600 flex items-center justify-center">
+            <Mic className="text-white" size={18} />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold">Assistant vocal (Gemini)</h2>
+            <p className="text-[10px] text-zinc-500">Parle pour gérer tes tâches + capture photo → tâches</p>
+          </div>
+        </div>
+
+        <div className="rounded-xl bg-zinc-900/60 border border-zinc-800 p-4 text-[11px] text-zinc-400 leading-relaxed">
+          <p className="font-semibold text-zinc-200 mb-1.5">Clé API Google AI Studio (gratuite)</p>
+          <ol className="space-y-0.5 list-decimal list-inside">
+            <li>Va sur <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" className="text-cyan-400 underline">aistudio.google.com/apikey</a></li>
+            <li>Connecte-toi avec ton compte Google</li>
+            <li>Clique "Create API Key"</li>
+            <li>Copie la clé et colle-la ci-dessous</li>
+          </ol>
+          <p className="mt-2 text-[10px] text-zinc-500">Tier gratuit : 1500 requêtes/jour — largement suffisant.</p>
+        </div>
+
+        <div>
+          <label className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">API Key</label>
+          <input type="password" value={aiKey} onChange={e => setAiKeyLocal(e.target.value)}
+            placeholder="AIzaSy..."
+            className="w-full mt-1.5 px-3 py-2.5 bg-zinc-950 border border-zinc-800 rounded-xl text-xs font-mono focus:outline-none focus:border-cyan-500" />
+          {hasAiKey && !aiKey && (
+            <p className="text-[10px] text-emerald-400 mt-1.5 flex items-center gap-1">
+              <Check size={10} /> Clé configurée
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button onClick={saveAiKey} disabled={!aiKey.trim() && !hasAiKey}
+            className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 text-white text-xs font-bold disabled:opacity-40 transition-all">
+            {aiSaved ? '✓ Enregistré' : 'Enregistrer'}
+          </button>
+          {hasAiKey && (
+            <button onClick={clearAiKey}
+              className="px-3 py-2.5 rounded-xl border border-rose-500/30 text-rose-400 hover:bg-rose-500/10 text-[11px]">
+              <Trash2 size={12} />
+            </button>
+          )}
+        </div>
+      </div>
 
       {/* Categories */}
       <div className="flex items-center justify-between">

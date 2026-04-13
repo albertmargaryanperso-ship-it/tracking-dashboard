@@ -10,6 +10,7 @@ import { SettingsView } from '@/components/SettingsView'
 import { DeepWorkModal } from '@/components/DeepWorkModal'
 import { QuickAddModal } from '@/components/QuickAddModal'
 import { TokenModal } from '@/components/TokenModal'
+import { VoiceAgent } from '@/components/VoiceAgent'
 import { useAppState } from '@/hooks/useAppState'
 import { hasToken } from '@/lib/github'
 import { cn, todayISO, isoToFr, formatMinutes, getActiveTabs } from '@/lib/utils'
@@ -193,6 +194,12 @@ import type { SyncStatus } from '@/lib/github'
 
       <TokenModal open={tokenOpen} onClose={() => setTokenOpen(false)}
         onTokenChange={() => setTokenPresent(hasToken())} />
+
+      <VoiceAgent state={state}
+        onAddTodo={actions.addTodo}
+        onToggleTodo={actions.toggleTodo}
+        onDeleteTodo={actions.deleteTodo}
+        onUpdateTodo={actions.updateTodo} />
     </div>
   )
 }
