@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 486,
-    "updated_at": "2026-04-13T14:00:24.382Z",
+    "version": 487,
+    "updated_at": "2026-04-13T14:00:31.828Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -191,20 +191,6 @@
       "duration_min": 30,
       "completed_min": null,
       "id": 10003,
-      "created": "2026-04-09",
-      "updated_at": "2026-04-09"
-    },
-    {
-      "text": "Récapitulatif février constructel",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10004,
       "created": "2026-04-09",
       "updated_at": "2026-04-09"
     },
