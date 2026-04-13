@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 594,
-    "updated_at": "2026-04-13T23:19:07.819Z",
+    "version": 595,
+    "updated_at": "2026-04-13T23:19:18.835Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -957,27 +957,6 @@
         }
       ],
       "done": true
-    },
-    {
-      "text": "Récapitulatif février constructel",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10004,
-      "created": "2026-04-09",
-      "updated_at": "2026-04-13T19:03:16.178Z",
-      "subtasks": [
-        {
-          "id": "st_1776106996178_4wz59",
-          "text": "Envoyer le récapitulatif à Constructel",
-          "done": false
-        }
-      ]
     },
     {
       "text": "Récap sogetrel fevrier",
