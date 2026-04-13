@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 533,
-    "updated_at": "2026-04-13T20:44:46.180Z",
+    "updated_at": "2026-04-13T20:44:48.550Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -213,20 +213,6 @@
       "id": 10005,
       "created": "2026-04-09",
       "updated_at": "2026-04-09"
-    },
-    {
-      "text": "Attestation vigilance Christopher",
-      "category": "pro",
-      "priority": "normal",
-      "status": "waiting",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": 30,
-      "completed_min": null,
-      "id": 10007,
-      "created": "2026-04-10",
-      "updated_at": "2026-04-10"
     },
     {
       "text": "Récupérer factures et documents Ziane amazigh décembre et voir pour le reste des virements",
