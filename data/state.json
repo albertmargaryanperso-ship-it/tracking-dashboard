@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 546,
-    "updated_at": "2026-04-13T20:47:51.147Z",
+    "version": 548,
+    "updated_at": "2026-04-13T20:47:52.544Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -707,6 +707,20 @@
           "done": false
         }
       ]
+    },
+    {
+      "text": "Récupérer factures et documents Ziane amazigh décembre et voir pour le reste des virements",
+      "category": "pro",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "completed_at": null,
+      "duration_min": null,
+      "completed_min": null,
+      "id": 10009,
+      "created": "2026-04-10",
+      "updated_at": "2026-04-10"
     }
   ],
   "todos_next_id": 10076,
