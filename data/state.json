@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 534,
-    "updated_at": "2026-04-13T20:44:52.893Z",
+    "updated_at": "2026-04-13T20:44:55.166Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -549,20 +549,6 @@
       "id": 10037,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:18:14.915Z"
-    },
-    {
-      "text": "Factures Omar",
-      "category": "admin",
-      "priority": "normal",
-      "status": "waiting",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": 15,
-      "completed_min": null,
-      "id": 10006,
-      "created": "2026-04-10",
-      "updated_at": "2026-04-10"
     },
     {
       "text": "Acheter chaussures blanches style airmax",
