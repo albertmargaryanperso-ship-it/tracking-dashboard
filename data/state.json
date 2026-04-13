@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 557,
-    "updated_at": "2026-04-13T20:50:12.206Z",
+    "updated_at": "2026-04-13T20:50:18.529Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -698,20 +698,6 @@
           "done": false
         }
       ]
-    },
-    {
-      "text": "Virements",
-      "category": "pro",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10078,
-      "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:50:11.853Z"
     }
   ],
   "todos_next_id": 10079,
