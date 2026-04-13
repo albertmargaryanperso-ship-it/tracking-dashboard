@@ -1,28 +1,21 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// AI — Groq API (free) — text-based action parsing (no native tool calling)
+// AI — Puter.js (free, no API key, no rate limit)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { Todo, AppState, Stats } from '@/types'
 import { getActiveCategories, getActiveTabs, todayISO } from '@/lib/utils'
 
+// Legacy key storage (kept for backward compat, not needed with Puter)
 export const AI_KEY_STORAGE = 'tracking-ai-key-v1'
-const API_URL = 'https://openrouter.ai/api/v1/chat/completions'
-const MODEL = 'meta-llama/llama-3.1-8b-instruct:free'
+export const getAiKey = (): string | null => 'puter' // always "configured"
+export const setAiKey = (_key: string | null): void => {}
 
-export const getAiKey = (): string | null => {
-  try { return localStorage.getItem(AI_KEY_STORAGE) } catch { return null }
-}
-export const setAiKey = (key: string | null): void => {
-  try {
-    if (key) localStorage.setItem(AI_KEY_STORAGE, key)
-    else localStorage.removeItem(AI_KEY_STORAGE)
-  } catch { /* */ }
-}
+declare const puter: any
 
-// ─── System prompt (COMPACT — minimize tokens) ─────────────────────────────
+// ─── System prompt (COMPACT) ───────────────────────────────────────────────
 
-function buildSystemPrompt(state: AppState, stats?: Stats): string {
-  const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(state.meta.custom_categories)
+function buildSystemPrompt(state: AppState): string {
+  const { CATEGORY_CONFIG } = getActiveCategories(state.meta.custom_categories)
   const tabs = getActiveTabs(state.meta.custom_tabs)
   const todoTabs = tabs.filter(t => t.type === 'todos')
   const openTodos = state.todos.filter(t => t.status !== 'done')
@@ -75,7 +68,7 @@ export interface AiResponse {
   functionCalls: FunctionCall[]
 }
 
-// ─── Parse action tags from text ───────────────────────────────────────────
+// ─── Parse action tags ─────────────────────────────────────────────────────
 
 function parseActions(text: string): { cleanText: string; calls: FunctionCall[] } {
   const calls: FunctionCall[] = []
@@ -119,55 +112,30 @@ function parseActions(text: string): { cleanText: string; calls: FunctionCall[] 
   return { cleanText, calls }
 }
 
-// ─── API call ──────────────────────────────────────────────────────────────
+// ─── API call via Puter.js ─────────────────────────────────────────────────
 
 export async function chat(
   messages: ChatMessage[],
   state: AppState,
-  stats?: Stats,
+  _stats?: Stats,
   _image?: string,
 ): Promise<AiResponse> {
-  const apiKey = getAiKey()
-  if (!apiKey) throw new Error('Clé API non configurée')
+  if (typeof puter === 'undefined') throw new Error('Puter.js pas encore chargé — rafraîchis la page')
 
-  const systemPrompt = buildSystemPrompt(state, stats)
+  const systemPrompt = buildSystemPrompt(state)
 
+  // Build messages for Puter (OpenAI format)
   const apiMessages: any[] = [{ role: 'system', content: systemPrompt }]
-  // Keep only last 6 messages
   for (const msg of messages.slice(-6)) {
     apiMessages.push({ role: msg.role, content: msg.content })
   }
 
-  let data: any = null
-  let lastError = ''
-
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'Rocko Assistant',
-      },
-      body: JSON.stringify({ model: MODEL, messages: apiMessages, max_tokens: 200, temperature: 0.7 }),
-    })
-
-    if (res.ok) { data = await res.json(); break }
-
-    if (res.status === 429) {
-      if (attempt < 2) { await new Promise(r => setTimeout(r, 15000)); continue }
-      lastError = 'Patiente quelques secondes'
-      break
-    }
-
-    const errBody = await res.text().catch(() => '')
-    try { lastError = `[${res.status}] ${JSON.parse(errBody)?.error?.message?.slice(0, 100) || ''}` }
-    catch { lastError = `[${res.status}] ${errBody.slice(0, 100)}` }
-    break
+  try {
+    const response = await puter.ai.chat(apiMessages, { model: 'claude-sonnet-4-20250514' })
+    const rawText = typeof response === 'string' ? response : response?.message?.content ?? response?.toString() ?? ''
+    const { cleanText, calls } = parseActions(rawText)
+    return { text: cleanText, functionCalls: calls }
+  } catch (e: any) {
+    throw new Error(e.message || 'Erreur Puter.js')
   }
-
-  if (!data) throw new Error(lastError === 'Rate limit' ? 'Patiente quelques secondes' : lastError || 'Erreur')
-  const { cleanText, calls } = parseActions(data.choices?.[0]?.message?.content ?? '')
-  return { text: cleanText, functionCalls: calls }
 }
