@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 596,
-    "updated_at": "2026-04-13T23:19:23.536Z",
+    "updated_at": "2026-04-13T23:19:25.152Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -957,34 +957,6 @@
         }
       ],
       "done": true
-    },
-    {
-      "text": "Récupérer factures et documents Ziane amazigh décembre et voir pour le reste des virements",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10009,
-      "created": "2026-04-10",
-      "updated_at": "2026-04-10"
-    },
-    {
-      "text": "Les montants versés Ziane et amazigh sont à recalculer sur facture de janvier car décembre mauvais montants verses",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10010,
-      "created": "2026-04-10",
-      "updated_at": "2026-04-10"
     },
     {
       "text": "Acheter chaussures blanches style airmax",
