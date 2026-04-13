@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 581,
-    "updated_at": "2026-04-13T20:55:20.103Z",
+    "version": 582,
+    "updated_at": "2026-04-13T20:55:30.411Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -660,7 +660,14 @@
       "completed_min": null,
       "id": 10085,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:55:19.750Z"
+      "updated_at": "2026-04-13T20:55:30.059Z",
+      "subtasks": [
+        {
+          "id": "st_1776113730058_crlfj",
+          "text": "Blanches style Airmax",
+          "done": false
+        }
+      ]
     }
   ],
   "todos_next_id": 10086,
