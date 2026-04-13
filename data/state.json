@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 545,
-    "updated_at": "2026-04-13T20:47:23.119Z",
+    "version": 544,
+    "updated_at": "2026-04-13T20:47:27.981Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -756,20 +756,6 @@
           "done": false
         }
       ]
-    },
-    {
-      "text": "Nouvelle tâche à définir",
-      "category": "pro",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-14",
-      "duration_min": 30,
-      "completed_at": null,
-      "id": 10060,
-      "created": "2026-04-13",
-      "completed_min": null,
-      "updated_at": "2026-04-13T18:39:08.145Z"
     }
   ],
   "todos_next_id": 10076,
