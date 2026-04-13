@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 561,
-    "updated_at": "2026-04-13T20:51:15.946Z",
+    "version": 562,
+    "updated_at": "2026-04-13T20:51:30.187Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -655,7 +655,7 @@
       "completed_min": null,
       "id": 10079,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:51:11.383Z",
+      "updated_at": "2026-04-13T20:51:29.834Z",
       "subtasks": [
         {
           "id": "st_1776113438018_htv9h",
@@ -675,6 +675,11 @@
         {
           "id": "st_1776113471383_w53mh",
           "text": "Aiman pour Feriel, Sabrina, Maroua, Karima",
+          "done": false
+        },
+        {
+          "id": "st_1776113489834_0x9rl",
+          "text": "Nadjim Idir",
           "done": false
         }
       ]
