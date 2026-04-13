@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 533,
-    "updated_at": "2026-04-13T20:44:48.550Z",
+    "version": 534,
+    "updated_at": "2026-04-13T20:44:52.893Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -811,7 +811,7 @@
       "completed_min": null,
       "id": 10074,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:44:45.825Z",
+      "updated_at": "2026-04-13T20:44:52.540Z",
       "subtasks": [
         {
           "id": "st_1776113066262_copnk",
@@ -826,6 +826,11 @@
         {
           "id": "st_1776113085825_m63z2",
           "text": "Attestation vigilance Christopher",
+          "done": false
+        },
+        {
+          "id": "st_1776113092540_2pend",
+          "text": "Factures Omar",
           "done": false
         }
       ]
