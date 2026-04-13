@@ -12,6 +12,7 @@ interface SubtaskSheetProps {
 export const SubtaskSheet = ({ todo, onClose, onUpdate }: SubtaskSheetProps) => {
   const [newText, setNewText] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const [sheetMaxH, setSheetMaxH] = useState('85vh')
 
   const isVisible = todo !== null
 
@@ -20,6 +21,20 @@ export const SubtaskSheet = ({ todo, onClose, onUpdate }: SubtaskSheetProps) => 
     if (isVisible) document.body.style.overflow = 'hidden'
     else document.body.style.overflow = ''
     return () => { document.body.style.overflow = '' }
+  }, [isVisible])
+
+  // Track iOS keyboard via visualViewport
+  useEffect(() => {
+    if (!isVisible) return
+    const vv = window.visualViewport
+    if (!vv) return
+    const update = () => {
+      const h = vv.height
+      setSheetMaxH(`${Math.min(h * 0.85, h - 20)}px`)
+    }
+    update()
+    vv.addEventListener('resize', update)
+    return () => vv.removeEventListener('resize', update)
   }, [isVisible])
 
   if (!todo) return null
@@ -68,7 +83,7 @@ export const SubtaskSheet = ({ todo, onClose, onUpdate }: SubtaskSheetProps) => 
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
       {/* Bottom Sheet Modal */}
-      <div className="relative w-full max-w-lg bg-zinc-950 rounded-t-3xl sm:rounded-3xl border border-zinc-800 flex flex-col max-h-[85vh] animate-slide-up shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+      <div className="relative w-full max-w-lg bg-zinc-950 rounded-t-3xl sm:rounded-3xl border border-zinc-800 flex flex-col animate-slide-up shadow-2xl overflow-hidden" style={{ maxHeight: sheetMaxH }} onClick={e => e.stopPropagation()}>
         
         {/* Visual drag handle for mobile */}
         <div className="flex justify-center pt-3 pb-2 sm:hidden" onClick={onClose}>
@@ -120,6 +135,8 @@ export const SubtaskSheet = ({ todo, onClose, onUpdate }: SubtaskSheetProps) => 
         <div className="p-4 border-t border-zinc-800 bg-zinc-950 sticky bottom-0 z-10">
            <div className="relative flex items-center">
              <input ref={inputRef} value={newText} onChange={e => setNewText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleAdd() }}
+               onFocus={() => { setTimeout(() => inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 300) }}
+               enterKeyHint="done"
                placeholder="Ajouter une sous-tâche..."
                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 pl-4 pr-12 text-sm text-zinc-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-600 shadow-inner" />
                
