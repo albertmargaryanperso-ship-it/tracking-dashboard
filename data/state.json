@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 545,
-    "updated_at": "2026-04-13T20:47:31.627Z",
+    "updated_at": "2026-04-13T20:47:34.832Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -732,27 +732,6 @@
         {
           "id": "st_1776113175150_ix4as",
           "text": "Demander à Rihab régul BLO à rembourser Janvier",
-          "done": false
-        }
-      ]
-    },
-    {
-      "text": "Récapitulatif février constructel",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10004,
-      "created": "2026-04-09",
-      "updated_at": "2026-04-13T19:03:16.178Z",
-      "subtasks": [
-        {
-          "id": "st_1776106996178_4wz59",
-          "text": "Envoyer le récapitulatif à Constructel",
           "done": false
         }
       ]
