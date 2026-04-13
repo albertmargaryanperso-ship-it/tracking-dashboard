@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 497,
-    "updated_at": "2026-04-13T18:51:01.459Z",
+    "version": 498,
+    "updated_at": "2026-04-13T18:51:03.560Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -718,20 +718,6 @@
       "done": true
     },
     {
-      "text": "Nouvelle tâche à définir",
-      "category": "pro",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-14",
-      "duration_min": 30,
-      "completed_at": null,
-      "id": 10060,
-      "created": "2026-04-13",
-      "completed_min": null,
-      "updated_at": "2026-04-13T18:39:08.145Z"
-    },
-    {
       "text": "Rendez-vous avec l'avocat",
       "category": "pro",
       "priority": "normal",
@@ -772,6 +758,20 @@
       "created": "2026-04-13",
       "completed_min": null,
       "updated_at": "2026-04-13T18:50:41.924Z"
+    },
+    {
+      "text": "Nouvelle tâche à définir",
+      "category": "pro",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": "2026-04-14",
+      "duration_min": 30,
+      "completed_at": null,
+      "id": 10060,
+      "created": "2026-04-13",
+      "completed_min": null,
+      "updated_at": "2026-04-13T18:39:08.145Z"
     }
   ],
   "todos_next_id": 10065,
