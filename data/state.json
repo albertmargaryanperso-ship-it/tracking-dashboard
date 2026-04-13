@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 602,
-    "updated_at": "2026-04-13T23:19:29.606Z",
+    "version": 604,
+    "updated_at": "2026-04-13T23:19:31.178Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -209,20 +209,6 @@
       "status": "done",
       "done": true,
       "updated_at": "2026-04-11T23:33:00.387Z"
-    },
-    {
-      "text": "Virement Nadjim + facture",
-      "category": "finance",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-12",
-      "completed_at": null,
-      "duration_min": 30,
-      "completed_min": null,
-      "id": 10028,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T00:12:35.042Z"
     },
     {
       "text": "Envoyer recap février Kader Youssef Nikola Adem",
@@ -943,6 +929,20 @@
       "id": 10043,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T05:52:59.325Z"
+    },
+    {
+      "text": "Virement Nadjim + facture",
+      "category": "finance",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": "2026-04-12",
+      "completed_at": null,
+      "duration_min": 30,
+      "completed_min": null,
+      "id": 10028,
+      "created": "2026-04-12",
+      "updated_at": "2026-04-12T00:12:35.042Z"
     },
     {
       "text": "Demander les documents de Massinissa Ferradj",
