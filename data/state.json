@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 585,
-    "updated_at": "2026-04-13T20:59:50.016Z",
+    "version": 586,
+    "updated_at": "2026-04-13T21:00:27.437Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -631,9 +631,23 @@
           "done": false
         }
       ]
+    },
+    {
+      "text": "S'inscrire à pôle emploi",
+      "category": "bien-etre",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": "2026-04-15",
+      "completed_at": null,
+      "duration_min": 60,
+      "completed_min": null,
+      "id": 10086,
+      "created": "2026-04-13",
+      "updated_at": "2026-04-13T21:00:27.379Z"
     }
   ],
-  "todos_next_id": 10086,
+  "todos_next_id": 10087,
   "archive": [
     {
       "month": "2026-03",
