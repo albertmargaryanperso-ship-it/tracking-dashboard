@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 577,
-    "updated_at": "2026-04-13T20:54:48.207Z",
+    "version": 578,
+    "updated_at": "2026-04-13T20:54:53.003Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -257,15 +257,16 @@
       "text": "Voir vidéo antigravity et ce qu’on peut faire avec",
       "category": "lecture",
       "priority": "normal",
-      "status": "waiting",
+      "status": "done",
       "delegated_to": null,
       "due": "2026-04-15",
-      "completed_at": null,
+      "completed_at": "2026-04-13",
       "duration_min": 60,
-      "completed_min": null,
+      "completed_min": 60,
       "id": 10039,
       "created": "2026-04-12",
-      "updated_at": "2026-04-12T00:21:58.775Z"
+      "updated_at": "2026-04-13T20:54:52.651Z",
+      "done": true
     },
     {
       "text": "Voir vidéos de création agent ia onoff téléphone",
