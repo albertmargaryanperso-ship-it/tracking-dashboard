@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { RefreshCw, Cloud, CloudOff, KeyRound, Plus, ClipboardCopy, Settings } from 'lucide-react'
+import { RefreshCw, Cloud, CloudOff, KeyRound, Plus, ClipboardCopy, Settings, Mic } from 'lucide-react'
 import { Header } from '@/components/Header'
 import { Dashboard } from '@/components/Dashboard'
 import { LiveTracker } from '@/components/LiveTracker'
@@ -162,9 +162,13 @@ import type { SyncStatus } from '@/lib/github'
                   view === 'settings' ? 'border-zinc-700 bg-zinc-800 text-zinc-300' : 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300')}>
                 <Settings size={14} className={cn(view === 'settings' && 'animate-spin-slow')} />
               </button>
-              <button onClick={() => setQuickAddOpen(true)}
+              <button onClick={() => setVoiceOpen(true)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-br from-violet-600 to-cyan-600 hover:from-violet-500 hover:to-cyan-500 text-xs font-semibold text-white transition-all shadow-lg shadow-violet-500/20">
-                <Plus size={14} /> <span>Ajouter</span>
+                <Mic size={14} /> <span>Assistant</span>
+              </button>
+              <button onClick={() => setQuickAddOpen(true)}
+                className="p-2 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-all">
+                <Plus size={14} />
               </button>
             </div>
           </div>
