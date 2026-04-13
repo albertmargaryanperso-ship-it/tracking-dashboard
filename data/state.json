@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 535,
-    "updated_at": "2026-04-13T20:45:10.151Z",
+    "version": 536,
+    "updated_at": "2026-04-13T20:45:52.525Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -833,7 +833,14 @@
       "completed_min": null,
       "id": 10075,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:45:09.796Z"
+      "updated_at": "2026-04-13T20:45:52.171Z",
+      "subtasks": [
+        {
+          "id": "st_1776113152171_p8a51",
+          "text": "Demander à Rihab pourquoi sur Janvier la BLO à été défalqué sur la PPD de la D3 et elle à aussi été défalquée avec Sabri pour qu'elle nous rembourse",
+          "done": false
+        }
+      ]
     }
   ],
   "todos_next_id": 10076,
