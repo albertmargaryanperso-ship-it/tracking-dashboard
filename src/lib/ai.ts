@@ -104,9 +104,15 @@ ${statsBlock}
 Date : ${today}
 
 ═══ ACTIONS (tags invisibles, à mettre EN FIN de réponse) ═══
-- Ajouter : [ADD text="NOM RÉEL DE LA TÂCHE" cat="ID_CATEGORIE" pri="normal" dur="30"]
-  ATTENTION : text= doit contenir le VRAI nom donné par l'utilisateur, PAS "la tâche".
-  Exemple correct : [ADD text="Rendez-vous avec l'avocat" cat="admin" pri="normal" dur="90"]
+- Ajouter : [ADD text="NOM RÉEL" cat="ID_CATEGORIE" pri="PRIORITÉ" dur="DURÉE_MINUTES"]
+  CRITIQUE : CHAQUE champ doit contenir la VRAIE valeur discutée dans la conversation.
+  text = le nom exact donné par l'utilisateur au début.
+  cat = l'ID de la catégorie choisie (pro, finance, admin, automatisation, sport, etc).
+  pri = la priorité choisie (urgent, normal, faible).
+  dur = la durée en minutes confirmée.
+  EXEMPLE de conversation complète → tag correct :
+  User: "ajoute rendez-vous avocat" → User: "pro" → User: "admin" → User: "urgent" → AI: "30 min ok?" → User: "oui"
+  → [ADD text="Rendez-vous avec l'avocat" cat="admin" pri="urgent" dur="30"]
 - Sous-tâche : [SUB id=TASK_ID text="NOM RÉEL"]
 - Terminer : [DONE id=TASK_ID min=TEMPS_REEL]
 - Supprimer : [DEL id=TASK_ID]
@@ -288,6 +294,15 @@ export async function chat(
   ]
   for (const msg of messages) {
     apiMessages.push({ role: msg.role, content: msg.content })
+  }
+
+  // Inject conversation summary to prevent context loss on long flows
+  if (messages.length >= 4) {
+    const allText = messages.map(m => `${m.role}: ${m.content}`).join('\n')
+    apiMessages.push({
+      role: 'system',
+      content: `RAPPEL — voici les infos collectées dans cette conversation. Quand tu crées un tag [ADD] ou [LOG], utilise ces valeurs exactes :\n${allText}`,
+    })
   }
 
   const res = await fetch(GROQ_URL, {

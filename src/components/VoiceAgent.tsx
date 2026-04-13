@@ -117,10 +117,29 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
       const response = await chat(newHistory, state, stats, image)
 
       if (response.functionCalls.length > 0) {
-        // Fix subtask IDs: if model used a placeholder, replace with real last created ID
+        // Enrich function calls from conversation history
+        const history = chatHistory.map(m => m.content.toLowerCase()).join(' ')
         const fixedCalls = response.functionCalls.map(fc => {
+          // Fix subtask IDs
           if (fc.name === 'add_subtask' && lastCreatedId && (!fc.arguments.task_id || fc.arguments.task_id === 0)) {
             return { ...fc, arguments: { ...fc.arguments, task_id: lastCreatedId } }
+          }
+          // Enrich ADD/LOG with conversation context if fields are missing/default
+          if ((fc.name === 'add_task' || fc.name === 'log_task') && chatHistory.length >= 4) {
+            const a = { ...fc.arguments }
+            // Extract category from history if missing
+            if (!a.category || a.category === 'admin') {
+              const cats = (state.meta.custom_categories ?? []).map(c => c.id)
+              for (const cat of cats) {
+                if (history.includes(cat)) { a.category = cat; break }
+              }
+            }
+            // Extract priority from history
+            if (!a.priority || a.priority === 'normal') {
+              if (history.includes('urgent')) a.priority = 'urgent'
+              else if (history.includes('faible')) a.priority = 'faible'
+            }
+            return { ...fc, arguments: a }
           }
           return fc
         })
