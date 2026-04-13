@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 559,
-    "updated_at": "2026-04-13T20:50:48.763Z",
+    "version": 560,
+    "updated_at": "2026-04-13T20:50:51.495Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -295,20 +295,6 @@
       "id": 10032,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:15:22.165Z"
-    },
-    {
-      "text": "Virement Youssef",
-      "category": "finance",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-12",
-      "completed_at": null,
-      "duration_min": 30,
-      "completed_min": null,
-      "id": 10033,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T00:15:38.050Z"
     },
     {
       "text": "Voir vidéo antigravity et ce qu’on peut faire avec",
