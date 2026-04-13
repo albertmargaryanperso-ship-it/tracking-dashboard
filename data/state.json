@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 595,
-    "updated_at": "2026-04-13T23:19:18.835Z",
+    "version": 596,
+    "updated_at": "2026-04-13T23:19:23.536Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -957,20 +957,6 @@
         }
       ],
       "done": true
-    },
-    {
-      "text": "Récap sogetrel fevrier",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10005,
-      "created": "2026-04-09",
-      "updated_at": "2026-04-09"
     },
     {
       "text": "Récupérer factures et documents Ziane amazigh décembre et voir pour le reste des virements",
