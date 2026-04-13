@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 582,
-    "updated_at": "2026-04-13T20:55:30.411Z",
+    "version": 583,
+    "updated_at": "2026-04-13T20:55:46.698Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -660,11 +660,16 @@
       "completed_min": null,
       "id": 10085,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:55:30.059Z",
+      "updated_at": "2026-04-13T20:55:46.345Z",
       "subtasks": [
         {
           "id": "st_1776113730058_crlfj",
           "text": "Blanches style Airmax",
+          "done": false
+        },
+        {
+          "id": "st_1776113746345_s1ojd",
+          "text": "Blanches/beige avec logo d'un arbre pour la marque",
           "done": false
         }
       ]
