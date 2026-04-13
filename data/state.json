@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 547,
-    "updated_at": "2026-04-13T20:48:05.920Z",
+    "updated_at": "2026-04-13T20:48:08.564Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -663,7 +663,7 @@
       "completed_min": null,
       "id": 10074,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:48:05.567Z",
+      "updated_at": "2026-04-13T20:48:08.210Z",
       "subtasks": [
         {
           "id": "st_1776113066262_copnk",
@@ -698,6 +698,11 @@
         {
           "id": "st_1776113285567_9vzjb",
           "text": "Factures Ziane",
+          "done": false
+        },
+        {
+          "id": "st_1776113288210_tzbkv",
+          "text": "Factures Amazigh",
           "done": false
         }
       ]
