@@ -3,11 +3,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type { Todo, AppState } from '@/types'
-import { getActiveCategories } from '@/lib/utils'
+import { getActiveCategories, todayISO } from '@/lib/utils'
 
 export const AI_KEY_STORAGE = 'tracking-ai-key-v1'
-const GEMINI_MODEL = 'gemini-2.0-flash'
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
+// Try models in order — 2.0 Flash Lite has separate quotas
+const GEMINI_MODELS = ['gemini-2.0-flash-lite', 'gemini-2.0-flash', 'gemini-1.5-flash']
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta/models'
 
 export const getAiKey = (): string | null => {
   try { return localStorage.getItem(AI_KEY_STORAGE) } catch { return null }
@@ -24,7 +25,7 @@ export const setAiKey = (key: string | null): void => {
 const TOOL_DECLARATIONS = [
   {
     name: 'add_task',
-    description: "Ajouter une nouvelle tâche. Utiliser quand l'utilisateur demande d'ajouter, créer, noter une tâche.",
+    description: "Ajouter une nouvelle tâche APRÈS confirmation orale de l'utilisateur.",
     parameters: {
       type: 'OBJECT',
       properties: {
@@ -39,7 +40,7 @@ const TOOL_DECLARATIONS = [
   },
   {
     name: 'complete_task',
-    description: "Marquer une tâche comme terminée.",
+    description: "Marquer une tâche comme terminée APRÈS confirmation.",
     parameters: {
       type: 'OBJECT',
       properties: {
@@ -51,7 +52,7 @@ const TOOL_DECLARATIONS = [
   },
   {
     name: 'delete_task',
-    description: "Supprimer une tâche.",
+    description: "Supprimer une tâche APRÈS confirmation.",
     parameters: {
       type: 'OBJECT',
       properties: {
@@ -62,7 +63,7 @@ const TOOL_DECLARATIONS = [
   },
   {
     name: 'add_subtask',
-    description: "Ajouter une sous-tâche à une tâche existante.",
+    description: "Ajouter une sous-tâche APRÈS confirmation.",
     parameters: {
       type: 'OBJECT',
       properties: {
@@ -79,6 +80,8 @@ const TOOL_DECLARATIONS = [
 function buildSystemPrompt(state: AppState): string {
   const { CATEGORY_CONFIG, CATEGORY_LIST } = getActiveCategories(state.meta.custom_categories)
   const openTodos = state.todos.filter(t => t.status !== 'done')
+  const doneTodos = state.todos.filter(t => t.status === 'done')
+  const today = todayISO()
 
   const catList = CATEGORY_LIST.map(id => {
     const c = CATEGORY_CONFIG[id]
@@ -89,28 +92,63 @@ function buildSystemPrompt(state: AppState): string {
     ? 'Aucune tâche en cours.'
     : openTodos.map(t => {
         const c = CATEGORY_CONFIG[t.category]
-        const sub = t.subtasks?.length ? ` [${t.subtasks.filter(s => s.done).length}/${t.subtasks.length} sous-tâches]` : ''
-        const due = t.due ? ` (échéance: ${t.due})` : ''
-        return `- [#${t.id}] ${c?.emoji ?? ''} ${t.text} | ${t.status}${t.priority === 'urgent' ? ' 🔴URGENT' : ''}${due}${sub}`
+        const sub = t.subtasks?.length ? ` [sous-tâches: ${t.subtasks.filter(s => s.done).length}/${t.subtasks.length}]` : ''
+        const due = t.due ? ` (échéance: ${t.due}${t.due < today ? ' ⚠️EN RETARD' : t.due === today ? ' ⚠️AUJOURD\'HUI' : ''})` : ''
+        const dur = t.duration_min ? ` ~${t.duration_min}min` : ''
+        const del = t.delegated_to ? ` → délégué à ${t.delegated_to}` : ''
+        return `- [#${t.id}] ${c?.emoji ?? ''} ${t.text} | ${t.status} | ${t.priority}${due}${dur}${del}${sub}`
       }).join('\n')
 
-  return `Tu es l'assistant vocal du dashboard de productivité d'Albert. Tu parles français, tu es concis et direct.
+  const urgentCount = openTodos.filter(t => t.priority === 'urgent').length
+  const overdueCount = openTodos.filter(t => t.due && t.due < today).length
+  const todayCount = openTodos.filter(t => t.due === t.due && t.due === today).length
+  const doneThisWeek = doneTodos.filter(t => {
+    if (!t.completed_at) return false
+    const d = new Date(t.completed_at)
+    const now = new Date()
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    return d >= weekAgo
+  }).length
 
-CATÉGORIES DISPONIBLES :
+  return `Tu es l'assistant vocal personnel d'Albert. Tu parles TOUJOURS en français, tu es direct et bienveillant.
+
+Tu connais toutes ses tâches et tu peux les analyser, donner des conseils, et agir dessus.
+
+CATÉGORIES :
 ${catList}
 
-TÂCHES EN COURS :
+TÂCHES OUVERTES (${openTodos.length}) :
 ${taskList}
 
-RÈGLES :
-- Réponds toujours en français
-- Sois ultra-concis (2-3 phrases max, c'est de la voix pas du texte)
-- Quand l'utilisateur mentionne une tâche par son nom, trouve la plus proche dans la liste
-- Si la catégorie n'est pas claire, utilise la première catégorie
-- Pour les priorités : urgent = critique/important/aujourd'hui, normal = par défaut, faible = optionnel/plus tard
-- Ne liste pas toutes les tâches sauf si demandé explicitement
-- Si une image est fournie, analyse-la pour extraire les tâches et utilise add_task pour chacune
-- Exécute les actions via les fonctions disponibles, puis confirme brièvement`
+STATS RAPIDES :
+- 🔴 ${urgentCount} urgent(es)
+- ⚠️ ${overdueCount} en retard
+- 📅 ${todayCount} pour aujourd'hui
+- ✅ ${doneThisWeek} terminée(s) cette semaine
+- Date du jour : ${today}
+
+═══ RÈGLES DE COMPORTEMENT ═══
+
+1. TOUJOURS PARLER — Ta réponse sera lue à haute voix. Formule des phrases naturelles et orales, pas du texte écrit. Sois concis (2-4 phrases).
+
+2. CONFIRMER AVANT D'AGIR — Quand l'utilisateur demande une action (ajouter, supprimer, terminer) :
+   - D'abord DÉCRIS ce que tu vas faire dans ta réponse textuelle
+   - ET exécute la fonction en même temps
+   Exemple : "J'ajoute la tâche 'Appeler le comptable' en urgent dans admin."
+
+3. ANALYSER SUR DEMANDE — Si l'utilisateur demande un point, un bilan, ou pose une question sur ses tâches :
+   - Analyse les priorités, les retards, la charge
+   - Donne des recommandations concrètes
+   - Propose des actions
+   Exemple : "Tu as 3 tâches en retard dont 2 urgentes. Je te recommande de commencer par..."
+
+4. ÊTRE PROACTIF — Si tu vois des anomalies (beaucoup de retard, tâches urgentes non traitées), mentionne-le.
+
+5. IDENTIFIER LES TÂCHES — Quand l'utilisateur mentionne une tâche par son nom (même approximatif), trouve la correspondance la plus proche dans la liste. Cite toujours le nom complet.
+
+6. CATÉGORIE PAR DÉFAUT — Si pas claire, utilise la première catégorie de la liste.
+
+7. IMAGE → TÂCHES — Si une image est fournie, analyse-la, liste les tâches trouvées, et propose de les ajouter. Utilise add_task pour chacune.`
 }
 
 // ─── Types ─────────────────────────────────────────────────────────────────
@@ -148,30 +186,23 @@ export async function chat(
 
   for (const msg of messages) {
     const parts: any[] = []
-
     if (msg.content) parts.push({ text: msg.content })
-
     if (msg.image) {
-      // Extract base64 from data URL
       const match = msg.image.match(/^data:([^;]+);base64,(.+)$/)
       if (match) {
-        parts.push({
-          inlineData: { mimeType: match[1], data: match[2] },
-        })
+        parts.push({ inlineData: { mimeType: match[1], data: match[2] } })
       }
     }
-
     contents.push({ role: msg.role === 'assistant' ? 'model' : 'user', parts })
   }
 
-  // If standalone image
   if (image && !messages.some(m => m.image)) {
     const match = image.match(/^data:([^;]+);base64,(.+)$/)
     if (match) {
       contents.push({
         role: 'user',
         parts: [
-          { text: "Analyse cette image et extrait les tâches visibles. Utilise add_task pour chacune." },
+          { text: "Analyse cette image. Si tu vois des tâches ou une liste, extrais-les et propose de les ajouter." },
           { inlineData: { mimeType: match[1], data: match[2] } },
         ],
       })
@@ -183,21 +214,38 @@ export async function chat(
     contents,
     tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
     toolConfig: { functionCallingConfig: { mode: 'AUTO' } },
-    generationConfig: { maxOutputTokens: 400, temperature: 0.7 },
+    generationConfig: { maxOutputTokens: 600, temperature: 0.7 },
   }
 
-  const res = await fetch(`${GEMINI_URL}?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
+  // Try each model until one works (handles 429 quota per-model)
+  let lastError = ''
+  let data: any = null
 
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Gemini API error: ${res.status} — ${err}`)
+  for (const model of GEMINI_MODELS) {
+    const url = `${GEMINI_BASE}/${model}:generateContent?key=${apiKey}`
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (res.ok) {
+        data = await res.json()
+        break
+      }
+      if (res.status === 429) {
+        lastError = `Quota dépassé sur ${model}`
+        continue // try next model
+      }
+      lastError = `Erreur ${res.status}`
+      break // non-429 error, don't retry
+    } catch (e: any) {
+      lastError = e.message
+      continue
+    }
   }
 
-  const data = await res.json()
+  if (!data) throw new Error(lastError || 'Tous les modèles sont indisponibles')
   const parts = data.candidates?.[0]?.content?.parts ?? []
 
   const functionCalls: FunctionCall[] = []
@@ -213,14 +261,14 @@ export async function chat(
     }
   }
 
-  // Auto-generate confirmation if only function calls, no text
+  // If only function calls and no text, generate spoken confirmation
   if (functionCalls.length > 0 && !text.trim()) {
     text = functionCalls.map(fc => {
       switch (fc.name) {
-        case 'add_task': return `Tâche ajoutée : ${fc.arguments.text}`
-        case 'complete_task': return 'Tâche terminée.'
+        case 'add_task': return `J'ajoute la tâche "${fc.arguments.text}".`
+        case 'complete_task': return 'Tâche marquée comme terminée.'
         case 'delete_task': return 'Tâche supprimée.'
-        case 'add_subtask': return `Sous-tâche ajoutée : ${fc.arguments.text}`
+        case 'add_subtask': return `Sous-tâche ajoutée : "${fc.arguments.text}".`
         default: return 'Action effectuée.'
       }
     }).join(' ')

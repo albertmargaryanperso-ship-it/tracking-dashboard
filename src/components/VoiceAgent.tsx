@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { Mic, MicOff, X, Camera, Volume2, VolumeX, Loader2, Trash2 } from 'lucide-react'
+import { Mic, MicOff, X, Camera, Volume2, Loader2 } from 'lucide-react'
 import { useVoiceChat } from '@/hooks/useVoiceChat'
 import { chat, getAiKey, type ChatMessage, type FunctionCall } from '@/lib/ai'
 import { cn } from '@/lib/utils'
@@ -13,24 +13,20 @@ interface VoiceAgentProps {
   onUpdateTodo: (id: number, patch: Partial<Todo>) => void
 }
 
-interface UIMessage {
-  role: 'user' | 'assistant'
-  text: string
-  ts: number
-}
+type AgentStatus = 'idle' | 'listening' | 'thinking' | 'speaking'
 
 export const VoiceAgent = ({ state, onAddTodo, onToggleTodo, onDeleteTodo, onUpdateTodo }: VoiceAgentProps) => {
   const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState<UIMessage[]>([])
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([])
-  const [loading, setLoading] = useState(false)
-  const [ttsEnabled, setTtsEnabled] = useState(true)
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const [status, setStatus] = useState<AgentStatus>('idle')
+  const [lastTranscript, setLastTranscript] = useState('')
+  const [lastResponse, setLastResponse] = useState('')
+  const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
   const hasKey = !!getAiKey()
 
-  // Execute function calls from AI response
+  // Execute function calls
   const executeFunctions = useCallback((calls: FunctionCall[]) => {
     for (const fc of calls) {
       const a = fc.arguments
@@ -70,47 +66,53 @@ export const VoiceAgent = ({ state, onAddTodo, onToggleTodo, onDeleteTodo, onUpd
     }
   }, [state, onAddTodo, onToggleTodo, onDeleteTodo, onUpdateTodo])
 
-  // Handle user message (text from speech or typed)
-  const handleUserMessage = useCallback(async (text: string, image?: string) => {
-    const userMsg: UIMessage = { role: 'user', text, ts: Date.now() }
-    setMessages(prev => [...prev, userMsg])
+  // Process user input (voice transcript or image)
+  const processInput = useCallback(async (text: string, image?: string) => {
+    setLastTranscript(text)
+    setError('')
+    setStatus('thinking')
 
     const chatMsg: ChatMessage = { role: 'user', content: text, image }
     const newHistory = [...chatHistory, chatMsg]
     setChatHistory(newHistory)
 
-    setLoading(true)
     try {
       const response = await chat(newHistory, state, image)
 
-      // Execute functions
       if (response.functionCalls.length > 0) {
         executeFunctions(response.functionCalls)
       }
 
-      const assistantMsg: UIMessage = { role: 'assistant', text: response.text, ts: Date.now() }
-      setMessages(prev => [...prev, assistantMsg])
       setChatHistory(prev => [...prev, { role: 'assistant', content: response.text }])
+      setLastResponse(response.text)
 
-      // TTS
-      if (ttsEnabled && response.text) {
-        speak(response.text)
+      // Speak the response
+      if (response.text) {
+        setStatus('speaking')
+        await speak(response.text)
       }
+      setStatus('idle')
     } catch (err: any) {
-      const errMsg: UIMessage = { role: 'assistant', text: `Erreur : ${err.message}`, ts: Date.now() }
-      setMessages(prev => [...prev, errMsg])
-    } finally {
-      setLoading(false)
+      const msg = err.message?.includes('429')
+        ? 'Quota dépassé — réessaie dans 30 secondes'
+        : err.message?.includes('API')
+          ? 'Erreur API — vérifie ta clé dans Réglages'
+          : `Erreur : ${err.message}`
+      setError(msg)
+      setStatus('idle')
+      // Speak the error
+      speak(msg)
     }
-  }, [chatHistory, state, executeFunctions, ttsEnabled])
+  }, [chatHistory, state, executeFunctions])
 
-  // Voice chat hook
-  const { isListening, isSpeaking, interim, startListening, stopListening, speak, stopSpeaking, isSupported } = useVoiceChat(handleUserMessage)
+  // Voice hook
+  const { isListening, isSpeaking, interim, startListening, stopListening, speak, stopSpeaking, isSupported } = useVoiceChat(processInput)
 
-  // Auto-scroll
+  // Sync status with voice state
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages, interim, loading])
+    if (isListening) setStatus('listening')
+    else if (isSpeaking) setStatus('speaking')
+  }, [isListening, isSpeaking])
 
   // Handle image capture
   const handleImage = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,16 +121,28 @@ export const VoiceAgent = ({ state, onAddTodo, onToggleTodo, onDeleteTodo, onUpd
     const reader = new FileReader()
     reader.onload = () => {
       const dataUrl = reader.result as string
-      handleUserMessage("Analyse cette image et crée les tâches.", dataUrl)
+      processInput("Analyse cette image et crée les tâches.", dataUrl)
     }
     reader.readAsDataURL(file)
     e.target.value = ''
-  }, [handleUserMessage])
+  }, [processInput])
 
-  const clearChat = () => {
-    setMessages([])
-    setChatHistory([])
+  const handleMicTap = () => {
+    if (status === 'speaking') { stopSpeaking(); setStatus('idle'); return }
+    if (status === 'listening') { stopListening(); return }
+    if (status === 'thinking') return
+    setError('')
+    startListening()
   }
+
+  const clearHistory = () => {
+    setChatHistory([])
+    setLastTranscript('')
+    setLastResponse('')
+    setError('')
+  }
+
+  // ─── Floating button (closed) ──────────────────────────────────────────
 
   if (!open) {
     return (
@@ -143,142 +157,119 @@ export const VoiceAgent = ({ state, onAddTodo, onToggleTodo, onDeleteTodo, onUpd
     )
   }
 
+  // ─── Status config ─────────────────────────────────────────────────────
+
+  const STATUS_CONFIG = {
+    idle: { label: 'Appuie pour parler', color: 'from-violet-600 to-cyan-600', ring: '', pulse: false, icon: Mic },
+    listening: { label: 'Écoute...', color: 'from-rose-500 to-pink-600', ring: 'ring-4 ring-rose-500/40', pulse: true, icon: MicOff },
+    thinking: { label: 'Réflexion...', color: 'from-amber-500 to-orange-600', ring: 'ring-4 ring-amber-500/30', pulse: true, icon: Loader2 },
+    speaking: { label: 'Réponse...', color: 'from-cyan-500 to-blue-600', ring: 'ring-4 ring-cyan-500/30', pulse: false, icon: Volume2 },
+  }
+  const cfg = STATUS_CONFIG[status]
+  const IconComponent = cfg.icon
+
+  // ─── Full-screen voice UI ──────────────────────────────────────────────
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { stopSpeaking(); stopListening(); setOpen(false) }} />
+    <div className="fixed inset-0 z-50 bg-zinc-950 flex flex-col animate-fade-in"
+      style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}>
 
-      <div className="relative w-full max-w-lg bg-zinc-950 rounded-t-3xl sm:rounded-3xl border border-zinc-800 flex flex-col max-h-[85vh] shadow-2xl overflow-hidden animate-slide-up"
-        onClick={e => e.stopPropagation()}>
+      {/* Top bar */}
+      <div className="flex items-center justify-between px-5 py-4">
+        <button onClick={clearHistory} className="text-[10px] text-zinc-500 px-3 py-1.5 rounded-lg border border-zinc-800 hover:border-zinc-700">
+          Effacer
+        </button>
+        <p className="text-[10px] text-zinc-500 font-mono">🎙️ Assistant vocal</p>
+        <button onClick={() => { stopSpeaking(); stopListening(); setOpen(false) }}
+          className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900">
+          <X size={18} />
+        </button>
+      </div>
 
-        {/* Drag handle (mobile) */}
-        <div className="flex justify-center pt-3 pb-1 sm:hidden">
-          <div className="w-12 h-1.5 rounded-full bg-zinc-800" />
-        </div>
+      {/* Center — status + transcript */}
+      <div className="flex-1 flex flex-col items-center justify-center px-8 gap-8">
 
-        {/* Header */}
-        <div className="px-5 pb-3 pt-2 sm:pt-5 border-b border-zinc-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-600 to-cyan-600 flex items-center justify-center">
-              <Mic size={14} className="text-white" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-zinc-100">Assistant vocal</h2>
-              <p className="text-[9px] text-zinc-500">Parle pour gérer tes tâches</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <button onClick={() => setTtsEnabled(!ttsEnabled)}
-              className={cn('p-2 rounded-lg transition-all', ttsEnabled ? 'text-cyan-400 bg-cyan-500/10' : 'text-zinc-500')}>
-              {ttsEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
-            </button>
-            <button onClick={clearChat} className="p-2 rounded-lg text-zinc-500 hover:text-zinc-300">
-              <Trash2 size={14} />
-            </button>
-            <button onClick={() => { stopSpeaking(); stopListening(); setOpen(false) }}
-              className="p-2 rounded-lg text-zinc-500 hover:text-zinc-300">
-              <X size={14} />
-            </button>
-          </div>
-        </div>
-
-        {/* Messages */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3 min-h-[200px]">
-          {!hasKey && (
-            <div className="text-center py-6">
-              <p className="text-sm text-amber-400 font-semibold mb-2">Clé API Gemini requise</p>
+        {/* Transcript / Response */}
+        <div className="w-full max-w-md text-center space-y-4 min-h-[120px] flex flex-col justify-center">
+          {!hasKey ? (
+            <>
+              <p className="text-amber-400 font-semibold">Clé API requise</p>
               <p className="text-[11px] text-zinc-500">
-                Va dans Réglages pour configurer ta clé.<br />
-                <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener"
-                  className="text-cyan-400 underline">Obtenir une clé gratuite →</a>
+                Réglages → Assistant vocal → colle ta clé de{' '}
+                <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" className="text-cyan-400 underline">
+                  aistudio.google.com
+                </a>
               </p>
-            </div>
-          )}
-
-          {messages.length === 0 && hasKey && (
-            <div className="text-center py-8">
-              <p className="text-2xl mb-3">🎙️</p>
-              <p className="text-sm text-zinc-400">Appuie sur le micro pour parler</p>
-              <p className="text-[10px] text-zinc-600 mt-2">
-                "Ajoute une tâche..." • "Supprime la tâche..." • "Quelles sont mes tâches urgentes ?"
+            </>
+          ) : error ? (
+            <p className="text-rose-400 text-sm font-medium">{error}</p>
+          ) : interim ? (
+            <p className="text-violet-300 text-lg italic animate-pulse">{interim}...</p>
+          ) : lastResponse ? (
+            <p className="text-zinc-200 text-base leading-relaxed">{lastResponse}</p>
+          ) : lastTranscript ? (
+            <p className="text-zinc-400 text-sm">{lastTranscript}</p>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-zinc-400 text-sm">Dis quelque chose...</p>
+              <p className="text-[10px] text-zinc-600 leading-relaxed">
+                "Ajoute une tâche..."<br/>
+                "Fais-moi un point sur mes urgences"<br/>
+                "Qu'est-ce que j'ai en retard ?"
               </p>
-            </div>
-          )}
-
-          {messages.map((msg, i) => (
-            <div key={msg.ts + i} className={cn('flex', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
-              <div className={cn(
-                'max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
-                msg.role === 'user'
-                  ? 'bg-violet-600/20 border border-violet-500/30 text-violet-100'
-                  : 'bg-zinc-900 border border-zinc-800 text-zinc-200',
-              )}>
-                {msg.text}
-              </div>
-            </div>
-          ))}
-
-          {interim && (
-            <div className="flex justify-end">
-              <div className="max-w-[85%] rounded-2xl px-4 py-2.5 text-sm bg-violet-600/10 border border-violet-500/20 text-violet-300 italic">
-                {interim}...
-              </div>
-            </div>
-          )}
-
-          {loading && (
-            <div className="flex justify-start">
-              <div className="rounded-2xl px-4 py-2.5 bg-zinc-900 border border-zinc-800">
-                <Loader2 size={16} className="text-cyan-400 animate-spin" />
-              </div>
             </div>
           )}
         </div>
 
-        {/* Controls */}
-        <div className="p-4 border-t border-zinc-800 bg-zinc-950">
-          <div className="flex items-center justify-center gap-4">
-            {/* Camera button */}
-            <button onClick={() => fileRef.current?.click()} disabled={loading || !hasKey}
-              className="p-3 rounded-xl border border-zinc-800 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900 disabled:opacity-30 transition-all">
-              <Camera size={18} />
-            </button>
-            <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImage} />
+        {/* Big mic button */}
+        <div className="relative">
+          {/* Animated rings */}
+          {status === 'listening' && (
+            <>
+              <div className="absolute inset-0 -m-4 rounded-full bg-rose-500/10 animate-ping" />
+              <div className="absolute inset-0 -m-8 rounded-full bg-rose-500/5 animate-pulse" />
+            </>
+          )}
+          {status === 'speaking' && (
+            <div className="absolute inset-0 -m-4 rounded-full bg-cyan-500/10 animate-pulse" />
+          )}
 
-            {/* Mic button */}
-            <button
-              onClick={() => {
-                if (isSpeaking) { stopSpeaking(); return }
-                if (isListening) { stopListening(); return }
-                startListening()
-              }}
-              disabled={loading || !hasKey || !isSupported}
-              className={cn(
-                'w-16 h-16 rounded-full flex items-center justify-center transition-all active:scale-95 shadow-xl',
-                isListening
-                  ? 'bg-rose-500 text-white animate-pulse shadow-rose-500/40'
-                  : isSpeaking
-                    ? 'bg-cyan-500 text-white shadow-cyan-500/40'
-                    : 'bg-gradient-to-br from-violet-600 to-cyan-600 text-white shadow-violet-500/30 hover:shadow-violet-500/50',
-                (loading || !hasKey || !isSupported) && 'opacity-40 cursor-not-allowed',
-              )}>
-              {loading ? <Loader2 size={24} className="animate-spin" /> :
-                isListening ? <MicOff size={24} /> :
-                isSpeaking ? <Volume2 size={24} /> :
-                <Mic size={24} />}
-            </button>
-
-            {/* Spacer for symmetry */}
-            <div className="w-[50px]" />
-          </div>
-
-          <p className="text-center text-[9px] text-zinc-600 mt-3">
-            {isListening ? '🔴 Écoute en cours...' :
-              isSpeaking ? '🔊 Réponse...' :
-              loading ? '⏳ Réflexion...' :
-              !isSupported ? 'Reconnaissance vocale non supportée' :
-              'Appuie pour parler'}
-          </p>
+          <button onClick={handleMicTap}
+            disabled={!hasKey || !isSupported}
+            className={cn(
+              'relative w-24 h-24 rounded-full flex items-center justify-center transition-all active:scale-95 shadow-2xl',
+              `bg-gradient-to-br ${cfg.color}`,
+              cfg.ring,
+              cfg.pulse && 'animate-pulse',
+              (!hasKey || !isSupported) && 'opacity-30 cursor-not-allowed',
+            )}>
+            {status === 'thinking' ? (
+              <Loader2 size={36} className="text-white animate-spin" />
+            ) : (
+              <IconComponent size={36} className="text-white" />
+            )}
+          </button>
         </div>
+
+        {/* Status label */}
+        <p className={cn('text-xs font-medium transition-colors',
+          status === 'listening' ? 'text-rose-400' :
+          status === 'thinking' ? 'text-amber-400' :
+          status === 'speaking' ? 'text-cyan-400' : 'text-zinc-500'
+        )}>
+          {cfg.label}
+        </p>
+      </div>
+
+      {/* Bottom — camera */}
+      <div className="px-5 pb-6 flex justify-center">
+        <button onClick={() => fileRef.current?.click()}
+          disabled={status === 'thinking' || !hasKey}
+          className="flex items-center gap-2 px-5 py-3 rounded-xl border border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 disabled:opacity-30 transition-all">
+          <Camera size={16} />
+          <span className="text-xs">Photo → Tâches</span>
+        </button>
+        <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImage} />
       </div>
     </div>
   )
