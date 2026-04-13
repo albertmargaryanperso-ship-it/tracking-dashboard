@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 548,
-    "updated_at": "2026-04-13T20:47:52.544Z",
+    "version": 546,
+    "updated_at": "2026-04-13T20:47:59.809Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -663,7 +663,7 @@
       "completed_min": null,
       "id": 10074,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:44:52.540Z",
+      "updated_at": "2026-04-13T20:47:59.455Z",
       "subtasks": [
         {
           "id": "st_1776113066262_copnk",
@@ -683,6 +683,11 @@
         {
           "id": "st_1776113092540_2pend",
           "text": "Factures Omar",
+          "done": false
+        },
+        {
+          "id": "st_1776113279455_hi3wi",
+          "text": "Docs Ziane",
           "done": false
         }
       ]
