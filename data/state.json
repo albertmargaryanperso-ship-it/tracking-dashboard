@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 564,
-    "updated_at": "2026-04-13T20:51:48.345Z",
+    "version": 565,
+    "updated_at": "2026-04-13T20:51:56.994Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -358,21 +358,6 @@
       "id": 10058,
       "created": "2026-04-13",
       "updated_at": "2026-04-13T20:47:17.512Z"
-    },
-    {
-      "text": "Apprentissage utilisation Vibe Coding",
-      "category": "pro",
-      "priority": "normal",
-      "delegated_to": null,
-      "due": null,
-      "duration_min": 300,
-      "completed_min": 300,
-      "completed_at": "2026-04-12",
-      "id": 10059,
-      "created": "2026-04-13",
-      "status": "done",
-      "done": true,
-      "updated_at": "2026-04-12T22:38:29.216Z"
     },
     {
       "text": "jojio",
