@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 523,
-    "updated_at": "2026-04-13T20:42:24.487Z",
+    "version": 524,
+    "updated_at": "2026-04-13T20:42:35.519Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -794,9 +794,23 @@
           "done": false
         }
       ]
+    },
+    {
+      "text": "Paiements",
+      "category": "finance",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": "2026-04-14",
+      "completed_at": null,
+      "duration_min": null,
+      "completed_min": null,
+      "id": 10073,
+      "created": "2026-04-13",
+      "updated_at": "2026-04-13T20:42:35.165Z"
     }
   ],
-  "todos_next_id": 10073,
+  "todos_next_id": 10074,
   "archive": [
     {
       "month": "2026-03",
