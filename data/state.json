@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 561,
-    "updated_at": "2026-04-13T20:51:11.736Z",
+    "updated_at": "2026-04-13T20:51:15.946Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -252,20 +252,6 @@
       "id": 10028,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:12:35.042Z"
-    },
-    {
-      "text": "Virement et facture Aiman pour Sabrina Karima Feriel Maroua",
-      "category": "finance",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-12",
-      "completed_at": null,
-      "duration_min": 45,
-      "completed_min": null,
-      "id": 10030,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T00:14:06.080Z"
     },
     {
       "text": "Envoyer recap février Kader Youssef Nikola Adem",
