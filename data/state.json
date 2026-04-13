@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 555,
-    "updated_at": "2026-04-13T20:49:53.831Z",
+    "version": 556,
+    "updated_at": "2026-04-13T20:50:02.297Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -372,14 +372,14 @@
       "priority": "normal",
       "category": "admin",
       "due": null,
-      "status": "open",
+      "status": "waiting",
       "done": false,
       "delegated_to": null,
       "created": "2026-04-09",
       "completed_at": null,
       "duration_min": 45,
       "completed_min": null,
-      "updated_at": "2026-04-13T20:35:39.497Z",
+      "updated_at": "2026-04-13T20:50:01.944Z",
       "subtasks": [
         {
           "id": "st_1776112539496_l64aw",
