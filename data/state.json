@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 502,
-    "updated_at": "2026-04-13T18:56:42.763Z",
+    "version": 503,
+    "updated_at": "2026-04-13T19:03:16.540Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -191,7 +191,14 @@
       "completed_min": null,
       "id": 10004,
       "created": "2026-04-09",
-      "updated_at": "2026-04-09"
+      "updated_at": "2026-04-13T19:03:16.178Z",
+      "subtasks": [
+        {
+          "id": "st_1776106996178_4wz59",
+          "text": "Envoyer le récapitulatif à Constructel",
+          "done": false
+        }
+      ]
     },
     {
       "text": "Récap sogetrel fevrier",
