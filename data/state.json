@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 504,
-    "updated_at": "2026-04-13T19:03:33.916Z",
+    "version": 505,
+    "updated_at": "2026-04-13T19:06:36.740Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -723,9 +723,23 @@
         }
       ],
       "done": true
+    },
+    {
+      "text": "la tâche",
+      "category": "pro",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "duration_min": 90,
+      "completed_at": null,
+      "id": 10069,
+      "created": "2026-04-13",
+      "completed_min": null,
+      "updated_at": "2026-04-13T19:06:36.387Z"
     }
   ],
-  "todos_next_id": 10069,
+  "todos_next_id": 10070,
   "archive": [
     {
       "month": "2026-03",
