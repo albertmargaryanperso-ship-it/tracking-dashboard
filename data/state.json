@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 531,
-    "updated_at": "2026-04-13T20:44:26.616Z",
+    "version": 532,
+    "updated_at": "2026-04-13T20:44:31.681Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -853,11 +853,16 @@
       "completed_min": null,
       "id": 10074,
       "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:44:26.262Z",
+      "updated_at": "2026-04-13T20:44:31.326Z",
       "subtasks": [
         {
           "id": "st_1776113066262_copnk",
           "text": "Facture Luca",
+          "done": false
+        },
+        {
+          "id": "st_1776113071326_pbkqu",
+          "text": "Attestation vigilance Adem",
           "done": false
         }
       ]
