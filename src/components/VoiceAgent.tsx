@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { Mic, MicOff, X, Camera, Volume2, Loader2 } from 'lucide-react'
+import { Mic, MicOff, X, Camera, Volume2, Loader2, Send } from 'lucide-react'
 import { useVoiceChat } from '@/hooks/useVoiceChat'
 import { chat, getAiKey, type ChatMessage, type FunctionCall } from '@/lib/ai'
 import { cn } from '@/lib/utils'
@@ -22,7 +22,9 @@ export const VoiceAgent = ({ state, onAddTodo, onToggleTodo, onDeleteTodo, onUpd
   const [lastTranscript, setLastTranscript] = useState('')
   const [lastResponse, setLastResponse] = useState('')
   const [error, setError] = useState('')
+  const [textInput, setTextInput] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const hasKey = !!getAiKey()
 
@@ -66,9 +68,10 @@ export const VoiceAgent = ({ state, onAddTodo, onToggleTodo, onDeleteTodo, onUpd
     }
   }, [state, onAddTodo, onToggleTodo, onDeleteTodo, onUpdateTodo])
 
-  // Process user input (voice transcript or image)
+  // Process user input (voice transcript, typed text, or image)
   const processInput = useCallback(async (text: string, image?: string) => {
     setLastTranscript(text)
+    setLastResponse('')
     setError('')
     setStatus('thinking')
 
@@ -86,46 +89,44 @@ export const VoiceAgent = ({ state, onAddTodo, onToggleTodo, onDeleteTodo, onUpd
       setChatHistory(prev => [...prev, { role: 'assistant', content: response.text }])
       setLastResponse(response.text)
 
-      // Speak the response
+      // TTS — speak the response
       if (response.text) {
         setStatus('speaking')
         await speak(response.text)
       }
       setStatus('idle')
     } catch (err: any) {
-      const msg = err.message?.includes('429')
-        ? 'Quota dépassé — réessaie dans 30 secondes'
-        : err.message?.includes('API')
-          ? 'Erreur API — vérifie ta clé dans Réglages'
-          : `Erreur : ${err.message}`
-      setError(msg)
+      setError(err.message || 'Erreur inconnue')
       setStatus('idle')
-      // Speak the error
-      speak(msg)
     }
   }, [chatHistory, state, executeFunctions])
 
   // Voice hook
   const { isListening, isSpeaking, interim, startListening, stopListening, speak, stopSpeaking, isSupported } = useVoiceChat(processInput)
 
-  // Sync status with voice state
+  // Sync status
   useEffect(() => {
     if (isListening) setStatus('listening')
     else if (isSpeaking) setStatus('speaking')
   }, [isListening, isSpeaking])
 
-  // Handle image capture
+  // Image capture
   const handleImage = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => {
-      const dataUrl = reader.result as string
-      processInput("Analyse cette image et crée les tâches.", dataUrl)
-    }
+    reader.onload = () => processInput("Analyse cette image et crée les tâches.", reader.result as string)
     reader.readAsDataURL(file)
     e.target.value = ''
   }, [processInput])
+
+  // Text submit
+  const handleTextSubmit = () => {
+    const t = textInput.trim()
+    if (!t || status === 'thinking') return
+    setTextInput('')
+    processInput(t)
+  }
 
   const handleMicTap = () => {
     if (status === 'speaking') { stopSpeaking(); setStatus('idle'); return }
@@ -135,14 +136,7 @@ export const VoiceAgent = ({ state, onAddTodo, onToggleTodo, onDeleteTodo, onUpd
     startListening()
   }
 
-  const clearHistory = () => {
-    setChatHistory([])
-    setLastTranscript('')
-    setLastResponse('')
-    setError('')
-  }
-
-  // ─── Floating button (closed) ──────────────────────────────────────────
+  // ─── Floating button ──────────────────────────────────────────────────
 
   if (!open) {
     return (
@@ -157,18 +151,18 @@ export const VoiceAgent = ({ state, onAddTodo, onToggleTodo, onDeleteTodo, onUpd
     )
   }
 
-  // ─── Status config ─────────────────────────────────────────────────────
+  // ─── Status config ────────────────────────────────────────────────────
 
   const STATUS_CONFIG = {
-    idle: { label: 'Appuie pour parler', color: 'from-violet-600 to-cyan-600', ring: '', pulse: false, icon: Mic },
-    listening: { label: 'Écoute...', color: 'from-rose-500 to-pink-600', ring: 'ring-4 ring-rose-500/40', pulse: true, icon: MicOff },
-    thinking: { label: 'Réflexion...', color: 'from-amber-500 to-orange-600', ring: 'ring-4 ring-amber-500/30', pulse: true, icon: Loader2 },
-    speaking: { label: 'Réponse...', color: 'from-cyan-500 to-blue-600', ring: 'ring-4 ring-cyan-500/30', pulse: false, icon: Volume2 },
+    idle: { label: isSupported ? 'Appuie pour parler' : 'Écris ta demande ci-dessous', color: 'from-violet-600 to-cyan-600', icon: Mic },
+    listening: { label: 'Écoute...', color: 'from-rose-500 to-pink-600', icon: MicOff },
+    thinking: { label: 'Réflexion...', color: 'from-amber-500 to-orange-600', icon: Loader2 },
+    speaking: { label: 'Réponse...', color: 'from-cyan-500 to-blue-600', icon: Volume2 },
   }
   const cfg = STATUS_CONFIG[status]
   const IconComponent = cfg.icon
 
-  // ─── Full-screen voice UI ──────────────────────────────────────────────
+  // ─── Full-screen voice UI ─────────────────────────────────────────────
 
   return (
     <div className="fixed inset-0 z-50 bg-zinc-950 flex flex-col animate-fade-in"
@@ -176,42 +170,46 @@ export const VoiceAgent = ({ state, onAddTodo, onToggleTodo, onDeleteTodo, onUpd
 
       {/* Top bar */}
       <div className="flex items-center justify-between px-5 py-4">
-        <button onClick={clearHistory} className="text-[10px] text-zinc-500 px-3 py-1.5 rounded-lg border border-zinc-800 hover:border-zinc-700">
+        <button onClick={() => { setChatHistory([]); setLastTranscript(''); setLastResponse(''); setError('') }}
+          className="text-[10px] text-zinc-500 px-3 py-1.5 rounded-lg border border-zinc-800 hover:border-zinc-700">
           Effacer
         </button>
-        <p className="text-[10px] text-zinc-500 font-mono">🎙️ Assistant vocal</p>
+        <p className="text-[10px] text-zinc-500 font-mono">🎙️ Assistant</p>
         <button onClick={() => { stopSpeaking(); stopListening(); setOpen(false) }}
           className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900">
           <X size={18} />
         </button>
       </div>
 
-      {/* Center — status + transcript */}
-      <div className="flex-1 flex flex-col items-center justify-center px-8 gap-8">
+      {/* Center — main area */}
+      <div className="flex-1 flex flex-col items-center justify-center px-8 gap-6 overflow-y-auto">
 
-        {/* Transcript / Response */}
-        <div className="w-full max-w-md text-center space-y-4 min-h-[120px] flex flex-col justify-center">
+        {/* Response / status text */}
+        <div className="w-full max-w-md text-center space-y-3 min-h-[100px] flex flex-col justify-center">
           {!hasKey ? (
             <>
               <p className="text-amber-400 font-semibold">Clé API requise</p>
               <p className="text-[11px] text-zinc-500">
-                Réglages → Assistant vocal → colle ta clé de{' '}
+                Réglages → Assistant vocal → colle ta clé<br />
                 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" className="text-cyan-400 underline">
-                  aistudio.google.com
+                  Obtenir une clé gratuite →
                 </a>
               </p>
             </>
           ) : error ? (
-            <p className="text-rose-400 text-sm font-medium">{error}</p>
+            <div className="space-y-2">
+              <p className="text-rose-400 text-sm font-medium break-words">{error}</p>
+              <p className="text-[10px] text-zinc-600">Si "quota dépassé" → crée une nouvelle clé dans un <b>nouveau projet</b> sur AI Studio</p>
+            </div>
           ) : interim ? (
             <p className="text-violet-300 text-lg italic animate-pulse">{interim}...</p>
           ) : lastResponse ? (
             <p className="text-zinc-200 text-base leading-relaxed">{lastResponse}</p>
           ) : lastTranscript ? (
-            <p className="text-zinc-400 text-sm">{lastTranscript}</p>
+            <p className="text-zinc-500 text-xs">Toi : {lastTranscript}</p>
           ) : (
             <div className="space-y-2">
-              <p className="text-zinc-400 text-sm">Dis quelque chose...</p>
+              <p className="text-zinc-400 text-sm">{isSupported ? 'Appuie sur le micro pour parler' : 'Écris ta demande ci-dessous'}</p>
               <p className="text-[10px] text-zinc-600 leading-relaxed">
                 "Ajoute une tâche..."<br/>
                 "Fais-moi un point sur mes urgences"<br/>
@@ -221,38 +219,36 @@ export const VoiceAgent = ({ state, onAddTodo, onToggleTodo, onDeleteTodo, onUpd
           )}
         </div>
 
-        {/* Big mic button */}
-        <div className="relative">
-          {/* Animated rings */}
-          {status === 'listening' && (
-            <>
-              <div className="absolute inset-0 -m-4 rounded-full bg-rose-500/10 animate-ping" />
-              <div className="absolute inset-0 -m-8 rounded-full bg-rose-500/5 animate-pulse" />
-            </>
-          )}
-          {status === 'speaking' && (
-            <div className="absolute inset-0 -m-4 rounded-full bg-cyan-500/10 animate-pulse" />
-          )}
-
-          <button onClick={handleMicTap}
-            disabled={!hasKey || !isSupported}
-            className={cn(
-              'relative w-24 h-24 rounded-full flex items-center justify-center transition-all active:scale-95 shadow-2xl',
-              `bg-gradient-to-br ${cfg.color}`,
-              cfg.ring,
-              cfg.pulse && 'animate-pulse',
-              (!hasKey || !isSupported) && 'opacity-30 cursor-not-allowed',
-            )}>
-            {status === 'thinking' ? (
-              <Loader2 size={36} className="text-white animate-spin" />
-            ) : (
-              <IconComponent size={36} className="text-white" />
+        {/* Big mic button — only if speech recognition supported */}
+        {isSupported && (
+          <div className="relative">
+            {status === 'listening' && (
+              <>
+                <div className="absolute inset-0 -m-4 rounded-full bg-rose-500/10 animate-ping" />
+                <div className="absolute inset-0 -m-8 rounded-full bg-rose-500/5 animate-pulse" />
+              </>
             )}
-          </button>
-        </div>
+            {status === 'speaking' && (
+              <div className="absolute inset-0 -m-4 rounded-full bg-cyan-500/10 animate-pulse" />
+            )}
+
+            <button onClick={handleMicTap} disabled={!hasKey}
+              className={cn(
+                'relative w-24 h-24 rounded-full flex items-center justify-center transition-all active:scale-95 shadow-2xl',
+                `bg-gradient-to-br ${cfg.color}`,
+                status === 'listening' && 'ring-4 ring-rose-500/40',
+                status === 'speaking' && 'ring-4 ring-cyan-500/30',
+                !hasKey && 'opacity-30 cursor-not-allowed',
+              )}>
+              {status === 'thinking'
+                ? <Loader2 size={36} className="text-white animate-spin" />
+                : <IconComponent size={36} className="text-white" />}
+            </button>
+          </div>
+        )}
 
         {/* Status label */}
-        <p className={cn('text-xs font-medium transition-colors',
+        <p className={cn('text-xs font-medium',
           status === 'listening' ? 'text-rose-400' :
           status === 'thinking' ? 'text-amber-400' :
           status === 'speaking' ? 'text-cyan-400' : 'text-zinc-500'
@@ -261,15 +257,33 @@ export const VoiceAgent = ({ state, onAddTodo, onToggleTodo, onDeleteTodo, onUpd
         </p>
       </div>
 
-      {/* Bottom — camera */}
-      <div className="px-5 pb-6 flex justify-center">
-        <button onClick={() => fileRef.current?.click()}
-          disabled={status === 'thinking' || !hasKey}
-          className="flex items-center gap-2 px-5 py-3 rounded-xl border border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-zinc-200 hover:border-zinc-700 disabled:opacity-30 transition-all">
-          <Camera size={16} />
-          <span className="text-xs">Photo → Tâches</span>
-        </button>
-        <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImage} />
+      {/* Bottom — text input + camera */}
+      <div className="px-4 pb-4 space-y-3">
+        {/* Text input (always visible — fallback for iOS + convenience) */}
+        <div className="flex items-center gap-2">
+          <input ref={inputRef} value={textInput}
+            onChange={e => setTextInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') handleTextSubmit() }}
+            placeholder="Ou écris ta demande ici..."
+            disabled={status === 'thinking' || !hasKey}
+            enterKeyHint="send"
+            className="flex-1 px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-violet-500 disabled:opacity-40" />
+          <button onClick={handleTextSubmit} disabled={!textInput.trim() || status === 'thinking' || !hasKey}
+            className="p-3 rounded-xl bg-violet-600 text-white disabled:opacity-30 transition-all active:scale-95">
+            <Send size={16} />
+          </button>
+        </div>
+
+        {/* Camera */}
+        <div className="flex justify-center">
+          <button onClick={() => fileRef.current?.click()}
+            disabled={status === 'thinking' || !hasKey}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-zinc-200 disabled:opacity-30 transition-all">
+            <Camera size={16} />
+            <span className="text-xs">Photo → Tâches</span>
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImage} />
+        </div>
       </div>
     </div>
   )

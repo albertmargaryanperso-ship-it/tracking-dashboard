@@ -209,44 +209,48 @@ export async function chat(
     }
   }
 
+  // Inject system prompt as first user turn (most compatible)
+  const fullContents = [
+    { role: 'user', parts: [{ text: systemPrompt }] },
+    { role: 'model', parts: [{ text: 'Compris. Je suis prêt.' }] },
+    ...contents,
+  ]
+
   const body = {
-    systemInstruction: { parts: [{ text: systemPrompt }] },
-    contents,
+    contents: fullContents,
     tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
-    toolConfig: { functionCallingConfig: { mode: 'AUTO' } },
     generationConfig: { maxOutputTokens: 600, temperature: 0.7 },
   }
 
-  // Try each model until one works (handles 429 quota per-model)
+  // Try each model until one works
   let lastError = ''
   let data: any = null
+  const model = 'gemini-1.5-flash'
+  const url = `${GEMINI_BASE}/${model}:generateContent?key=${apiKey}`
 
-  for (const model of GEMINI_MODELS) {
-    const url = `${GEMINI_BASE}/${model}:generateContent?key=${apiKey}`
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (res.ok) {
-        data = await res.json()
-        break
-      }
-      if (res.status === 429 || res.status === 404) {
-        lastError = res.status === 429 ? `Quota dépassé sur ${model}` : `Modèle ${model} non trouvé`
-        continue // try next model
-      }
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (res.ok) {
+      data = await res.json()
+    } else {
       const errBody = await res.text().catch(() => '')
-      lastError = `Erreur ${res.status}${errBody ? ` — ${errBody.slice(0, 100)}` : ''}`
-      break // non-retryable error
-    } catch (e: any) {
-      lastError = e.message
-      continue
+      // Try to extract clean error message
+      try {
+        const parsed = JSON.parse(errBody)
+        lastError = `[${res.status}] ${parsed?.error?.message || errBody.slice(0, 200)}`
+      } catch {
+        lastError = `[${res.status}] ${errBody.slice(0, 200)}`
+      }
     }
+  } catch (e: any) {
+    lastError = `Réseau: ${e.message}`
   }
 
-  if (!data) throw new Error(lastError || 'Tous les modèles sont indisponibles')
+  if (!data) throw new Error(lastError || 'Erreur inconnue')
   const parts = data.candidates?.[0]?.content?.parts ?? []
 
   const functionCalls: FunctionCall[] = []
