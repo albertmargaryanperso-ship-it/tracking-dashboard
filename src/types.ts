@@ -111,6 +111,9 @@ export interface AppState {
   todos: Todo[]
   todos_next_id: number
   archive: ArchiveMonth[]
+  // Tombstones: deleted todo IDs with deletion timestamp (for multi-device sync)
+  tombstones?: Record<string, string> // id → ISO datetime
+
   // Legacy (preserved, never written to)
   sessions?: VaultSession[]
   travail?: TravailEntry[]

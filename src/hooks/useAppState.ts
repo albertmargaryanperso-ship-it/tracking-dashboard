@@ -224,6 +224,7 @@ const reducer = (state: AppState, action: Action): AppState => {
         ...state,
         meta: { ...state.meta, updated_at: now, updated_by: 'web' },
         todos: state.todos.filter(t => t.id !== action.id),
+        tombstones: { ...(state.tombstones ?? {}), [String(action.id)]: now },
       }
 
     case 'SWAP_TODO_ORDER': {
@@ -263,13 +264,15 @@ const reducer = (state: AppState, action: Action): AppState => {
       }
 
     case 'DELETE_TAB_TODOS': {
-      // Delete open todos that belong exclusively to this tab's categories
-      // Archive is NEVER touched — only active non-done todos are removed
       const cats = new Set(action.categoryFilter)
+      const toDelete = state.todos.filter(t => t.status !== 'done' && cats.has(t.category))
+      const newTombstones = { ...(state.tombstones ?? {}) }
+      for (const t of toDelete) newTombstones[String(t.id)] = now
       return {
         ...state,
         meta: { ...state.meta, updated_at: now, updated_by: 'web' },
         todos: state.todos.filter(t => t.status === 'done' || !cats.has(t.category)),
+        tombstones: newTombstones,
       }
     }
 

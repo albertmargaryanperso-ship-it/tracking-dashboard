@@ -16,17 +16,48 @@ import {
 // per todo. Archive is union by month. Legacy arrays are passed through.
 
 export const mergeStates = (local: AppState, remote: AppState): AppState => {
-  // Todos — merge by id, NEWEST updated_at wins
+  // Merge tombstones: union, newest deletion date wins
+  const tombstones: Record<string, string> = {}
+  const allTombstoneIds = new Set([
+    ...Object.keys(local.tombstones ?? {}),
+    ...Object.keys(remote.tombstones ?? {}),
+  ])
+  for (const id of allTombstoneIds) {
+    const lDate = local.tombstones?.[id] ?? ''
+    const rDate = remote.tombstones?.[id] ?? ''
+    tombstones[id] = lDate >= rDate ? lDate : rDate
+  }
+
+  // Cleanup old tombstones (> 30 days) to prevent unbounded growth
+  const THIRTY_DAYS_AGO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+  for (const id of Object.keys(tombstones)) {
+    if (tombstones[id] < THIRTY_DAYS_AGO) delete tombstones[id]
+  }
+
+  // Todos — merge by id, NEWEST updated_at wins, SKIP tombstoned IDs
   const localById = new Map((local.todos ?? []).map(t => [t.id, t]))
   const remoteById = new Map((remote.todos ?? []).map(t => [t.id, t]))
   const allTodoIds = new Set([...localById.keys(), ...remoteById.keys()])
-  const mergedTodos = Array.from(allTodoIds).map(id => {
-    const l = localById.get(id)
-    const r = remoteById.get(id)
-    if (!l) return r!
-    if (!r) return l
-    return (l.updated_at ?? '') >= (r.updated_at ?? '') ? l : r
-  })
+  const mergedTodos = Array.from(allTodoIds)
+    .filter(id => {
+      // Respect tombstone: if deleted_at is newer than the todo's last update, skip it
+      const tombDate = tombstones[String(id)]
+      if (!tombDate) return true
+      const l = localById.get(id)
+      const r = remoteById.get(id)
+      const todoDate = Math.max(
+        l?.updated_at ? new Date(l.updated_at).getTime() : 0,
+        r?.updated_at ? new Date(r.updated_at).getTime() : 0,
+      )
+      return todoDate > new Date(tombDate).getTime()
+    })
+    .map(id => {
+      const l = localById.get(id)
+      const r = remoteById.get(id)
+      if (!l) return r!
+      if (!r) return l
+      return (l.updated_at ?? '') >= (r.updated_at ?? '') ? l : r
+    })
 
   // Archive — union by month (immutable once created)
   const localArchive = local.archive ?? []
@@ -82,6 +113,7 @@ export const mergeStates = (local: AppState, remote: AppState): AppState => {
     todos: mergedTodos,
     todos_next_id: nextId,
     archive: mergedArchive,
+    tombstones: Object.keys(tombstones).length > 0 ? tombstones : undefined,
     sessions,
     travail,
     routine,
