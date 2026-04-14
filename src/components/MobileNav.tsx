@@ -25,8 +25,10 @@ export const MobileNav = ({ view, onViewChange, tabs, onSync, onAdd, onOpenVoice
           <RefreshCw size={15} className={cn(syncStatus === 'syncing' && 'animate-spin')} />
         </button>
         <button onClick={onOpenVoice}
-          className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-600 to-cyan-600 flex items-center justify-center shadow-lg shadow-violet-500/30">
-          <Mic size={20} strokeWidth={2.5} className="text-white" />
+          className="relative w-14 h-14 -translate-y-2 rounded-full flex items-center justify-center shadow-2xl transition-transform active:scale-90 group">
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-500 via-cyan-400 to-emerald-400 opacity-60 blur-md animate-siri-pulse" />
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-violet-600 to-cyan-500 shadow-[inset_0_2px_4px_rgba(255,255,255,0.3)]" />
+          <Mic size={22} strokeWidth={2.5} className="text-white relative z-10" />
         </button>
         <button onClick={onAdd}
           className="w-12 h-12 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center shadow-lg text-zinc-300">

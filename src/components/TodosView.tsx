@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { motion, useAnimation, useMotionValue, useTransform } from 'framer-motion'
 import { Plus, Check, Trash2, Clock, ChevronDown, ChevronRight, CalendarDays, Hourglass, Play, Square } from 'lucide-react'
 import type { AppState, Stats, Todo, TodoCategory, TodoPriority, TodoStatus, CategoryConfig } from '@/types'
 import { cn, formatMinutes, todayISO, isoToFr, getActiveCategories } from '@/lib/utils'
@@ -139,22 +140,22 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
             <span className="text-[9px] font-bold text-zinc-400">{subtaskProgress.pct}%</span>
           </div>
         )}
-        {/* Nav buttons */}
-        <div className="grid grid-cols-4 gap-1">
+        {/* Nav buttons (Chips) */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar snap-x pb-2 pt-1 -mx-2 px-2">
           <button onClick={() => document.getElementById('kanban-board')?.scrollIntoView({ behavior: 'smooth' })}
-            className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 py-1.5 text-center">
-            <p className="text-sm font-extrabold text-emerald-400">{filteredStats.open}</p>
-            <p className="text-[7px] font-semibold text-emerald-300/70 uppercase">Ouverts</p>
+            className="flex-shrink-0 snap-start flex items-center gap-2 rounded-full border border-emerald-500/40 bg-zinc-900/80 px-4 py-1.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] transition-all hover:bg-emerald-500/10">
+            <span className="text-[13px] font-black text-emerald-400">{filteredStats.open}</span>
+            <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest">Ouverts</span>
           </button>
           {([
-            { id: 'col-todo', label: 'À faire', count: byColumn.todo.length, border: 'border-amber-500/30', bg: 'bg-amber-500/5', text: 'text-amber-400', sub: 'text-amber-300/70' },
-            { id: 'col-delegated', label: 'Délégué', count: byColumn.delegated.length, border: 'border-violet-500/30', bg: 'bg-violet-500/5', text: 'text-violet-400', sub: 'text-violet-300/70' },
-            { id: 'col-waiting', label: 'Attente', count: byColumn.waiting.length, border: 'border-sky-500/30', bg: 'bg-sky-500/5', text: 'text-sky-400', sub: 'text-sky-300/70' },
+            { id: 'col-todo', label: 'À faire', count: byColumn.todo.length, border: 'border-amber-500/40', text: 'text-amber-400' },
+            { id: 'col-delegated', label: 'Délégué', count: byColumn.delegated.length, border: 'border-violet-500/40', text: 'text-violet-400' },
+            { id: 'col-waiting', label: 'Attente', count: byColumn.waiting.length, border: 'border-sky-500/40', text: 'text-sky-400' },
           ] as const).map(btn => (
             <button key={btn.id} onClick={() => document.getElementById(btn.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-              className={cn('rounded-lg border py-1.5 text-center', btn.border, btn.bg)}>
-              <p className={cn('text-sm font-extrabold', btn.text)}>{btn.count}</p>
-              <p className={cn('text-[7px] font-semibold uppercase', btn.sub)}>{btn.label}</p>
+              className={cn('flex-shrink-0 snap-start flex items-center gap-2 rounded-full border bg-zinc-900/80 px-4 py-1.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05)] transition-all hover:bg-white/5', btn.border)}>
+              <span className={cn('text-[13px] font-black', btn.text)}>{btn.count}</span>
+              <span className={cn('text-[10px] font-bold uppercase tracking-widest text-zinc-300')}>{btn.label}</span>
             </button>
           ))}
         </div>
@@ -308,14 +309,62 @@ const TodoCard = ({ todo, dragging, isDragOver, isActive, elapsedMinutes, config
     }
   }
 
+  const x = useMotionValue(0)
+  const controls = useAnimation()
+  
+  const bgOpacityDelete = useTransform(x, [-80, -30, 0], [1, 0.3, 0])
+  const bgOpacityToggle = useTransform(x, [0, 30, 80], [0, 0.3, 1])
+
+  const handleDragEnd = (_e: any, info: any) => {
+    const offset = info.offset.x
+    const velocity = info.velocity.x
+    
+    if (offset < -100 || velocity < -800) {
+      controls.start({ x: -500, transition: { duration: 0.2 } }).then(() => {
+        onDelete(todo.id)
+        controls.set({ x: 0 })
+      })
+    } else if (offset > 100 || velocity > 800) {
+      controls.start({ x: 500, transition: { duration: 0.2 } }).then(() => {
+        onToggle(todo.id)
+        controls.set({ x: 0 })
+      })
+    } else {
+      controls.start({ x: 0, transition: { type: 'spring', stiffness: 400, damping: 25 } })
+    }
+  }
+
   return (
-    <div draggable={!isDone} onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart() }} 
-      onDragEnd={onDragEnd} onDragOver={onDragOver} onDrop={onDrop}
-      className={cn('group relative rounded-xl border bg-zinc-900/70 hover:bg-zinc-900 p-3.5 transition-all',
-        isDone ? 'border-zinc-800/60 opacity-60' : 'border-zinc-800 hover:border-emerald-500/30 cursor-grab active:cursor-grabbing',
-        dragging && 'opacity-40 ring-2 ring-emerald-500/50',
-        isDragOver && 'ring-2 ring-emerald-500/80 bg-zinc-800/50',
-        isActive && 'border-cyan-500/50 bg-cyan-900/20 shadow-[0_0_15px_rgba(6,182,212,0.15)] ring-1 ring-cyan-500/30')}>
+    <div className={cn("relative group rounded-xl overflow-hidden", isDragOver && 'ring-2 ring-emerald-500/80 bg-zinc-800/50')}>
+      {/* Background for Gestures */}
+      <div className="absolute inset-0 flex items-center justify-between px-5 bg-zinc-900 rounded-xl">
+        <motion.div className="flex items-center gap-2 text-emerald-400 font-bold tracking-widest text-xs uppercase" style={{ opacity: bgOpacityToggle }}>
+          <Check size={20} strokeWidth={3} />
+          <span>{isDone ? 'Ouvrir' : 'Terminer'}</span>
+        </motion.div>
+        <motion.div className="flex items-center gap-2 text-rose-400 font-bold tracking-widest text-xs uppercase" style={{ opacity: bgOpacityDelete }}>
+          <span>Suppr.</span>
+          <Trash2 size={20} strokeWidth={2.5} />
+        </motion.div>
+      </div>
+
+      <motion.div 
+        drag={isMobile ? "x" : false} // On mobile only, to prevent collision with kanban desktop drag
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.8}
+        onDragEnd={handleDragEnd}
+        animate={controls}
+        style={{ x }}
+        draggable={!isMobile && !isDone} 
+        onDragStart={(e: any) => { 
+          if (!isMobile && e?.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; onDragStart() }
+        }} 
+        onDragOver={onDragOver} onDrop={onDrop}
+        className={cn('relative rounded-xl border bg-zinc-900 hover:bg-zinc-800 p-3.5 transition-colors shadow-sm',
+          isDone ? 'border-zinc-800/60 opacity-60' : 'border-zinc-800 hover:border-emerald-500/30 cursor-grab active:cursor-grabbing',
+          dragging && 'opacity-40 ring-2 ring-emerald-500/50',
+          isActive && 'border-cyan-500/50 bg-[linear-gradient(to_bottom_right,#08334440,#00000080)] shadow-[0_0_20px_rgba(6,182,212,0.15)] ring-1 ring-cyan-500/30')}
+      >
       <div className="flex items-start gap-3">
         <button onClick={handleToggle} className={cn('shrink-0 mt-0.5 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all',
           isDone ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-zinc-600 hover:border-emerald-400',
@@ -378,6 +427,7 @@ const TodoCard = ({ todo, dragging, isDragOver, isActive, elapsedMinutes, config
           </div>
         </button>
       )}
+      </motion.div>
     </div>
   )
 }
