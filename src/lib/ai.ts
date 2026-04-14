@@ -133,7 +133,20 @@ export async function chat(
     if (activeImage) {
       // Vision mode: single-turn prompt + image
       const lastUserMsg = messages[messages.length - 1]
-      const prompt = `${systemPrompt}\n\nAlbert dit: "${lastUserMsg?.content || 'Analyse cette image et extrais les tâches que tu vois.'}"\n\nAnalyse l'image et crée les tâches avec les tags [ADD ...]. Les tâches créées vont dans la catégorie par défaut pro.`
+      const userHint = lastUserMsg?.content ? `Albert a précisé oralement : "${lastUserMsg.content}". ` : ''
+      const prompt = `${systemPrompt}
+
+═══ MODE ANALYSE D'IMAGE ═══
+${userHint}Extrais TOUTES les tâches visibles dans l'image.
+Pour CHAQUE tâche, détermine intelligemment d'après le contenu :
+- La catégorie la plus pertinente (ex: "appeler banque"=finance, "courir 10km"=cardio, "lire livre"=lecture, "faire admin"=admin, "envoyer devis"=pro, "acheter cadeau"=admin perso, etc.)
+- La priorité (urgent/normal/faible selon ce qui est écrit)
+- Une durée estimée réaliste en minutes
+
+Si Albert a précisé une catégorie ou priorité oralement, respecte-la (elle prime sur ta déduction).
+
+Crée chaque tâche avec un tag [ADD text="..." cat="ID" pri="..." dur="..."] à la suite.
+Finis par un récap oral court : le nombre de tâches ajoutées et où (ex: "J'ai ajouté 4 tâches. 2 en Finance, 1 en Admin, 1 en Cardio.").`
       response = await puter.ai.chat(prompt, activeImage, { model: 'gpt-4o' })
     } else {
       // Text mode: full conversation

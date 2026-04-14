@@ -28,6 +28,7 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
   const [lastResponse, setLastResponse] = useState('')
   const [error, setError] = useState('')
   const [textInput, setTextInput] = useState('')
+  const [pendingImage, setPendingImage] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -124,12 +125,16 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
     setError('')
     setStatus('thinking')
 
-    const chatMsg: ChatMessage = { role: 'user', content: text, image }
+    // Consume pending image if voice input arrives
+    const effectiveImage = image || pendingImage
+    if (effectiveImage && pendingImage) setPendingImage(null)
+
+    const chatMsg: ChatMessage = { role: 'user', content: text, image: effectiveImage ?? undefined }
     const newHistory = [...chatHistory, chatMsg]
     setChatHistory(newHistory)
 
     try {
-      const response = await chat(newHistory, state, stats, image)
+      const response = await chat(newHistory, state, stats, effectiveImage ?? undefined)
 
       if (response.functionCalls.length > 0) {
         // Enrich function calls from conversation history
@@ -186,22 +191,30 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
   }, [isListening, isSpeaking])
 
   // Image capture
+  // Pending image — waits for user's voice/text instruction before sending
   const handleImage = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => processInput("Analyse cette image et crée les tâches.", reader.result as string)
+    reader.onload = () => {
+      setPendingImage(reader.result as string)
+      // Speak prompt to user
+      unlockTTS()
+      speak("Photo reçue. Dis-moi quoi en faire ou tape envoyer.")
+    }
     reader.readAsDataURL(file)
     e.target.value = ''
-  }, [processInput])
+  }, [speak, unlockTTS])
 
-  // Text submit
+  // Text submit — uses pending image if any
   const handleTextSubmit = () => {
     const t = textInput.trim()
-    if (!t || status === 'thinking') return
-    unlockTTS() // iOS: unlock speech on user tap
+    if ((!t && !pendingImage) || status === 'thinking') return
+    unlockTTS()
     setTextInput('')
-    processInput(t)
+    const img = pendingImage
+    setPendingImage(null)
+    processInput(t || "Analyse cette image et crée les tâches avec les bonnes catégories.", img || undefined)
   }
 
   const handleMicTap = () => {
