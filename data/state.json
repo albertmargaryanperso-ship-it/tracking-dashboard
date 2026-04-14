@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 610,
-    "updated_at": "2026-04-14T13:46:06.783Z",
+    "version": 612,
+    "updated_at": "2026-04-14T13:46:08.558Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -1043,6 +1043,20 @@
       "created": "2026-04-13",
       "completed_min": null,
       "updated_at": "2026-04-13T18:55:28.966Z"
+    },
+    {
+      "text": "Les montants versés Ziane et amazigh sont à recalculer sur facture de janvier car décembre mauvais montants verses",
+      "category": "pro",
+      "priority": "urgent",
+      "status": "open",
+      "delegated_to": null,
+      "due": null,
+      "completed_at": null,
+      "duration_min": null,
+      "completed_min": null,
+      "id": 10010,
+      "created": "2026-04-10",
+      "updated_at": "2026-04-10"
     }
   ],
   "todos_next_id": 10088,
