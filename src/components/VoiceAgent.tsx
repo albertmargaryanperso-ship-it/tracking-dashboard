@@ -226,14 +226,16 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
     startListening() // 1st tap = start listening
   }
 
-  const STATUS_CONFIG = {
-    idle: { label: isSupported ? 'Appuie pour parler' : 'Écris ta demande ci-dessous', color: 'from-violet-600 to-cyan-600', icon: Mic },
-    listening: { label: 'Parle... envoi auto après silence', color: 'from-rose-500 to-pink-600', icon: Send },
-    thinking: { label: 'Réflexion...', color: 'from-amber-500 to-orange-600', icon: Loader2 },
-    speaking: { label: 'Réponse...', color: 'from-cyan-500 to-blue-600', icon: Volume2 },
-  } as const
-  const cfg = STATUS_CONFIG[status]
-  const IconComponent = cfg.icon
+  const getStatusConfig = () => {
+    switch(status) {
+      case 'listening': return { label: 'Parle... envoi auto après silence', color: 'from-rose-500 to-pink-600', icon: Send }
+      case 'thinking': return { label: 'Réflexion...', color: 'from-amber-500 to-orange-600', icon: Loader2 }
+      case 'speaking': return { label: 'Réponse...', color: 'from-cyan-500 to-blue-600', icon: Volume2 }
+      default: return { label: isSupported ? 'Appuie pour parler' : 'Écris ta demande ci-dessous', color: 'from-violet-600 to-cyan-600', icon: Mic }
+    }
+  }
+
+  const { color: statusColor, icon: StatusIcon, label: statusLabel } = getStatusConfig()
 
   return (
     <AnimatePresence>
@@ -315,7 +317,7 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
                 <button onClick={handleMicTap} disabled={!hasKey}
                   className={cn(
                     'relative w-28 h-28 rounded-full flex items-center justify-center transition-transform active:scale-90 shadow-2xl',
-                    `bg-gradient-to-br ${cfg.color}`,
+                    `bg-gradient-to-br ${statusColor}`,
                     !hasKey && 'opacity-30 cursor-not-allowed',
                     status === 'thinking' && 'animate-magic-spin'
                   )}>
@@ -326,7 +328,7 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
                     <>
                       {/* Fluid inner glow */}
                       <div className="absolute inset-2 rounded-full bg-white/20 blur-md" />
-                      <IconComponent size={40} strokeWidth={2} className={cn("text-white relative z-10", status === 'listening' && "animate-pulse")} />
+                      <StatusIcon size={40} strokeWidth={2} className={cn("text-white relative z-10", status === 'listening' && "animate-pulse")} />
                     </>
                   )}
                 </button>
@@ -342,7 +344,7 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
               status === 'thinking' ? 'text-amber-400' :
               status === 'speaking' ? 'text-cyan-400' : 'text-zinc-500'
             )}>
-              {cfg.label}
+              {statusLabel}
             </p>
           </div>
 
