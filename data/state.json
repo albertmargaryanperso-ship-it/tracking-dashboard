@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 618,
-    "updated_at": "2026-04-14T13:46:36.750Z",
+    "updated_at": "2026-04-14T13:46:40.217Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -930,20 +930,6 @@
       "status": "done",
       "done": true,
       "updated_at": "2026-04-11T23:44:03.484Z"
-    },
-    {
-      "text": "Faire un email à constructel facturation avec Claudio en copie pour le recap de février et mars",
-      "category": "admin",
-      "priority": "normal",
-      "status": "delegated",
-      "delegated_to": "Loelia",
-      "due": "2026-04-13",
-      "completed_at": null,
-      "duration_min": 60,
-      "completed_min": null,
-      "id": 10037,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T00:18:14.915Z"
     },
     {
       "text": "Recap sogetrel février",
