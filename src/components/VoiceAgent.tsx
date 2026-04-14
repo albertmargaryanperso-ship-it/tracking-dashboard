@@ -226,6 +226,15 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
     startListening() // 1st tap = start listening
   }
 
+  const STATUS_CONFIG = {
+    idle: { label: isSupported ? 'Appuie pour parler' : 'Écris ta demande ci-dessous', color: 'from-violet-600 to-cyan-600', icon: Mic },
+    listening: { label: 'Parle... envoi auto après silence', color: 'from-rose-500 to-pink-600', icon: Send },
+    thinking: { label: 'Réflexion...', color: 'from-amber-500 to-orange-600', icon: Loader2 },
+    speaking: { label: 'Réponse...', color: 'from-cyan-500 to-blue-600', icon: Volume2 },
+  } as const
+  const cfg = STATUS_CONFIG[status]
+  const IconComponent = cfg.icon
+
   return (
     <AnimatePresence>
       {open && (

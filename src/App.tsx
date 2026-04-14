@@ -12,6 +12,7 @@ import { QuickAddModal } from '@/components/QuickAddModal'
 import { TokenModal } from '@/components/TokenModal'
 import { VoiceAgent } from '@/components/VoiceAgent'
 import { useAppState } from '@/hooks/useAppState'
+import { useDueNotifications } from '@/hooks/useDueNotifications'
 import { hasToken } from '@/lib/github'
 import { cn, todayISO, isoToFr, formatMinutes, getActiveTabs } from '@/lib/utils'
 import { MobileNav } from '@/components/MobileNav'
@@ -21,6 +22,7 @@ import type { SyncStatus } from '@/lib/github'
 
   export default function App() {
     const { state, stats, actions, syncStatus, lastSync, pull } = useAppState()
+    useDueNotifications(state)
     const isMobile = useIsMobile()
     const tabs = getActiveTabs(state.meta.custom_tabs)
     const [view, setView] = useState<View>(tabs[0]?.id ?? 'dashboard')
