@@ -219,6 +219,7 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
   }
 
   const handleMicTap = () => {
+    unlockTTS() // ← VITAL SUR iOS : Débloque la synthèse vocale immédiatement via l'action utilisateur
     if (status === 'speaking') { stopSpeaking(); setStatus('idle'); return }
     if (status === 'listening') { stopAndSend(); return } // 2nd tap = send
     if (status === 'thinking') return
