@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 609,
-    "updated_at": "2026-04-14T07:09:53.507Z",
+    "version": 608,
+    "updated_at": "2026-04-14T07:09:55.215Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -950,7 +950,7 @@
       "completed_min": null,
       "id": 10079,
       "created": "2026-04-13",
-      "updated_at": "2026-04-14T07:09:52.272Z",
+      "updated_at": "2026-04-14T07:09:54.859Z",
       "subtasks": [
         {
           "id": "st_1776113438018_htv9h",
@@ -970,7 +970,7 @@
         {
           "id": "st_1776113471383_w53mh",
           "text": "Aiman pour Feriel, Sabrina, Maroua, Karima",
-          "done": false
+          "done": true
         },
         {
           "id": "st_1776113489834_0x9rl",
