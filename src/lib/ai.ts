@@ -80,9 +80,6 @@ function extractField(tag: string, key: string): string | null {
 function parseActions(text: string): { cleanText: string; calls: FunctionCall[] } {
   const calls: FunctionCall[] = []
 
-  // Log raw text for debug
-  if (text) console.log('AI raw:', text.slice(0, 400))
-
   // Generic tag matcher: [TAG ...]
   const tagRe = /\[(ADD|SUB|DONE|DEL|CHECK|LOG)\b([^\]]*)\]/gi
   let match
@@ -174,8 +171,6 @@ Finis par un récap oral court : le nombre de tâches ajoutées et où (ex: "J'a
       }
       response = await puter.ai.chat(apiMessages, { model: 'gpt-4o-mini' })
     }
-    // Debug: log full response structure
-    console.log('PUTER RESPONSE:', JSON.stringify(response, null, 2))
     // Extract text from whatever Puter returns
     let rawText = ''
     if (typeof response === 'string') rawText = response

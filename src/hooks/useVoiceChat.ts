@@ -46,14 +46,15 @@ export function useVoiceChat(
     ttsUnlockedRef.current = true
   }, [])
 
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   useEffect(() => {
     return () => {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)
       recognitionRef.current?.abort()
       synthRef.current?.cancel()
     }
   }, [])
-
-  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const startListening = useCallback(() => {
     if (!SpeechRecognition) return

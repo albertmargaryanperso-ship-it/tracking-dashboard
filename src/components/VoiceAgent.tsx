@@ -231,7 +231,7 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
 
   const STATUS_CONFIG = {
     idle: { label: isSupported ? 'Appuie pour parler' : 'Écris ta demande ci-dessous', color: 'from-violet-600 to-cyan-600', icon: Mic },
-    listening: { label: 'Appuie pour envoyer', color: 'from-rose-500 to-pink-600', icon: Send },
+    listening: { label: 'Parle... envoi auto après silence', color: 'from-rose-500 to-pink-600', icon: Send },
     thinking: { label: 'Réflexion...', color: 'from-amber-500 to-orange-600', icon: Loader2 },
     speaking: { label: 'Réponse...', color: 'from-cyan-500 to-blue-600', icon: Volume2 },
   }
@@ -251,7 +251,7 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
           Effacer
         </button>
         <p className="text-[10px] text-zinc-500 font-mono">🎙️ Assistant</p>
-        <button onClick={() => { stopSpeaking(); stopAndSend(); onClose() }}
+        <button onClick={() => { stopSpeaking(); stopAndSend(); setPendingImage(null); onClose() }}
           className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900">
           <X size={18} />
         </button>
@@ -354,14 +354,24 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
           </button>
         </div>
 
-        {/* Camera */}
-        <div className="flex justify-center">
-          <button onClick={() => fileRef.current?.click()}
-            disabled={status === 'thinking' || !hasKey}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-zinc-200 disabled:opacity-30 transition-all">
-            <Camera size={16} />
-            <span className="text-xs">Photo → Tâches</span>
-          </button>
+        {/* Camera + pending image indicator */}
+        <div className="flex justify-center items-center gap-2">
+          {pendingImage ? (
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-300">
+              <Camera size={14} />
+              <span className="text-xs">Photo prête — parle ou envoie</span>
+              <button onClick={() => setPendingImage(null)} className="ml-1 text-amber-400 hover:text-rose-400">
+                <X size={12} />
+              </button>
+            </div>
+          ) : (
+            <button onClick={() => fileRef.current?.click()}
+              disabled={status === 'thinking' || !hasKey}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-zinc-800 bg-zinc-900/50 text-zinc-400 hover:text-zinc-200 disabled:opacity-30 transition-all">
+              <Camera size={16} />
+              <span className="text-xs">Photo → Tâches</span>
+            </button>
+          )}
           <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImage} />
         </div>
       </div>
