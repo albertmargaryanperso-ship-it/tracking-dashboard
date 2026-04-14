@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 618,
-    "updated_at": "2026-04-14T13:46:42.532Z",
+    "version": 619,
+    "updated_at": "2026-04-14T13:46:51.083Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -930,20 +930,6 @@
       "status": "done",
       "done": true,
       "updated_at": "2026-04-11T23:44:03.484Z"
-    },
-    {
-      "text": "Rendez-vous avec l'avocat",
-      "category": "pro",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "duration_min": null,
-      "completed_at": null,
-      "id": 10065,
-      "created": "2026-04-13",
-      "completed_min": null,
-      "updated_at": "2026-04-13T18:55:28.966Z"
     }
   ],
   "todos_next_id": 10088,
