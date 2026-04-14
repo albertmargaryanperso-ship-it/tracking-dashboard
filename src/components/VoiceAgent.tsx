@@ -223,7 +223,10 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
     if (status === 'listening') { stopAndSend(); return } // 2nd tap = send
     if (status === 'thinking') return
     setError('')
-    startListening() // 1st tap = start lis  return (
+    startListening() // 1st tap = start listening
+  }
+
+  return (
     <AnimatePresence>
       {open && (
         <motion.div 
