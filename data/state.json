@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 624,
-    "updated_at": "2026-04-14T13:47:24.333Z",
+    "version": 625,
+    "updated_at": "2026-04-14T13:47:45.615Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -268,12 +268,12 @@
       "completed_at": null,
       "duration_min": 45,
       "completed_min": null,
-      "updated_at": "2026-04-13T20:50:01.944Z",
+      "updated_at": "2026-04-14T13:47:45.297Z",
       "subtasks": [
         {
           "id": "st_1776112539496_l64aw",
           "text": "Demande liquidation judiciaire",
-          "done": false
+          "done": true
         }
       ]
     },
