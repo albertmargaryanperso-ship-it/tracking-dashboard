@@ -56,39 +56,43 @@ export const Dashboard = ({ state, stats }: DashboardProps) => {
             const glow = [0, 6, 14, 24, 40][intensity]
             const scale = [0.8, 1, 1.1, 1.2, 1.35][intensity]
             return (
-              <div key={tab.id} className="flex items-center justify-center gap-1 px-2 py-3 rounded-xl border"
-                style={{ borderColor: hex + '30', backgroundColor: hex + '08', boxShadow: glow > 0 ? `0 0 ${glow}px ${hex}50` : undefined }}>
-                <svg width={36} height={42} viewBox="0 0 32 40" className="shrink-0"
-                  style={{ transform: `scale(${scale})`, filter: glow > 8 ? `drop-shadow(0 0 ${glow / 2}px ${hex})` : undefined }}>
-                  <defs>
-                    <linearGradient id={`fl-${tab.id}`} x1="0.5" y1="1" x2="0.5" y2="0">
-                      <stop offset="0%" stopColor={hex} />
-                      <stop offset="40%" stopColor={hex} />
-                      <stop offset="75%" stopColor="#fbbf24" />
-                      <stop offset="100%" stopColor="#fff" />
-                    </linearGradient>
-                  </defs>
-                  {/* Main flame */}
-                  <path d="M16 2C16 2 4 15 4 24C4 30 9 36 16 36C23 36 28 30 28 24C28 15 16 2 16 2Z"
-                    fill={`url(#fl-${tab.id})`} opacity={streak === 0 ? 0.12 : 0.95}
-                    style={speed > 0 ? { animation: `flameWave ${speed}s ease-in-out infinite`, transformOrigin: '16px 36px' } : undefined} />
-                  {/* Inner core */}
-                  {intensity >= 1 && (
-                    <path d="M16 14C16 14 10 23 10 28C10 31.3 12.7 34 16 34C19.3 34 22 31.3 22 28C22 23 16 14 16 14Z"
-                      fill="#fef08a" opacity={[0, 0.3, 0.5, 0.65, 0.8][intensity]}
-                      style={speed > 0 ? { animation: `flameWave ${speed * 0.6}s ease-in-out infinite`, animationDelay: '0.1s', transformOrigin: '16px 34px' } : undefined} />
-                  )}
-                  {/* White hot center */}
-                  {intensity >= 2 && (
-                    <ellipse cx="16" cy="30" rx={[0, 0, 3, 4, 5][intensity]} ry={[0, 0, 2, 3, 3.5][intensity]}
-                      fill="white" opacity={[0, 0, 0.4, 0.6, 0.8][intensity]}
-                      style={{ animation: `flameWave ${speed * 0.4}s ease-in-out infinite`, animationDelay: '0.05s', transformOrigin: '16px 30px' }} />
-                  )}
-                </svg>
-                <div className="text-center">
-                  <p className="text-2xl font-black" style={{ color: hex }}>{streak}</p>
-                  <p className="text-[7px] uppercase tracking-widest font-bold" style={{ color: hex + 'aa' }}>streak</p>
+              <div key={tab.id} className="flex flex-col items-center justify-center gap-2 py-4">
+                <div className="relative w-28 h-28 rounded-full flex items-center justify-center border-2"
+                  style={{
+                    borderColor: hex + '50',
+                    backgroundColor: hex + '10',
+                    boxShadow: glow > 0 ? `0 0 ${glow * 1.5}px ${hex}60, inset 0 0 ${glow}px ${hex}20` : undefined,
+                  }}>
+                  <svg width={56} height={66} viewBox="0 0 32 40" className="shrink-0"
+                    style={{ transform: `scale(${scale})`, filter: glow > 8 ? `drop-shadow(0 0 ${glow / 2}px ${hex})` : undefined }}>
+                    <defs>
+                      <linearGradient id={`fl-${tab.id}`} x1="0.5" y1="1" x2="0.5" y2="0">
+                        <stop offset="0%" stopColor={hex} />
+                        <stop offset="40%" stopColor={hex} />
+                        <stop offset="75%" stopColor="#fbbf24" />
+                        <stop offset="100%" stopColor="#fff" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M16 2C16 2 4 15 4 24C4 30 9 36 16 36C23 36 28 30 28 24C28 15 16 2 16 2Z"
+                      fill={`url(#fl-${tab.id})`} opacity={streak === 0 ? 0.12 : 0.95}
+                      style={speed > 0 ? { animation: `flameWave ${speed}s ease-in-out infinite`, transformOrigin: '16px 36px' } : undefined} />
+                    {intensity >= 1 && (
+                      <path d="M16 14C16 14 10 23 10 28C10 31.3 12.7 34 16 34C19.3 34 22 31.3 22 28C22 23 16 14 16 14Z"
+                        fill="#fef08a" opacity={[0, 0.3, 0.5, 0.65, 0.8][intensity]}
+                        style={speed > 0 ? { animation: `flameWave ${speed * 0.6}s ease-in-out infinite`, animationDelay: '0.1s', transformOrigin: '16px 34px' } : undefined} />
+                    )}
+                    {intensity >= 2 && (
+                      <ellipse cx="16" cy="30" rx={[0, 0, 3, 4, 5][intensity]} ry={[0, 0, 2, 3, 3.5][intensity]}
+                        fill="white" opacity={[0, 0, 0.4, 0.6, 0.8][intensity]}
+                        style={{ animation: `flameWave ${speed * 0.4}s ease-in-out infinite`, animationDelay: '0.05s', transformOrigin: '16px 30px' }} />
+                    )}
+                  </svg>
+                  <span className="absolute -bottom-1 -right-1 min-w-[28px] h-7 px-1.5 rounded-full flex items-center justify-center text-sm font-black border-2"
+                    style={{ backgroundColor: '#09090b', borderColor: hex + '80', color: hex }}>
+                    {streak}
+                  </span>
                 </div>
+                <p className="text-[9px] uppercase tracking-widest font-bold" style={{ color: hex + 'aa' }}>streak</p>
               </div>
             )
           })}
