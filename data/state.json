@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 621,
-    "updated_at": "2026-04-14T13:46:54.738Z",
+    "version": 622,
+    "updated_at": "2026-04-14T13:46:57.600Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -750,20 +750,6 @@
       "updated_at": "2026-04-12T00:14:06.080Z"
     },
     {
-      "text": "Virement Kader",
-      "category": "finance",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-12",
-      "completed_at": null,
-      "duration_min": 15,
-      "completed_min": null,
-      "id": 10032,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T00:15:22.165Z"
-    },
-    {
       "text": "Sabri demander où en est le virement",
       "category": "finance",
       "priority": "normal",
@@ -904,6 +890,20 @@
       "updated_at": "2026-04-11T23:44:03.484Z"
     },
     {
+      "text": "Virement Kader",
+      "category": "finance",
+      "priority": "normal",
+      "status": "open",
+      "delegated_to": null,
+      "due": "2026-04-12",
+      "completed_at": null,
+      "duration_min": 15,
+      "completed_min": null,
+      "id": 10032,
+      "created": "2026-04-12",
+      "updated_at": "2026-04-12T00:15:22.165Z"
+    },
+    {
       "text": "Virement Youssef",
       "category": "finance",
       "priority": "normal",
@@ -916,20 +916,6 @@
       "id": 10033,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:15:38.050Z"
-    },
-    {
-      "text": "Virement Adem",
-      "category": "finance",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-12",
-      "completed_at": null,
-      "duration_min": 15,
-      "completed_min": null,
-      "id": 10034,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T00:16:04.903Z"
     }
   ],
   "todos_next_id": 10088,
