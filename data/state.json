@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 607,
-    "updated_at": "2026-04-14T07:09:52.347Z",
+    "version": 609,
+    "updated_at": "2026-04-14T07:09:53.507Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -950,7 +950,7 @@
       "completed_min": null,
       "id": 10079,
       "created": "2026-04-13",
-      "updated_at": "2026-04-14T07:09:50.667Z",
+      "updated_at": "2026-04-14T07:09:52.272Z",
       "subtasks": [
         {
           "id": "st_1776113438018_htv9h",
@@ -965,7 +965,7 @@
         {
           "id": "st_1776113456506_jlzex",
           "text": "Kader Bouziane",
-          "done": true
+          "done": false
         },
         {
           "id": "st_1776113471383_w53mh",
