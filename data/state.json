@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 625,
-    "updated_at": "2026-04-14T13:47:45.615Z",
+    "version": 626,
+    "updated_at": "2026-04-14T13:48:09.249Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -522,20 +522,6 @@
           "done": true
         }
       ]
-    },
-    {
-      "text": "Acheter chaussures blanches beiges dans la liste d’achats",
-      "category": "pro",
-      "priority": "normal",
-      "status": "waiting",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": 60,
-      "completed_min": null,
-      "id": 10057,
-      "created": "2026-04-13",
-      "updated_at": "2026-04-13T20:47:20.712Z"
     },
     {
       "text": "Vibe coding",
