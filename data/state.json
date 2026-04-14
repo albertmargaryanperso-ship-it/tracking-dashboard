@@ -1,7 +1,7 @@
 {
   "meta": {
     "version": 622,
-    "updated_at": "2026-04-14T13:46:58.683Z",
+    "updated_at": "2026-04-14T13:46:59.999Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -734,20 +734,6 @@
       "id": 10029,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T00:13:21.400Z"
-    },
-    {
-      "text": "Virement et facture Aiman pour Sabrina Karima Feriel Maroua",
-      "category": "finance",
-      "priority": "normal",
-      "status": "open",
-      "delegated_to": null,
-      "due": "2026-04-12",
-      "completed_at": null,
-      "duration_min": 45,
-      "completed_min": null,
-      "id": 10030,
-      "created": "2026-04-12",
-      "updated_at": "2026-04-12T00:14:06.080Z"
     },
     {
       "text": "Sabri demander où en est le virement",
