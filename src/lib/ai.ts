@@ -118,20 +118,31 @@ export async function chat(
   messages: ChatMessage[],
   state: AppState,
   _stats?: Stats,
-  _image?: string,
+  image?: string,
 ): Promise<AiResponse> {
   if (typeof puter === 'undefined') throw new Error('Puter.js pas encore chargé — rafraîchis la page')
 
   const systemPrompt = buildSystemPrompt(state)
 
-  // Build messages for Puter (OpenAI format)
-  const apiMessages: any[] = [{ role: 'system', content: systemPrompt }]
-  for (const msg of messages.slice(-6)) {
-    apiMessages.push({ role: msg.role, content: msg.content })
-  }
+  // Check if any message has an image (from history or current)
+  const imageInHistory = messages.find(m => m.image)?.image
+  const activeImage = image || imageInHistory
 
   try {
-    const response = await puter.ai.chat(apiMessages, { model: 'gpt-4o-mini' })
+    let response
+    if (activeImage) {
+      // Vision mode: single-turn prompt + image
+      const lastUserMsg = messages[messages.length - 1]
+      const prompt = `${systemPrompt}\n\nAlbert dit: "${lastUserMsg?.content || 'Analyse cette image et extrais les tâches que tu vois.'}"\n\nAnalyse l'image et crée les tâches avec les tags [ADD ...]. Les tâches créées vont dans la catégorie par défaut pro.`
+      response = await puter.ai.chat(prompt, activeImage, { model: 'gpt-4o' })
+    } else {
+      // Text mode: full conversation
+      const apiMessages: any[] = [{ role: 'system', content: systemPrompt }]
+      for (const msg of messages.slice(-6)) {
+        apiMessages.push({ role: msg.role, content: msg.content })
+      }
+      response = await puter.ai.chat(apiMessages, { model: 'gpt-4o-mini' })
+    }
     // Debug: log full response structure
     console.log('PUTER RESPONSE:', JSON.stringify(response, null, 2))
     // Extract text from whatever Puter returns

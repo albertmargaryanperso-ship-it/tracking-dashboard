@@ -53,14 +53,14 @@ export function useVoiceChat(
     }
   }, [])
 
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const startListening = useCallback(() => {
     if (!SpeechRecognition) return
 
-    // Stop TTS
     synthRef.current?.cancel()
     setIsSpeaking(false)
 
-    // Reset
     transcriptRef.current = ''
     setTranscript('')
     setInterim('')
@@ -71,9 +71,23 @@ export function useVoiceChat(
     recognition.continuous = true
     recognition.maxAlternatives = 1
 
-    recognition.onstart = () => {
-      setIsListening(true)
+    const autoSendAfterSilence = () => {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)
+      silenceTimerRef.current = setTimeout(() => {
+        const text = transcriptRef.current.trim()
+        if (text) {
+          recognitionRef.current = null
+          try { recognition.stop() } catch { /* */ }
+          setIsListening(false)
+          setInterim('')
+          transcriptRef.current = ''
+          setTranscript('')
+          onResult(text)
+        }
+      }, 1800) // 1.8s de silence → envoi auto
     }
+
+    recognition.onstart = () => { setIsListening(true) }
 
     recognition.onresult = (event: any) => {
       let finalText = ''
@@ -81,30 +95,28 @@ export function useVoiceChat(
 
       for (let i = 0; i < event.results.length; i++) {
         const result = event.results[i]
-        if (result.isFinal) {
-          finalText += result[0].transcript + ' '
-        } else {
-          interimText += result[0].transcript
-        }
+        if (result.isFinal) finalText += result[0].transcript + ' '
+        else interimText += result[0].transcript
       }
 
       if (finalText) {
-        transcriptRef.current = finalText.trim()
-        setTranscript(finalText.trim())
+        transcriptRef.current = (transcriptRef.current + ' ' + finalText).trim()
+        setTranscript(transcriptRef.current)
       }
       setInterim(interimText)
+      // Reset silence timer whenever we get any speech
+      autoSendAfterSilence()
     }
 
     recognition.onerror = (event: any) => {
-      if (event.error === 'no-speech') return // Ignore, keep listening
+      if (event.error === 'no-speech') return
       console.warn('Speech error:', event.error)
       setIsListening(false)
       setInterim('')
     }
 
     recognition.onend = () => {
-      // If still supposed to be listening, restart (iOS kills it sometimes)
-      if (isListening && recognitionRef.current) {
+      if (recognitionRef.current === recognition) {
         try { recognition.start() } catch { setIsListening(false) }
         return
       }
@@ -113,13 +125,14 @@ export function useVoiceChat(
 
     recognitionRef.current = recognition
     recognition.start()
-  }, [SpeechRecognition, isListening])
+  }, [SpeechRecognition, onResult])
 
   const stopAndSend = useCallback(() => {
     unlockTTS()
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current)
     const recognition = recognitionRef.current
-    recognitionRef.current = null // prevent auto-restart in onend
-    recognition?.stop()
+    recognitionRef.current = null
+    try { recognition?.stop() } catch { /* */ }
     setIsListening(false)
     setInterim('')
 
@@ -129,7 +142,7 @@ export function useVoiceChat(
       transcriptRef.current = ''
       setTranscript('')
     }
-  }, [onResult])
+  }, [onResult, unlockTTS])
 
   const speak = useCallback((text: string): Promise<void> => {
     return new Promise((resolve) => {
