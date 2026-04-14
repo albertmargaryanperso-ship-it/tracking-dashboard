@@ -37,6 +37,21 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
   const [lastCreatedId, setLastCreatedId] = useState<number | null>(null)
 
   // Execute function calls
+  // Validate category ID — model often returns "Pro" instead of "pro"
+  const validCategory = useCallback((raw: string): string => {
+    const cats = (state.meta.custom_categories ?? []).map(c => c.id)
+    if (!raw) return cats[0] || 'admin'
+    const lower = raw.toLowerCase().trim()
+    // Exact match
+    if (cats.includes(lower)) return lower
+    if (cats.includes(raw)) return raw
+    // Fuzzy: find category whose id or label starts with the input
+    const found = (state.meta.custom_categories ?? []).find(c =>
+      c.id.toLowerCase() === lower || c.label.toLowerCase() === lower
+    )
+    return found?.id || cats[0] || 'admin'
+  }, [state.meta.custom_categories])
+
   const executeFunctions = useCallback((calls: FunctionCall[]) => {
     for (const fc of calls) {
       const a = fc.arguments
@@ -44,8 +59,8 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
         case 'add_task':
           onAddTodo({
             text: a.text,
-            category: a.category || state.meta.custom_categories?.[0]?.id || 'admin',
-            priority: a.priority || 'normal',
+            category: validCategory(a.category),
+            priority: ['urgent', 'normal', 'faible'].includes(a.priority) ? a.priority : 'normal',
             status: 'open',
             delegated_to: null,
             due: a.due || null,
@@ -58,8 +73,8 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
         case 'log_task':
           onAddDoneTodo({
             text: a.text,
-            category: a.category || state.meta.custom_categories?.[0]?.id || 'admin',
-            priority: a.priority || 'normal',
+            category: validCategory(a.category),
+            priority: ['urgent', 'normal', 'faible'].includes(a.priority) ? a.priority : 'normal',
             delegated_to: null,
             due: null,
             duration_min: a.duration_min || null,
@@ -100,7 +115,7 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
           break
       }
     }
-  }, [state, onAddTodo, onToggleTodo, onDeleteTodo, onUpdateTodo])
+  }, [state, validCategory, onAddTodo, onAddDoneTodo, onToggleTodo, onDeleteTodo, onUpdateTodo])
 
   // Process user input (voice transcript, typed text, or image)
   const processInput = useCallback(async (text: string, image?: string) => {
