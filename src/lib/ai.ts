@@ -70,44 +70,62 @@ export interface AiResponse {
 
 // ─── Parse action tags ─────────────────────────────────────────────────────
 
+// Tolerant field extractor: matches text="..." text='...' or text=...
+function extractField(tag: string, key: string): string | null {
+  const re = new RegExp(`${key}\\s*[:=]?\\s*(?:"([^"]*)"|'([^']*)'|([^\\s\\],]+))`, 'i')
+  const m = tag.match(re)
+  return m ? (m[1] ?? m[2] ?? m[3] ?? null) : null
+}
+
 function parseActions(text: string): { cleanText: string; calls: FunctionCall[] } {
   const calls: FunctionCall[] = []
+
+  // Log raw text for debug
+  if (text) console.log('AI raw:', text.slice(0, 400))
+
+  // Generic tag matcher: [TAG ...]
+  const tagRe = /\[(ADD|SUB|DONE|DEL|CHECK|LOG)\b([^\]]*)\]/gi
   let match
+  while ((match = tagRe.exec(text)) !== null) {
+    const tagName = match[1].toUpperCase()
+    const body = match[2]
 
-  const addRe = /\[ADD\s+text="([^"]+)"\s*cat="([^"]+)"\s*pri="([^"]+)"\s*dur="(\d+)"\s*\]/gi
-  while ((match = addRe.exec(text)) !== null) {
-    calls.push({ name: 'add_task', arguments: { text: match[1], category: match[2], priority: match[3], duration_min: parseInt(match[4], 10) } })
+    if (tagName === 'ADD') {
+      const t = extractField(body, 'text')
+      const cat = extractField(body, 'cat') || extractField(body, 'category')
+      const pri = extractField(body, 'pri') || extractField(body, 'priority') || 'normal'
+      const dur = extractField(body, 'dur') || extractField(body, 'duration') || '30'
+      if (t) {
+        calls.push({ name: 'add_task', arguments: { text: t, category: cat || '', priority: pri, duration_min: parseInt(dur, 10) || 30 } })
+      }
+    } else if (tagName === 'LOG') {
+      const t = extractField(body, 'text')
+      const cat = extractField(body, 'cat') || extractField(body, 'category')
+      const pri = extractField(body, 'pri') || extractField(body, 'priority') || 'normal'
+      const dur = extractField(body, 'dur') || extractField(body, 'duration') || '30'
+      const mn = extractField(body, 'min') || dur
+      if (t) {
+        calls.push({ name: 'log_task', arguments: { text: t, category: cat || '', priority: pri, duration_min: parseInt(dur, 10) || 30, completed_min: parseInt(mn, 10) || 30 } })
+      }
+    } else if (tagName === 'SUB') {
+      const id = extractField(body, 'id')
+      const t = extractField(body, 'text')
+      if (id && t) calls.push({ name: 'add_subtask', arguments: { task_id: parseInt(id, 10), text: t } })
+    } else if (tagName === 'DONE') {
+      const id = extractField(body, 'id')
+      const mn = extractField(body, 'min')
+      if (id) calls.push({ name: 'complete_task', arguments: { task_id: parseInt(id, 10), completed_min: mn ? parseInt(mn, 10) : undefined } })
+    } else if (tagName === 'DEL') {
+      const id = extractField(body, 'id')
+      if (id) calls.push({ name: 'delete_task', arguments: { task_id: parseInt(id, 10) } })
+    } else if (tagName === 'CHECK') {
+      const id = extractField(body, 'id')
+      const sid = extractField(body, 'sid')
+      if (id && sid) calls.push({ name: 'check_subtask', arguments: { task_id: parseInt(id, 10), subtask_id: sid } })
+    }
   }
 
-  const logRe = /\[LOG\s+text="([^"]+)"\s*cat="([^"]+)"\s*pri="([^"]+)"\s*dur="(\d+)"\s*min="(\d+)"\s*\]/gi
-  while ((match = logRe.exec(text)) !== null) {
-    calls.push({ name: 'log_task', arguments: { text: match[1], category: match[2], priority: match[3], duration_min: parseInt(match[4], 10), completed_min: parseInt(match[5], 10) } })
-  }
-
-  const subRe = /\[SUB\s+id=(\d+)\s+text="([^"]+)"\s*\]/gi
-  while ((match = subRe.exec(text)) !== null) {
-    calls.push({ name: 'add_subtask', arguments: { task_id: parseInt(match[1], 10), text: match[2] } })
-  }
-
-  const doneRe = /\[DONE\s+id=(\d+)(?:\s+min=(\d+))?\s*\]/gi
-  while ((match = doneRe.exec(text)) !== null) {
-    calls.push({ name: 'complete_task', arguments: { task_id: parseInt(match[1], 10), completed_min: match[2] ? parseInt(match[2], 10) : undefined } })
-  }
-
-  const delRe = /\[DEL\s+id=(\d+)\s*\]/gi
-  while ((match = delRe.exec(text)) !== null) {
-    calls.push({ name: 'delete_task', arguments: { task_id: parseInt(match[1], 10) } })
-  }
-
-  const checkRe = /\[CHECK\s+id=(\d+)\s+sid="([^"]+)"\s*\]/gi
-  while ((match = checkRe.exec(text)) !== null) {
-    calls.push({ name: 'check_subtask', arguments: { task_id: parseInt(match[1], 10), subtask_id: match[2] } })
-  }
-
-  const cleanText = text
-    .replace(/\[ADD[^\]]*\]/gi, '').replace(/\[SUB[^\]]*\]/gi, '').replace(/\[DONE[^\]]*\]/gi, '')
-    .replace(/\[DEL[^\]]*\]/gi, '').replace(/\[CHECK[^\]]*\]/gi, '').replace(/\[LOG[^\]]*\]/gi, '')
-    .replace(/\s{2,}/g, ' ').trim()
+  const cleanText = text.replace(/\[(ADD|SUB|DONE|DEL|CHECK|LOG)\b[^\]]*\]/gi, '').replace(/\s{2,}/g, ' ').trim()
 
   return { cleanText, calls }
 }
