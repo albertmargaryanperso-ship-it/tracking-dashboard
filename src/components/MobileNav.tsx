@@ -1,6 +1,6 @@
 import type { TabConfig, View } from '@/types'
 import { cn } from '@/lib/utils'
-import { Plus, RefreshCw, Mic, Settings } from 'lucide-react'
+import { Plus, RefreshCw, Mic, Settings, LayoutDashboard, Briefcase, Heart, LineChart, History } from 'lucide-react'
 
 interface MobileNavProps {
   view: View
@@ -37,23 +37,33 @@ export const MobileNav = ({ view, onViewChange, tabs, onSync, onAdd, onOpenVoice
       </div>
 
       {/* Tab bar */}
-      <div className="bg-zinc-950 border-t border-zinc-800/50 pb-[env(safe-area-inset-bottom,8px)] pt-1.5 px-2">
+      <div className="bg-zinc-950/90 backdrop-blur-xl border-t border-zinc-800/50 pb-[env(safe-area-inset-bottom,8px)] pt-2 px-2">
         <div className="flex items-center justify-around">
           {tabs.filter(t => t.type !== 'settings').map(tab => {
             const isActive = view === tab.id
+            const Icon = 
+              tab.id === 'dashboard' ? LayoutDashboard :
+              tab.id === 'todo-travail' ? Briefcase :
+              tab.id === 'todo-personnel' ? Heart :
+              tab.id === 'charts' ? LineChart :
+              tab.id === 'historique' ? History : null
+            
             return (
               <button key={tab.id} onClick={() => onViewChange(tab.id as View)}
-                className="flex flex-col items-center gap-0.5 py-1 flex-1">
-                <span className={cn('text-[18px]', !isActive && 'opacity-40 grayscale')}>{tab.emoji}</span>
-                {isActive && <div className="w-1 h-1 rounded-full bg-cyan-400" />}
+                className="flex flex-col items-center gap-1 py-1 flex-1">
+                {Icon ? 
+                  <Icon size={22} strokeWidth={isActive ? 2.5 : 2} className={cn(isActive ? "text-cyan-400" : "text-zinc-500 opacity-60")} />
+                  : <span className={cn('text-[18px]', !isActive && 'opacity-40 grayscale')}>{tab.emoji}</span>
+                }
+                {isActive && <div className="w-1 h-1 rounded-full bg-cyan-400 mt-0.5" />}
               </button>
             )
           })}
           {/* Settings always visible on mobile */}
           <button onClick={() => onViewChange('settings' as View)}
-            className="flex flex-col items-center gap-0.5 py-1 flex-1">
-            <Settings size={18} className={cn(view === 'settings' ? 'text-zinc-200' : 'text-zinc-500 opacity-50')} />
-            {view === 'settings' && <div className="w-1 h-1 rounded-full bg-cyan-400" />}
+            className="flex flex-col items-center gap-1 py-1 flex-1">
+            <Settings size={22} strokeWidth={view === 'settings' ? 2.5 : 2} className={cn(view === 'settings' ? 'text-zinc-200' : 'text-zinc-500 opacity-50')} />
+            {view === 'settings' && <div className="w-1 h-1 rounded-full bg-cyan-400 mt-0.5" />}
           </button>
         </div>
       </div>

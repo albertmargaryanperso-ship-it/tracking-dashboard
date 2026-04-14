@@ -111,8 +111,8 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
   return (
     <div className="space-y-5">
       {/* Fixed panel: stats + subtask progress + nav buttons */}
-      <div className="fixed left-0 right-0 z-10 px-3 sm:px-6 pt-1 pb-2 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800/50 space-y-1.5"
-        style={{ top: isMobile ? 'env(safe-area-inset-top, 0px)' : '60px' }}>
+      <div className="fixed left-0 right-0 z-10 px-4 sm:px-6 pb-3 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/50 space-y-3"
+        style={{ top: 0, paddingTop: isMobile ? 'max(env(safe-area-inset-top), 16px)' : '76px' }}>
         {/* Stats */}
         <div className="grid grid-cols-2 gap-2">
           <div className="flex items-center justify-between px-2.5 py-1.5 rounded-lg border border-rose-500/20 bg-rose-500/5">
@@ -132,12 +132,12 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
         </div>
         {/* Subtask progress */}
         {subtaskProgress.total > 0 && (
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-1.5 rounded-full bg-zinc-800 overflow-hidden">
-              <div className={cn('h-full rounded-full', subtaskProgress.pct === 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-violet-500 to-cyan-500')}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-2.5 rounded-full bg-zinc-800/80 overflow-hidden shadow-inner">
+              <div className={cn('h-full rounded-full transition-all duration-500 ease-out', subtaskProgress.pct === 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-violet-500 to-cyan-500')}
                 style={{ width: `${subtaskProgress.pct}%` }} />
             </div>
-            <span className="text-[9px] font-bold text-zinc-400">{subtaskProgress.pct}%</span>
+            <span className="text-[10px] font-extrabold tracking-wider text-zinc-300">{subtaskProgress.pct}%</span>
           </div>
         )}
         {/* Nav buttons (Chips) */}
