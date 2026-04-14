@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 626,
-    "updated_at": "2026-04-14T13:48:09.249Z",
+    "version": 627,
+    "updated_at": "2026-04-14T13:48:30.782Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -761,21 +761,6 @@
       "id": 10043,
       "created": "2026-04-12",
       "updated_at": "2026-04-12T05:52:59.325Z"
-    },
-    {
-      "text": "Faire virement",
-      "category": "finance",
-      "priority": "normal",
-      "delegated_to": null,
-      "due": null,
-      "duration_min": 45,
-      "completed_min": 45,
-      "completed_at": "2026-04-12",
-      "id": 10026,
-      "created": "2026-04-12",
-      "status": "done",
-      "done": true,
-      "updated_at": "2026-04-11T23:44:03.484Z"
     }
   ],
   "todos_next_id": 10088,
