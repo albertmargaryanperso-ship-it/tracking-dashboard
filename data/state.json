@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 615,
-    "updated_at": "2026-04-14T13:46:12.869Z",
+    "version": 616,
+    "updated_at": "2026-04-14T13:46:18.267Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -955,20 +955,6 @@
       "duration_min": null,
       "completed_min": null,
       "id": 10012,
-      "created": "2026-04-10",
-      "updated_at": "2026-04-10"
-    },
-    {
-      "text": "Demander facture Smail EZZAHI CCT",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": null,
-      "completed_min": null,
-      "id": 10011,
       "created": "2026-04-10",
       "updated_at": "2026-04-10"
     },
