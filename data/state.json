@@ -1,7 +1,7 @@
 {
   "meta": {
-    "version": 627,
-    "updated_at": "2026-04-14T13:48:30.782Z",
+    "version": 628,
+    "updated_at": "2026-04-14T13:48:42.432Z",
     "updated_by": "web",
     "habitudes": [
       "Sport",
@@ -636,20 +636,6 @@
       "id": 10087,
       "created": "2026-04-13",
       "updated_at": "2026-04-13T21:07:38.876Z"
-    },
-    {
-      "text": "S’inscrire à pole emploi",
-      "category": "pro",
-      "priority": "urgent",
-      "status": "open",
-      "delegated_to": null,
-      "due": null,
-      "completed_at": null,
-      "duration_min": 30,
-      "completed_min": null,
-      "id": 10003,
-      "created": "2026-04-09",
-      "updated_at": "2026-04-09"
     },
     {
       "text": "Acheter chaussures blanches style Airmax",
