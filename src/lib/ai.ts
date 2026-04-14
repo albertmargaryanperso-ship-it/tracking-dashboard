@@ -135,7 +135,12 @@ export async function chat(
   _stats?: Stats,
   image?: string,
 ): Promise<AiResponse> {
-  if (typeof puter === 'undefined') throw new Error('Puter.js pas encore chargé — rafraîchis la page')
+  // Wait up to 5s for Puter.js to load (handles slow network or SW cache lag)
+  for (let i = 0; i < 50; i++) {
+    if (typeof puter !== 'undefined') break
+    await new Promise(r => setTimeout(r, 100))
+  }
+  if (typeof puter === 'undefined') throw new Error('Puter.js indisponible. Désinscris le service worker : DevTools → Application → Unregister SW, puis recharge.')
 
   const systemPrompt = buildSystemPrompt(state)
 
