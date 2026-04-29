@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { X, Plus, Trash2, Check } from 'lucide-react'
+import { X, Plus, Trash2, Check, CalendarDays } from 'lucide-react'
 import type { Todo, Subtask } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -96,7 +96,30 @@ export const SubtaskSheet = ({ todo, onClose, onUpdate }: SubtaskSheetProps) => 
             <h2 className="text-sm font-bold text-zinc-100 leading-snug">{todo.text}</h2>
             <button onClick={onClose} className="p-1.5 rounded-full text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-all shrink-0"><X size={16} /></button>
           </div>
-          
+
+          {/* Date editor */}
+          {todo.status === 'done' ? (
+            <label className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
+              <CalendarDays size={12} className="text-emerald-400 shrink-0" />
+              <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold shrink-0">Réalisée le</span>
+              <input type="date" value={todo.completed_at ?? ''}
+                onChange={e => onUpdate(todo.id, { completed_at: e.target.value || null })}
+                className="flex-1 bg-transparent border-none focus:outline-none text-xs text-zinc-200 text-right" />
+            </label>
+          ) : (
+            <label className="flex items-center gap-2 mb-3 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800">
+              <CalendarDays size={12} className="text-amber-400 shrink-0" />
+              <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold shrink-0">Échéance</span>
+              <input type="date" value={todo.due ?? ''}
+                onChange={e => onUpdate(todo.id, { due: e.target.value || null })}
+                className="flex-1 bg-transparent border-none focus:outline-none text-xs text-zinc-200 text-right" />
+              {todo.due && (
+                <button onPointerDown={e => e.preventDefault()} onClick={() => onUpdate(todo.id, { due: null })}
+                  className="p-1 text-zinc-500 hover:text-rose-400 rounded shrink-0"><X size={10} /></button>
+              )}
+            </label>
+          )}
+
           {/* Progress bar */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-2 bg-zinc-900 rounded-full overflow-hidden">
