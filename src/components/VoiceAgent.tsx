@@ -201,7 +201,7 @@ export const VoiceAgent = ({ open, onClose, state, stats, onAddTodo, onAddDoneTo
       setPendingImage(reader.result as string)
       // Speak prompt to user
       unlockTTS()
-      speak("Photo reçue. Dis-moi quoi en faire ou tape envoyer.")
+      speak("Photo reçue. Dis-moi : extraire les tâches, ou lis-moi le texte.")
     }
     reader.readAsDataURL(file)
     e.target.value = ''

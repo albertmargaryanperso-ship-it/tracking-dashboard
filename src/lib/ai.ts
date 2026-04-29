@@ -154,7 +154,19 @@ export async function chat(
       // Vision mode: single-turn prompt + image
       const lastUserMsg = messages[messages.length - 1]
       const userHint = lastUserMsg?.content ? `Albert a précisé oralement : "${lastUserMsg.content}". ` : ''
-      const prompt = `${systemPrompt}
+      const userText = (lastUserMsg?.content ?? '').toLowerCase()
+      const isReadIntent = /\b(lis|lit|lire|lecture|lis-?moi|lis-?le|read|raconte|résume|resume|résumé|resumé|raconte-?moi)\b/.test(userText)
+
+      const readPrompt = `${systemPrompt}
+
+═══ MODE LECTURE D'IMAGE ═══
+${userHint}Albert te demande de LIRE le contenu de l'image, pas de créer des tâches.
+- Si c'est un texte (lettre, document, article, écran) : transcris-le fidèlement et lis-le intégralement, en français. Garde ponctuation et pauses naturelles.
+- Si Albert a demandé un résumé : fais un résumé clair et structuré (max 5 phrases).
+- Si c'est une scène / photo sans texte significatif : décris-la brièvement.
+- N'AJOUTE AUCUN tag [ADD], [LOG], [SUB] etc. — c'est uniquement de la lecture.`
+
+      const taskPrompt = `${systemPrompt}
 
 ═══ MODE ANALYSE D'IMAGE ═══
 ${userHint}Extrais TOUTES les tâches visibles dans l'image.
@@ -167,6 +179,8 @@ Si Albert a précisé une catégorie ou priorité oralement, respecte-la (elle p
 
 Crée chaque tâche avec un tag [ADD text="..." cat="ID" pri="..." dur="..."] à la suite.
 Finis par un récap oral court : le nombre de tâches ajoutées et où (ex: "J'ai ajouté 4 tâches. 2 en Finance, 1 en Admin, 1 en Cardio.").`
+
+      const prompt = isReadIntent ? readPrompt : taskPrompt
       response = await puter.ai.chat(prompt, activeImage, { model: 'gpt-4o' })
     } else {
       // Text mode: full conversation
