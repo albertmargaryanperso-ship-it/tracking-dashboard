@@ -78,7 +78,7 @@ export const SubtaskSheet = ({ todo, onClose, onUpdate }: SubtaskSheetProps) => 
   const progress = subtasks.length === 0 ? 0 : (doneCount / subtasks.length) * 100
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
       {/* Background Overlay */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       
@@ -155,7 +155,7 @@ export const SubtaskSheet = ({ todo, onClose, onUpdate }: SubtaskSheetProps) => 
         </div>
 
         {/* Input Add */}
-        <div className="p-4 border-t border-zinc-800 bg-zinc-950 sticky bottom-0 z-10">
+        <div className="p-4 pb-[max(16px,env(safe-area-inset-bottom))] border-t border-zinc-800 bg-zinc-950 sticky bottom-0 z-10">
            <div className="relative flex items-center">
              <input ref={inputRef} value={newText} onChange={e => setNewText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') handleAdd() }}
                onFocus={() => { setTimeout(() => inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 300) }}
