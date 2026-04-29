@@ -140,7 +140,7 @@ export const SubtaskSheet = ({ todo, onClose, onUpdate }: SubtaskSheetProps) => 
                placeholder="Ajouter une sous-tâche..."
                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 pl-4 pr-12 text-sm text-zinc-200 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-600 shadow-inner" />
                
-             <button onClick={handleAdd} disabled={!newText.trim()}
+             <button onPointerDown={e => e.preventDefault()} onClick={handleAdd} disabled={!newText.trim()}
                className="absolute right-2 p-1.5 bg-emerald-600 text-white rounded-lg disabled:opacity-50 disabled:bg-zinc-800 disabled:text-zinc-500 transition-all hover:bg-emerald-500 active:scale-95">
                <Plus size={16} />
              </button>

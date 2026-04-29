@@ -122,13 +122,13 @@ import type { SyncStatus } from '@/lib/github'
           appName={state.meta.app_name} appEmoji={state.meta.app_emoji} />
       )}
 
-      {syncStatus === 'no-token' && (
+      {!tokenPresent && (
         <div className="relative bg-amber-500/10 border-b border-amber-500/30 px-4 py-2 text-[11px] text-amber-300 flex items-center justify-center gap-2">
           <span>⚠️</span><span>Modifications locales uniquement.</span>
           <button onClick={() => setTokenOpen(true)} className="underline font-semibold ml-1">Configurer token</button>
         </div>
       )}
-      {syncStatus === 'error' && (
+      {syncStatus === 'error' && tokenPresent && (
         <div className="relative bg-rose-500/10 border-b border-rose-500/30 px-4 py-2 text-[11px] text-rose-300 flex items-center justify-center gap-2">
           <span>⚠️</span> Sync échouée — données en cache
         </div>

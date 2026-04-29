@@ -40,16 +40,23 @@ export const mergeStates = (local: AppState, remote: AppState): AppState => {
   const allTodoIds = new Set([...localById.keys(), ...remoteById.keys()])
   const mergedTodos = Array.from(allTodoIds)
     .filter(id => {
-      // Respect tombstone: if deleted_at is newer than the todo's last update, skip it
+      // Respect tombstone ONLY if:
+      // 1. The tombstone exists AND
+      // 2. The todo has a real updated_at AND
+      // 3. The tombstone date is strictly newer than the todo's last update
+      // If updated_at is missing, KEEP the todo (conservative — never lose data)
       const tombDate = tombstones[String(id)]
       if (!tombDate) return true
       const l = localById.get(id)
       const r = remoteById.get(id)
-      const todoDate = Math.max(
-        l?.updated_at ? new Date(l.updated_at).getTime() : 0,
-        r?.updated_at ? new Date(r.updated_at).getTime() : 0,
-      )
-      return todoDate > new Date(tombDate).getTime()
+      const lTime = l?.updated_at ? new Date(l.updated_at).getTime() : null
+      const rTime = r?.updated_at ? new Date(r.updated_at).getTime() : null
+      // If neither side has updated_at, DON'T delete — safer
+      if (lTime === null && rTime === null) return true
+      const todoDate = Math.max(lTime ?? 0, rTime ?? 0)
+      const tombTime = new Date(tombDate).getTime()
+      // Only delete if tombstone is strictly newer
+      return todoDate >= tombTime
     })
     .map(id => {
       const l = localById.get(id)

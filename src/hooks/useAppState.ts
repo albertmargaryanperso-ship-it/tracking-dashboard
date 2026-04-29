@@ -401,8 +401,10 @@ export const useAppState = () => {
       setTimeout(() => setSyncStatus('idle'), 1500)
     } catch (e) {
       console.warn('[tracking] pull failed', e)
-      setSyncStatus('error')
-      setTimeout(() => setSyncStatus('idle'), 3000)
+      if (!silent) {
+        setSyncStatus('error')
+        setTimeout(() => setSyncStatus('idle'), 3000)
+      }
     }
   }, [flushPendingPush, pushNow])
 
