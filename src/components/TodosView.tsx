@@ -110,8 +110,8 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
 
   return (
     <div className="space-y-5">
-      {/* Fixed panel: stats + subtask progress + nav buttons */}
-      <div className="fixed left-0 right-0 z-10 px-4 sm:px-6 pb-3 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/50 space-y-3"
+      {/* Sticky panel: stats + subtask progress + nav buttons */}
+      <div className="sticky z-10 -mx-4 sm:-mx-6 px-4 sm:px-6 pb-3 bg-zinc-950/95 backdrop-blur-xl border-b border-zinc-800/50 space-y-3"
         style={{ top: 0, paddingTop: isMobile ? 'max(env(safe-area-inset-top), 16px)' : '76px' }}>
         {/* Stats */}
         <div className="grid grid-cols-2 gap-2">
@@ -160,9 +160,6 @@ export const TodosView = ({ state, stats, onAdd, onAddDone, onUpdate, onToggle, 
           ))}
         </div>
       </div>
-      {/* Spacer for fixed panel */}
-      <div className="h-32" />
-
       {/* Log done todo button */}
       <div className="flex justify-end">
         <button onClick={() => setLogMode(!logMode)}
