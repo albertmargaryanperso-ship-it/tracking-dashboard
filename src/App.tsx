@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { RefreshCw, Cloud, CloudOff, KeyRound, Plus, ClipboardCopy, Settings, Mic } from 'lucide-react'
+import { RefreshCw, Cloud, KeyRound, Plus, ClipboardCopy, Settings, Mic } from 'lucide-react'
 import { Header } from '@/components/Header'
 import { Dashboard } from '@/components/Dashboard'
 import { LiveTracker } from '@/components/LiveTracker'
@@ -143,7 +143,7 @@ import type { SyncStatus } from '@/lib/github'
                 className={cn('p-2 rounded-xl border transition-all',
                   tokenPresent ? 'border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300'
                     : 'border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 animate-pulse')}>
-                {!tokenPresent ? <KeyRound size={14} /> : syncStatus === 'error' ? <CloudOff size={14} /> : <Cloud size={14} />}
+                {!tokenPresent ? <KeyRound size={14} /> : <Cloud size={14} />}
               </button>
               <button onClick={() => void pull()} title="Sync maintenant"
                 className="p-2 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-500 hover:text-zinc-300 transition-all">
@@ -220,8 +220,7 @@ const SyncIndicator = ({ syncStatus, lastSync }: { syncStatus: SyncStatus; lastS
   }
   const color =
     syncStatus === 'syncing' ? 'text-cyan-400 animate-pulse' :
-    syncStatus === 'success' ? 'text-emerald-400' :
-    syncStatus === 'error' ? 'text-rose-400' : 'text-zinc-600'
+    syncStatus === 'success' ? 'text-emerald-400' : 'text-zinc-600'
   return (
     <div className="flex items-center gap-1.5 text-[10px] text-zinc-500">
       <span className={cn('w-1.5 h-1.5 rounded-full', color)} />
