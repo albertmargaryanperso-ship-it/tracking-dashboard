@@ -128,12 +128,6 @@ import type { SyncStatus } from '@/lib/github'
           <button onClick={() => setTokenOpen(true)} className="underline font-semibold ml-1">Configurer token</button>
         </div>
       )}
-      {syncStatus === 'error' && tokenPresent && (
-        <div className="relative bg-rose-500/10 border-b border-rose-500/30 px-4 py-2 text-[11px] text-rose-300 flex items-center justify-center gap-2">
-          <span>⚠️</span> Sync échouée — données en cache
-        </div>
-      )}
-
       <main className={cn("relative max-w-screen-2xl mx-auto px-4 sm:px-6 py-6", isMobile ? "pb-40" : "pb-24")}>
         {renderView()}
       </main>
