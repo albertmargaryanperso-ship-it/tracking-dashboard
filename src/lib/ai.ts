@@ -181,14 +181,14 @@ Crée chaque tâche avec un tag [ADD text="..." cat="ID" pri="..." dur="..."] à
 Finis par un récap oral court : le nombre de tâches ajoutées et où (ex: "J'ai ajouté 4 tâches. 2 en Finance, 1 en Admin, 1 en Cardio.").`
 
       const prompt = isReadIntent ? readPrompt : taskPrompt
-      response = await puter.ai.chat(prompt, activeImage, { model: 'gpt-4o' })
+      response = await puter.ai.chat(prompt, activeImage, { model: 'openai/gpt-5.4-mini' })
     } else {
       // Text mode: full conversation
       const apiMessages: any[] = [{ role: 'system', content: systemPrompt }]
       for (const msg of messages.slice(-6)) {
         apiMessages.push({ role: msg.role, content: msg.content })
       }
-      response = await puter.ai.chat(apiMessages, { model: 'gpt-4o-mini' })
+      response = await puter.ai.chat(apiMessages, { model: 'openai/gpt-5.4-nano' })
     }
     // Extract text from whatever Puter returns
     let rawText = ''

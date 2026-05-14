@@ -215,7 +215,7 @@ const reducer = (state: AppState, action: Action): AppState => {
           const isDone = t.status === 'done'
           if (isDone) return { ...t, status: 'open' as const, done: false, completed_at: null, completed_min: null, updated_at: now }
           const completed_min = action.completed_min ?? t.duration_min ?? null
-          return { ...t, status: 'done' as const, done: true, completed_at: today, completed_min, updated_at: now }
+          return { ...t, status: 'done' as const, done: true, completed_at: today, completed_min, due: null, updated_at: now }
         }),
       }
 
